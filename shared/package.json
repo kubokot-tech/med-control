@@ -1,0 +1,6 @@
+{
+  "name": "medcontrol-shared",
+  "private": true,
+  "type": "module",
+  "description": "Code shared by the gateway and the frontend (docs/I18N.md)"
+}

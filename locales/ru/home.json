@@ -1,0 +1,80 @@
+{
+  "header": {
+    "therapyDay": "День {day} терапии",
+    "therapy": "Терапия",
+    "streakSchedule": "{n} подряд по схеме",
+    "streakDaily": "{n, plural, one {{n} день} few {{n} дня} many {{n} дней} other {{n} дня}} приёма подряд"
+  },
+  "dose": {
+    "mg": "мг",
+    "ml": "мл",
+    "saving": "Записываю…",
+    "takeNth": "{n}-й приём принят: {dose}",
+    "take": "Принято: {dose}",
+    "marked": "Отмечено {n} из {total}",
+    "markedAt": "Отмечено {n} из {total}: в {times}",
+    "undoLast": "отменить последний",
+    "skip": "пропустить",
+    "takenOf": "Принято {n} из {total}",
+    "takenOfAt": "Принято {n} из {total}: в {times}",
+    "taken": "Принято",
+    "takenAt": "Принято в {time}",
+    "paused": "Пауза в терапии",
+    "skipped": "Сегодня пропущено",
+    "undo": "отменить",
+    "notDue": "Сегодня приёма нет",
+    "notDueNext": "Сегодня приёма нет · следующий {date}",
+    "offSchedule": "принято вне графика",
+    "usually": "Обычно в {window}",
+    "yesterday": "вчера в {time}"
+  },
+  "appt": {
+    "overdue": "Как прошёл приём {date}?",
+    "overdueHint": "Загрузите отчёт врача или отметьте, что приём прошёл",
+    "next": "{d, plural, =0 {Сегодня} =1 {Завтра} other {Через {d} дн.}} приём: {doctor}, {date}",
+    "nextAt": "{d, plural, =0 {Сегодня} =1 {Завтра} other {Через {d} дн.}} приём: {doctor}, {date} в {time}",
+    "doctor": "врач",
+    "questionsReady": "Вопросы к приёму готовы",
+    "questionsMissing": "Вопросы к приёму можно подготовить заранее"
+  },
+  "attention": {
+    "title": "Требует внимания",
+    "high": "{name} {value} · выше нормы",
+    "low": "{name} {value} · ниже нормы",
+    "ref": "Норма {range} · анализ от {date}",
+    "refUnit": "Норма {range} {unit} · анализ от {date}",
+    "missed": "Отметить приёмы за неделю?",
+    "missedSub": "{n, plural, one {{n} день} few {{n} дня} many {{n} дней} other {{n} дня}} без отметки · открыть журнал"
+  },
+  "actions": {
+    "upload": "Загрузить анализы",
+    "summary": "Сводная"
+  },
+  "feed": {
+    "empty": "Здесь будет история лечения",
+    "emptyDesc": "Приёмы, анализы и записи появятся в этой ленте. Проще всего начать с последнего бланка анализов.",
+    "loading": "Загружаю…",
+    "more": "Показать ещё"
+  },
+  "human": {
+    "greet": "{part, select, morning {Доброе утро} day {Добрый день} evening {Добрый вечер} other {Доброй ночи}}",
+    "greetName": "{part, select, morning {Доброе утро} day {Добрый день} evening {Добрый вечер} other {Доброй ночи}}, {name}",
+    "moodSelf": "Как вы сегодня?",
+    "moodRelative": "Как самочувствие сегодня?",
+    "moodRelativeName": "Как {name} сегодня?",
+    "moodHint": "Одно касание, и запись в дневнике. Подробности можно добавить потом.",
+    "moodSaved": "Записано в <link>дневник</link>. До конца дня можно поменять.",
+    "goodNews": "Хорошая новость",
+    "labNormal": "{name} снова в норме",
+    "labNormalSub": "анализ от {date}",
+    "hide": "Скрыть",
+    "moment": {
+      "therapyDays": "{n} дней терапии",
+      "therapyYears": "{n, plural, =1 {Год с начала терапии} one {{n} год с начала терапии} few {{n} года с начала терапии} many {{n} лет с начала терапии} other {{n} года с начала терапии}}",
+      "streakDays": "{n, plural, one {{n} день приёма подряд} few {{n} дня приёма подряд} many {{n} дней приёма подряд} other {{n} дня приёма подряд}}",
+      "streakDoses": "{n, plural, one {{n} приём подряд} few {{n} приёма подряд} many {{n} приёмов подряд} other {{n} приёма подряд}}"
+    },
+    "quietNote": "Пока не показываем серию дней и вехи.",
+    "quietResume": "Вернуть"
+  }
+}

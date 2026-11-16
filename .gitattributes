@@ -1,0 +1,6 @@
+# Line endings stay LF on every system: shell scripts, the Caddyfile and SQL run inside Linux containers, and Git for
+# Windows would otherwise check them out with CRLF (a CRLF entrypoint.sh stops the gateway from starting).
+* text=auto eol=lf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf

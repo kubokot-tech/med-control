@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MedControl</title>
+<style>
+  :root { color-scheme: light dark; --bg: #eef2f7; --fg: #1f2a37; --accent: #1f5fa6; --muted: #5b6b7d; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #111820; --fg: #e6edf5; --accent: #7fb0ea; --muted: #9aa9b9; } }
+  html, body { height: 100%; margin: 0; background: var(--bg); color: var(--fg);
+    font: 15px/1.5 -apple-system, "Segoe UI", system-ui, sans-serif; }
+  main { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 24px; text-align: center; }
+  h1 { margin: 0; font: 600 28px Georgia, "Times New Roman", serif; color: var(--accent); }
+  .mark { width: 180px; height: auto; }
+  p { margin: 0; color: var(--muted); max-width: 520px; }
+  .err { color: var(--fg); white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<main>
+  <img class="mark" src="mark.svg" alt="">
+  <h1 id="name">MedControl</h1>
+  <p id="status">Starting… The first start can take up to a minute.</p>
+</main>
+<script>
+  // Russian on a Russian system, like the shell's own menu and messages.
+  if (/^ru/i.test(navigator.language || '')) {
+    document.documentElement.lang = 'ru';
+    document.title = 'МедКонтроль';
+    document.getElementById('name').textContent = 'МедКонтроль';
+    document.getElementById('status').textContent = 'Запускается… При первом запуске это может занять до минуты.';
+  }
+  // Called by the app when the servers could not start.
+  window.showError = function (text) {
+    var el = document.getElementById('status');
+    el.className = 'err';
+    el.textContent = text;
+  };
+</script>
+</body>
+</html>

@@ -1,0 +1,129 @@
+{
+  "fatigue": {
+    "label": "Fatigue",
+    "short": "fatigue",
+    "hint": "less energy than usual"
+  },
+  "nausea": {
+    "label": "Nausea",
+    "short": "nausea"
+  },
+  "diarrhea": {
+    "label": "Diarrhea",
+    "short": "diarrhea",
+    "hint": "frequent stools"
+  },
+  "handFoot": {
+    "label": "Palms and soles",
+    "short": "palms/soles",
+    "hint": "redness, pain, peeling"
+  },
+  "throatPain": {
+    "label": "Mouth and throat",
+    "short": "mouth/throat",
+    "hint": "stomatitis, pain when swallowing"
+  },
+  "jawEarPain": {
+    "label": "Jaw and ear",
+    "short": "jaw/ear",
+    "hint": "pain in the jaw or ear"
+  },
+  "reflux": {
+    "label": "Heartburn",
+    "short": "heartburn",
+    "hint": "heartburn, belching"
+  },
+  "sleepQuality": {
+    "label": "Sleep problems",
+    "short": "sleep"
+  },
+  "anxiety": {
+    "label": "Anxiety",
+    "short": "anxiety",
+    "hint": "anxiety, low mood"
+  },
+  "appetite": {
+    "label": "Loss of appetite",
+    "short": "appetite",
+    "hint": "eating less than usual"
+  },
+  "vomiting": {
+    "label": "Vomiting",
+    "short": "vomiting"
+  },
+  "constipation": {
+    "label": "Constipation",
+    "short": "constipation"
+  },
+  "neuropathy": {
+    "label": "Numbness, tingling",
+    "short": "numbness",
+    "hint": "fingers and toes"
+  },
+  "rash": {
+    "label": "Rash, skin",
+    "short": "rash",
+    "hint": "rash, dryness, cracks"
+  },
+  "itch": {
+    "label": "Itching",
+    "short": "itching"
+  },
+  "cough": {
+    "label": "Cough",
+    "short": "cough"
+  },
+  "dyspnea": {
+    "label": "Shortness of breath",
+    "short": "shortness of breath",
+    "hint": "during normal activity"
+  },
+  "edema": {
+    "label": "Swelling",
+    "short": "swelling",
+    "hint": "legs, face, hands"
+  },
+  "jointPain": {
+    "label": "Joint pain",
+    "short": "joints",
+    "hint": "pain, swelling"
+  },
+  "stiffness": {
+    "label": "Morning stiffness",
+    "short": "stiffness",
+    "hint": "lasting over half an hour after sleep"
+  },
+  "pain": {
+    "label": "Pain",
+    "short": "pain",
+    "hint": "any noticeable pain"
+  },
+  "headache": {
+    "label": "Headache",
+    "short": "headache"
+  },
+  "dizziness": {
+    "label": "Dizziness",
+    "short": "dizziness"
+  },
+  "tremor": {
+    "label": "Tremor",
+    "short": "tremor",
+    "hint": "shaking hands"
+  },
+  "cramps": {
+    "label": "Muscle cramps",
+    "short": "cramps",
+    "hint": "legs, during or after dialysis"
+  },
+  "bleeding": {
+    "label": "Bleeding",
+    "short": "bleeding",
+    "hint": "gums, nose, bruises"
+  },
+  "fever": {
+    "label": "Chills, fever",
+    "short": "chills",
+    "hint": "without a temperature reading"
+  }
+}

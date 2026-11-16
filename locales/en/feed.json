@@ -1,0 +1,23 @@
+{
+  "eventCard": {
+    "labTitle": "Labs · {lab}",
+    "labDefault": "lab",
+    "labFlagged": "{total, plural, one {{total} marker} other {{total} markers}}, <warn>{flagged} out of range</warn>",
+    "labAllNormal": "{total, plural, one {{total} marker} other {{total} markers}}, all in range",
+    "labUploaded": "Document uploaded",
+    "medDefault": "Medication",
+    "medTaken": "{name} taken",
+    "medSkipped": "{name} skipped",
+    "medPaused": "{name} paused",
+    "medMissed": "{name} not marked",
+    "milestoneDefault": "Milestone",
+    "noteDefault": "Note",
+    "doseChangeDefault": "Dose change",
+    "infusionDefault": "Medication given",
+    "symptomPrefix": "Diary: "
+  },
+  "day": {
+    "today": "Today",
+    "yesterday": "Yesterday, {date}"
+  }
+}

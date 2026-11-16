@@ -1,0 +1,38 @@
+{
+ "candidates": [
+  "hadassah_pdf_v1",
+  "mknc_pdf_v1"
+ ],
+ "parses": {
+  "helix_pdf_v1": {
+   "lab_name": "Хеликс",
+   "doc_date": null,
+   "observations": []
+  },
+  "hadassah_pdf_v1": {
+   "lab_name": "Хадасса",
+   "doc_date": "2026-03-06",
+   "observations": [
+    {
+     "test_name": "Глюкоза",
+     "result_text": "4,92",
+     "result_num": 4.92,
+     "units": "ммоль/л",
+     "ref_text": "4,11 - 5,89",
+     "ref_low": 4.11,
+     "ref_high": 5.89
+    }
+   ]
+  },
+  "dnkom_pdf_v1": {
+   "lab_name": "ДНКОМ",
+   "doc_date": null,
+   "observations": []
+  },
+  "mknc_pdf_v1": {
+   "lab_name": null,
+   "doc_date": null,
+   "observations": []
+  }
+ }
+}

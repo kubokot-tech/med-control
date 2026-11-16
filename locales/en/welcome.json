@@ -1,0 +1,126 @@
+{
+  "pageTitle": "MedControl setup",
+  "progress": "Step {n} of {total}",
+  "next": "Next",
+  "back": "Back",
+  "skip": "Skip",
+  "saving": "Saving…",
+  "about": {
+    "title": "Whose treatment history is this",
+    "lead": "A few questions so the app can be useful from the start. You can change everything in Settings.",
+    "who": "Who keeps MedControl",
+    "keptBy": {
+      "self": "For myself",
+      "relative": "For someone close to me"
+    },
+    "nameSelf": "What should we call you",
+    "nameSelfHint": "for example, Anna",
+    "nameRelative": "Name of the person you keep it for",
+    "nameRelativeHint": "for example, Mom",
+    "diagnosis": "Diagnosis in one line",
+    "diagnosisHint": "as in your medical records: the main diagnosis and key details",
+    "diagnosisWhy": "It goes into the header of the doctor report. The name is not sent to AI."
+  },
+  "protocol": {
+    "title": "What treatment is going on now",
+    "lead": "The protocol sets lab alert thresholds, diary scales and what the AI knows about the treatment.",
+    "warning": "Protocols are examples and have not been reviewed by a doctor. Check the thresholds with the treating doctor."
+  },
+  "anamnesis": {
+    "title": "Medical background",
+    "lead": "Briefly: what happened, what treatment there was, what is going on now. This text goes into the doctor report, and if you connect AI, it gives the context. You do not have to write it from scratch: upload a discharge summary or another document that already says it.",
+    "upload": "Upload a document",
+    "uploadHint": "PDF, photo or text file. The text is read right here on your computer or server, and the file is not kept. Save a Word file as PDF first.",
+    "reading": "Reading the document…",
+    "text": "Medical background",
+    "placeholder": "Diagnosis and when it was made. Surgeries and courses of treatment. Current medications. Allergies and other conditions.",
+    "readText": "The text comes from the document. Read it and remove what is not needed, especially names, addresses and policy numbers: if you connect AI, the background goes to it as written.",
+    "readOcr": "The text was recognized from an image and may contain errors. Check the numbers and drug names, and remove names, addresses and policy numbers: if you connect AI, the background goes to it as written.",
+    "truncated": "The document is long, the first 20,000 characters were taken.",
+    "versionNote": "first run"
+  },
+  "ai": {
+    "title": "Connect AI",
+    "lead": "This is optional: without AI everything works except the buttons that use a model. What it gives you:",
+    "gives": {
+      "labs": "reads lab reports MedControl does not know;",
+      "explain": "explains results and reports in plain words;",
+      "visit": "prepares visit questions from what has built up since the last visit;",
+      "chat": "answers questions about your history on any page."
+    },
+    "data": "The AI service receives the text of your requests, including lab results, the medical background and documents you send for review. The name on the patient card is not sent, the medical background goes as written. AI answers must be checked, it does not replace a doctor. The app is free, requests are paid for at the service you choose.",
+    "tab": {
+      "openrouter": "OpenRouter",
+      "anthropic": "Claude",
+      "openai": "ChatGPT",
+      "gigachat": "GigaChat"
+    },
+    "openrouter": {
+      "s1": "Open <b>openrouter.ai</b> and sign in or create an account.",
+      "s2": "On <b>openrouter.ai/settings/credits</b>, add funds. It is prepaid, by card or cryptocurrency.",
+      "s3": "In your account's privacy settings, turn off models that train on requests. We recommend this for medical data.",
+      "s4": "On <b>openrouter.ai/keys</b>, create a new key.",
+      "warning": "Before connecting, read the rules of OpenRouter and of the model providers: they may have restrictions, for example by country or by type of data. By default OpenRouter itself does not keep the text of requests and answers.",
+      "keyLabel": "OpenRouter key",
+      "s5": "Copy the key and paste it below."
+    },
+    "anthropic": {
+      "s1": "Open <b>platform.claude.com</b> and sign in or create an account.",
+      "s2": "In <b>Billing</b>, click <b>Buy credits</b> and add funds: the key only works with a paid balance.",
+      "s3": "Open <b>Settings</b> → <b>API keys</b> and click <b>Create key</b>.",
+      "s4": "Give it a name and be sure to pick a <b>workspace</b>, for example Default.",
+      "s5": "Copy the key, it starts with <code>sk-ant-</code>. It will not be shown again, so paste it below.",
+      "warning": "Before connecting, read Anthropic's rules: they may have restrictions, for example by country or by type of data. By default API requests are not used to train models.",
+      "keyLabel": "Anthropic key"
+    },
+    "openai": {
+      "s1": "Open <b>platform.openai.com</b> and sign in or create an account. A ChatGPT Plus subscription does not cover this: the API is billed separately.",
+      "s2": "In <b>Billing</b>, add funds. Auto-recharge may be on from the start, turn it off if you want no extra charges.",
+      "s3": "Open <b>Settings</b> → <b>API keys</b>.",
+      "s4": "Click <b>Create new secret key</b>.",
+      "s5": "Copy the key. It will not be shown again, so paste it below.",
+      "warning": "Before connecting, read OpenAI's rules: they may have restrictions, for example by country or by type of data. By default API requests are not used to train models.",
+      "keyLabel": "OpenAI key"
+    },
+    "gigachat": {
+      "s1": "Open <b>developers.sber.ru/studio</b> and sign in with Sber ID.",
+      "s2": "Click <b>Создать проект</b> → <b>AI-модели</b> → <b>GigaChat API</b>, enter a name and accept the terms. New users get the free Freemium plan.",
+      "s3": "In the project, open <b>Настройки API</b> and click <b>Получить ключ</b>.",
+      "s4": "Copy the <b>Authorization Key</b>. It is shown once, so paste it below.",
+      "warning": "Before connecting, read Sber's rules: they may have restrictions, including on personal and medical data. GigaChat does not read PDFs and scans directly, so it cannot process unfamiliar lab reports.",
+      "keyLabel": "GigaChat Authorization Key"
+    },
+    "connect": "Connect and check",
+    "checking": "Checking…",
+    "connected": "Connected, the service answered.",
+    "failed": "The service did not answer the check. Check the key and the balance; the key was not saved.",
+    "passwordLabel": "MedControl password",
+    "passwordHint": "More than 15 minutes have passed since you signed in. The AI service decides where your data goes, so connecting it is confirmed with the password.",
+    "other": "DeepSeek, YandexGPT and your own model can be connected later in Settings → AI assistant."
+  },
+  "labs": {
+    "title": "Add lab results",
+    "lead": "Upload a few PDFs from the lab, preferably the latest. MedControl will put them in one table, bring units together and show what is out of range.",
+    "choose": "Choose PDFs",
+    "done": "{n, plural, one {# marker} other {# markers}} added",
+    "state": {
+      "busy": "Reading…",
+      "duplicate": "This report is already uploaded",
+      "review": "The rows need checking: add it on the <link>Upload tab</link>",
+      "error": "{reason}"
+    },
+    "hint": "Without AI, reports from known labs are read; the list is on the Upload tab. Check values against the original report."
+  },
+  "done": {
+    "title": "All set",
+    "lead": "Your treatment history has started. It grows from here: upload results, mark doses and note how you feel.",
+    "leadName": "{name}, your treatment history has started. It grows from here: upload results, mark doses and note how you feel.",
+    "labsTitle": "{n, plural, one {# marker} other {# markers}} in the table",
+    "flagged": "{n, plural, one {# value} other {# values}} out of range in the latest results:",
+    "flaggedNote": "This compares values with the lab's reference range, it is not a diagnosis. Discuss the results with a doctor.",
+    "noneFlagged": "No values out of range in the latest results. This does not replace a doctor's assessment.",
+    "openLabs": "Open the lab table",
+    "later": "What you skipped stays in the Getting started list on the home screen. Telegram dose reminders are set up in Settings.",
+    "open": "Open MedControl"
+  }
+}

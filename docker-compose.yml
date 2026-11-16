@@ -1,0 +1,281 @@
+# Base stack: postgres, gateway, frontend, edge, backup. Runs without .env: open http://localhost:3001
+# and the first-run page asks for a password. Optional profiles (COMPOSE_PROFILES in .env):
+#   python   — the Python PDF service (ingestion), kept in reserve: the gateway reads PDFs itself; with PDF_ENGINE=python
+#   dicom    — Orthanc DICOM archive and viewer (needs ORTHANC_PASSWORD)
+#   watchdog — health checks with Telegram alarms (needs TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID in .env)
+#   egress   — outbound proxy through the router's VPN for AI and Telegram
+# The project name does not follow the folder name: a fresh copy unpacked into «medcontrol-main (2)» must find the
+# same volumes (data, database) instead of starting empty. Other stacks set their own (-p, COMPOSE_PROJECT_NAME).
+name: medcontrol
+
+x-logging: &logging
+  logging:
+    driver: json-file
+    options: { max-size: "10m", max-file: "5" }
+
+# Every service: no privilege escalation through setuid binaries. Capabilities are dropped per service below.
+x-hardened: &hardened
+  security_opt: ["no-new-privileges:true"]
+
+services:
+  postgres:
+    <<: [*logging, *hardened]
+    image: postgres:16.13
+    restart: unless-stopped
+    # The entrypoint fixes ownership of the data directory and switches to the postgres user.
+    cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETUID, SETGID]
+    networks: [data]
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-dtc}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dtc}
+      POSTGRES_DB: ${POSTGRES_DB:-dtc}
+    volumes:
+      - ${PG_DIR:-pgdata}:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-dtc} -d ${POSTGRES_DB:-dtc}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  gateway:
+    <<: [*logging, *hardened]
+    build: { context: ., dockerfile: gateway/Dockerfile }
+    image: dtc/gateway:${IMAGE_TAG:-dev}
+    restart: unless-stopped
+    # Starts as root only to hand /data to the node user (entrypoint.sh), then drops to it.
+    cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETUID, SETGID]
+    read_only: true
+    tmpfs: ["/tmp"]
+    networks: [default, data]
+    env_file:
+      # ENV_FILE lets scripts/demo.sh keep the real .env out of the demo stack.
+      - path: ${ENV_FILE:-.env}
+        required: false
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgres://${POSTGRES_USER:-dtc}:${POSTGRES_PASSWORD:-dtc}@postgres:5432/${POSTGRES_DB:-dtc}}
+      # Empty JWT_SECRET: generated once into DATA_DIR. Empty DTC_PASSWORD: the first-run page sets the password.
+      JWT_SECRET: ${JWT_SECRET:-}
+      DTC_PASSWORD: ${DTC_PASSWORD:-}
+      JWT_TTL: ${JWT_TTL:-30d}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      CLAUDE_MODEL: ${CLAUDE_MODEL:-claude-opus-5}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      LLM_PROVIDER: ${LLM_PROVIDER:-}
+      LLM_MODEL: ${LLM_MODEL:-}
+      EGRESS_PROXY: ${EGRESS_PROXY:-}
+      TELEGRAM_PROXY: ${TELEGRAM_PROXY:-}
+      # The DICOM archive is on when ORTHANC_PASSWORD is set (and the dicom profile runs Orthanc).
+      ORTHANC_URL: ${ORTHANC_URL:-http://orthanc:8042}
+      ORTHANC_USER: ${ORTHANC_USER:-dtc}
+      ORTHANC_PASSWORD: ${ORTHANC_PASSWORD:-}
+      DICOM_DIR: /dicom
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID:-}
+      APP_URL: ${APP_URL:-http://localhost:${APP_PORT:-3001}}
+      # where edge listens: when not loopback, the first-run wizard asks for a one-time code (lib/setupCode.js)
+      DTC_BIND_ADDR: ${BIND_ADDR:-127.0.0.1}
+      DTC_SETUP_CODE: ${DTC_SETUP_CODE:-}
+      ENABLE_DOCS: ${ENABLE_DOCS:-0}
+      DTC_MFA: ${DTC_MFA:-on}
+      WEBAUTHN_ORIGINS: ${WEBAUTHN_ORIGINS:-}
+      # empty: Settings → Telegram decides (11:00, 20:00, 28 by default); a value here wins over the settings page
+      REMIND_DOSE_AT: ${REMIND_DOSE_AT:-}
+      REMIND_DOSE_AGAIN_AT: ${REMIND_DOSE_AGAIN_AT:-}
+      LAB_STALE_DAYS: ${LAB_STALE_DAYS:-}
+      INGESTION_URL: ${INGESTION_URL:-http://ingestion:8000}
+      PDF_ENGINE: ${PDF_ENGINE:-js}
+      LAB_SAMPLES_URL: ${LAB_SAMPLES_URL:-}
+      # desktop: server-only features off, shown as «только в серверной версии» (docs/DESKTOP.md); the server is «server»
+      DTC_EDITION: ${DTC_EDITION:-server}
+      MIGRATIONS_DIR: /app/migrations
+      # where the backups are on the server, as written in .env: shown on the backup card
+      BACKUP_DIR_SHOWN: ${BACKUP_DIR:-../medcontrol-backups}
+    volumes:
+      - ${DATA_DIR:-dtcdata}:/data
+      - ${DICOM_DIR:-dicomdata}:/dicom:ro
+      - ${BACKUP_DIR:-../medcontrol-backups}:/backups:ro
+      - ./db/migrations:/app/migrations:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  ingestion:
+    <<: [*logging, *hardened]
+    build: ./ingestion
+    image: dtc/ingestion:${IMAGE_TAG:-dev}
+    profiles: ["python"]
+    restart: unless-stopped
+    cap_drop: [ALL]
+    read_only: true
+    tmpfs: ["/tmp"]
+    # Only the gateway talks to the parser; it has no way out to the internet and no access to the database.
+    networks: [data]
+
+  frontend:
+    <<: [*logging, *hardened]
+    build: { context: ., dockerfile: frontend/Dockerfile }
+    image: dtc/frontend:${IMAGE_TAG:-dev}
+    restart: unless-stopped
+    cap_drop: [ALL]
+    read_only: true
+    tmpfs: ["/tmp", "/app/.next/cache:uid=1000,gid=1000"]
+    networks: [default]
+    environment:
+      # Frontend talks to gateway via /api/* proxies
+      GATEWAY_INTERNAL_URL: http://gateway:3000
+      PORT: 3001
+      NEXT_TELEMETRY_DISABLED: 1
+    depends_on:
+      gateway:
+        condition: service_started
+
+  # Front door on 3001: /orthanc/* → Orthanc, everything else → frontend (see edge/Caddyfile).
+  edge:
+    <<: [*logging, *hardened]
+    image: caddy:2.11.4-alpine
+    restart: unless-stopped
+    cap_drop: [ALL]
+    cap_add: [NET_BIND_SERVICE]
+    read_only: true
+    tmpfs: ["/data", "/config"]
+    networks: [default, data]
+    volumes:
+      - ./edge/Caddyfile:/etc/caddy/Caddyfile:ro
+    depends_on:
+      - frontend
+    ports:
+      - "${BIND_ADDR:-127.0.0.1}:${APP_PORT:-3001}:3001"
+
+  # DICOM archive and viewer. Studies are imported from DICOM_DIR through the gateway (/imaging/orthanc/import).
+  # Orthanc's own web UI and the Stone viewer are reachable via the edge under /orthanc, read-only, with a viewer cookie
+  # of a signed-in session; edge adds Orthanc's basic auth after asking the gateway (edge/Caddyfile, /orthanc-auth).
+  orthanc:
+    <<: [*logging, *hardened]
+    image: orthancteam/orthanc:26.8.2
+    profiles: ["dicom"]
+    restart: unless-stopped
+    networks: [data]
+    # Refuse to start without a password: the viewer is published under /orthanc.
+    entrypoint: ["/bin/sh", "-c", "[ -n \"$$ORTHANC_PASSWORD_CHECK\" ] || { echo 'orthanc: set ORTHANC_PASSWORD in .env' >&2; exit 1; }; exec /docker-entrypoint.sh \"$$@\"", "--"]
+    command: ["/tmp/orthanc.json"]
+    environment:
+      ORTHANC_PASSWORD_CHECK: ${ORTHANC_PASSWORD:-}
+      ORTHANC__NAME: MedControl
+      ORTHANC__AUTHENTICATION_ENABLED: "true"
+      ORTHANC__REGISTERED_USERS: '{"${ORTHANC_USER:-dtc}": "${ORTHANC_PASSWORD:-}"}'
+      ORTHANC__DICOM_SERVER_ENABLED: "false"
+      ORTHANC__STORAGE_COMPRESSION: "false"
+      ORTHANC__STABLE_AGE: "10"
+      DICOM_WEB_PLUGIN_ENABLED: "true"
+      STONE_WEB_VIEWER_PLUGIN_ENABLED: "true"
+      TZ: ${TZ:-Europe/Moscow}
+    volumes:
+      - ${ORTHANC_DIR:-orthancdata}:/var/lib/orthanc/db
+
+  # Nightly backup inside the stack: pg_dump + tar of /data into BACKUP_DIR, keeps 14. By default a folder next to the
+  # code folder (../medcontrol-backups), not inside it: deleting the code folder for a fresh copy keeps the backups.
+  backup:
+    <<: [*logging, *hardened]
+    build: ./backup
+    image: dtc/backup:${IMAGE_TAG:-dev}
+    restart: unless-stopped
+    # Runs as root to read every file in /data and keep backups owner-only.
+    cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER]
+    networks: [default, data]
+    environment:
+      PGHOST: postgres
+      PGUSER: ${POSTGRES_USER:-dtc}
+      PGPASSWORD: ${POSTGRES_PASSWORD:-dtc}
+      PGDATABASE: ${POSTGRES_DB:-dtc}
+      BACKUP_AT: ${BACKUP_AT:-03:30}
+      BACKUP_KEEP: ${BACKUP_KEEP:-14}
+      RESTORE_TEST_DOW: ${RESTORE_TEST_DOW:-Sun}
+      CLOUD_REMOTE: ${CLOUD_REMOTE:-}
+      # «yes» only when MIRROR_DIR points at a real second disk; the default volume is the same disk and does not count
+      MIRROR_CONFIGURED: ${MIRROR_DIR:+yes}
+      TZ: ${TZ:-Europe/Moscow}
+    volumes:
+      - ${DATA_DIR:-dtcdata}:/data:ro
+      - ${DICOM_DIR:-dicomdata}:/dicom:ro
+      - ${BACKUP_DIR:-../medcontrol-backups}:/backups
+      - ${MIRROR_DIR:-mirrordata}:/mirror
+      - ${RCLONE_DIR:-rclonedata}:/config
+      # The app directory read-only: backup copies .env when it exists (a missing file must not become a directory).
+      - ./:/env:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # Watchdog: polls /health?deep=1, alarms in Telegram when the gateway is down or degraded,
+  # pings HEALTHCHECKS_URL (external dead-man's switch) on success.
+  watchdog:
+    <<: [*logging, *hardened]
+    build: ./watchdog
+    image: dtc/watchdog:${IMAGE_TAG:-dev}
+    profiles: ["watchdog"]
+    restart: unless-stopped
+    cap_drop: [ALL]
+    read_only: true
+    tmpfs: ["/tmp"]
+    networks: [default]
+    environment:
+      CHECK_URL: http://gateway:3000/health?deep=1
+      INTERVAL: ${WATCHDOG_INTERVAL:-300}
+      WATCHDOG_LANG: ${WATCHDOG_LANG:-ru}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID:-}
+      HEALTHCHECKS_URL: ${HEALTHCHECKS_URL:-}
+      EGRESS_PROXY: ${TELEGRAM_PROXY_WATCHDOG:-${EGRESS_PROXY:-}}
+      TZ: ${TZ:-Europe/Moscow}
+    depends_on:
+      - gateway
+
+  # Outbound proxy with its own LAN address (macvlan). Enable with COMPOSE_PROFILES=egress on the server
+  # and route that device through the VPN in the router; gateway uses it via EGRESS_PROXY=http://egress:8888.
+  egress:
+    <<: [*logging, *hardened]
+    build: ./egress
+    image: dtc/egress:${IMAGE_TAG:-dev}
+    profiles: ["egress"]
+    restart: unless-stopped
+    mac_address: ${EGRESS_MAC:-02:dc:00:00:00:60}
+    # gw_priority makes the macvlan side the default route (docker >= 28), so the
+    # router sees this container's own MAC/IP and can route it through a VPN.
+    networks:
+      default:
+        priority: 10
+        gw_priority: 10
+      egress:
+        priority: 100
+        gw_priority: 100
+        ipv4_address: ${EGRESS_IP:-192.168.1.60}
+
+volumes:
+  pgdata:
+  dtcdata:
+  orthancdata:
+  dicomdata:
+  mirrordata:
+  rclonedata:
+
+networks:
+  # Database, parser and DICOM archive: reachable only from inside the stack, no route to the internet.
+  data:
+    internal: true
+  default:
+    # Pinned so the egress proxy can allow exactly this stack (see egress/tinyproxy.conf).
+    ipam:
+      config:
+        - subnet: ${STACK_SUBNET:-172.31.250.0/24}
+  egress:
+    driver: macvlan
+    driver_opts:
+      parent: ${EGRESS_PARENT:-eth0}
+    ipam:
+      config:
+        - subnet: ${EGRESS_SUBNET:-192.168.1.0/24}
+          gateway: ${EGRESS_GATEWAY:-192.168.1.1}
+          ip_range: ${EGRESS_IP:-192.168.1.60}/32

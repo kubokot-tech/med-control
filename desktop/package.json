@@ -1,0 +1,19 @@
+{
+  "name": "medcontrol-desktop",
+  "version": "0.3.0",
+  "license": "AGPL-3.0-only",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "prepare-app": "node scripts/prepare.mjs",
+    "dev": "node scripts/prepare.mjs && tauri dev",
+    "build": "node scripts/prepare.mjs && tauri build",
+    "tauri": "tauri"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "2.12.3"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

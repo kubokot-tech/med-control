@@ -1,0 +1,21 @@
+{
+  "appName": "MedControl",
+  "connected": "✅ MedControl is connected. Dose reminders and lab alerts will come here.",
+  "passwordChanged": "🔑 The MedControl password was changed: other sessions were ended, the Apple Health key and AI agent tokens were revoked. If this was not you, sign in and change the password.",
+  "passwordReset": "🔑 The MedControl password was reset with the recovery code: other sessions were ended, the Apple Health key and AI agent tokens were revoked. If this was not you, sign in and change the password.",
+  "recoveryCode": "🔑 A new password recovery code was created in MedControl, the old one no longer works. If this was not you, change the password.",
+  "allSessionsEnded": "🔒 All MedControl sessions were ended, the Apple Health key and AI agent tokens were revoked. Sign in again.",
+  "passkeyAdded": "🔑 A new passkey \"{name}\" was added to MedControl. If this was not you, delete it in Settings → \"Sign-in and security\" and change the password.",
+  "passkeyRemoved": "🔑 A passkey was removed from MedControl. If this was not you, change the password.",
+  "telegramChanged": "🔔 The Telegram bot or chat of MedControl was changed: reminders and security messages may no longer come to this chat. If this was not you, sign in, press “Sign out everywhere” in Settings → “Sign-in and security” and change the password.",
+  "mcpOn": "🤖 Access for AI agents (MCP) was turned on in MedControl. If this was not you, turn it off in Settings and change the password.",
+  "mcpOff": "🤖 Access for AI agents (MCP) was turned off, all tokens were revoked.",
+  "mcpToken": "🔑 AI agent token \"{name}\" was created ({scope}). If this was not you, revoke it in Settings.",
+  "mcpScope": {
+    "read": "read only",
+    "write": "read and write"
+  },
+  "anamnesisRestored": "restored from the version of {when}",
+  "viewerClosed": "The image viewer is closed: open the Imaging section in MedControl and press \"Open images\" again.",
+  "importInterrupted": "interrupted by a restart"
+}

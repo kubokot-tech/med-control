@@ -1,0 +1,99 @@
+{
+  "loading": "Loading…",
+  "save": "Save",
+  "saved": "Saved.",
+  "cancelChanges": "Discard changes",
+  "done": "Done",
+  "status": {
+    "ready": "author's preset",
+    "example": "example, not reviewed by a doctor",
+    "custom": "custom"
+  },
+  "op": {
+    "lt": "<",
+    "lte": "≤",
+    "gt": ">",
+    "gte": "≥",
+    "gtRef": "> range limit ×",
+    "ltRef": "< range limit ×"
+  },
+  "severity": {
+    "RED": "red",
+    "YELLOW": "yellow"
+  },
+  "alerts": {
+    "norm": "range limit",
+    "chips": {
+      "value": "value",
+      "unit": "unit",
+      "ref": "range limit"
+    },
+    "defaultMessage": "'{v} {u}': discuss with the doctor",
+    "empty": "No thresholds: no lab alerts will appear.",
+    "add": "Add threshold",
+    "hint": "“range limit ×” multiplies the limit of the marker's reference range in effect (custom, from the catalog or from the lab report). If several rules fire for a marker, the strictest one applies.",
+    "saved": "Thresholds saved. New alerts will appear on the next lab upload or when you click “Recheck” on the alerts page.",
+    "titleEdit": "Threshold",
+    "titleNew": "New threshold",
+    "marker": "Marker",
+    "condition": "Condition",
+    "value": "Value",
+    "valueUnit": "Value, {unit}",
+    "severityLabel": "Alert",
+    "message": "Alert text",
+    "insert": "Insert:",
+    "remove": "Delete threshold",
+    "applyHint": "Changes take effect after you click “Save” on the page."
+  },
+  "overview": {
+    "regimenCreated": "Dosing regimen created. It's in Medications.",
+    "regimenExists": "A main medication is already set: nothing changed.",
+    "regimenNone": "The protocol has no dosing regimen.",
+    "agentsAdded": "Added to the infusion catalog: {n}.",
+    "agentsNone": "Everything is already in the infusion catalog.",
+    "loadedMsg": "Protocol “{name}” loaded.",
+    "createRegimen": "Create dosing regimen: {regimen}",
+    "addAgents": "Add to the infusion catalog: {names}",
+    "rows": {
+      "alerts": "Alert thresholds",
+      "alertsSub": "{n, plural, one {{n} rule} other {{n} rules}}",
+      "scales": "Diary scales",
+      "scalesSub": "{on} of {total}",
+      "notes": "Marker notes",
+      "notesSub": "{n, plural, one {{n} note} other {{n} notes}}",
+      "texts": "Name and AI texts",
+      "aiFilled": "AI intro filled in",
+      "aiEmpty": "AI intro empty"
+    },
+    "untitled": "Untitled",
+    "presetsWarning": "Presets are not reviewed by a doctor: check the thresholds with the treating doctor.",
+    "change": "Change protocol",
+    "followUps": "Dosing regimen and infusions from the protocol",
+    "followUpsHint": "Created once: the regimen if no main medication is set yet, infusions only if missing.",
+    "loadedTitle": "Protocol loaded",
+    "replaceHint": "Alert thresholds, notes and texts will be replaced by the preset. The preset's diary scales will be added to yours, and yours will stay.",
+    "load": "Load",
+    "cancel": "Cancel",
+    "canCreate": "You can set up from it right away:"
+  },
+  "texts": {
+    "name": "Name",
+    "namePlaceholder": "For example: Levothyroxine 100 mcg",
+    "ai": "AI intro",
+    "aiPlaceholder": "What the model should know about the therapy: medication, known side effects, what to watch for in labs.",
+    "aiHint": "Added as the first line of every AI question.",
+    "cadence": "How often to get labs",
+    "cadencePlaceholder": "For example: blood every 2–4 weeks",
+    "cadenceHint": "Used in the “no recent labs” reminder."
+  },
+  "notes": {
+    "empty": "No notes.",
+    "remove": "Remove",
+    "pick": "Marker…",
+    "add": "Add note",
+    "saved": "Notes saved."
+  },
+  "scales": {
+    "saved": "Scales saved. The diary shows them right away."
+  }
+}

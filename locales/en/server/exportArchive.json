@@ -1,0 +1,5 @@
+{
+  "dossierName": "medcontrol-dossier-{date}.{ext}",
+  "zipName": "medcontrol-export-{date}.zip",
+  "readme": "MedControl, full data export of {date}.\n\ntables/*.json   all database tables (only your rows): events, lab results, doses, imaging, diary, alerts, infusions, doctor's appointments, AI comments and questions. These are the stored records used to load the archive back, so texts generated earlier stay in the language they were written in.\nlabs.csv        lab results in one table (separator \";\", UTF-8 encoding, opens in Excel/Numbers).\nanamnesis.txt   the current medical background for AI; version history in tables/anamnesis_versions.json.\nnotes/          notes in Markdown with front matter (title, tags, url, source, date); note files are in files/milestones.\nfiles/          uploaded files: lab PDFs ({pdf}, linked through tables/attachments.json), doctors' reports and images (files/milestones).\nmanifest.json   export date and row counts by table.\n\nThe archive is not encrypted and contains medical data: keep it as carefully as a paper chart.\n"
+}

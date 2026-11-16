@@ -1,0 +1,92 @@
+{
+ "candidates": [
+  "dnkom_pdf_v1",
+  "mknc_pdf_v1"
+ ],
+ "parses": {
+  "helix_pdf_v1": {
+   "lab_name": "Хеликс",
+   "doc_date": null,
+   "observations": []
+  },
+  "hadassah_pdf_v1": {
+   "lab_name": "Хадасса",
+   "doc_date": null,
+   "observations": []
+  },
+  "dnkom_pdf_v1": {
+   "lab_name": "ДНКОМ",
+   "doc_date": "2026-02-01",
+   "observations": [
+    {
+     "test_name": "Билирубин общий",
+     "result_text": "9,4",
+     "result_num": 9.4,
+     "units": "мкмоль/л",
+     "ref_text": "3,4 - 20,5",
+     "ref_low": 3.4,
+     "ref_high": 20.5
+    },
+    {
+     "test_name": "Холестерин-ЛПВП",
+     "result_text": "1,52",
+     "result_num": 1.52,
+     "units": "ммоль/л",
+     "ref_text": "> 1",
+     "ref_low": 1.0,
+     "ref_high": null
+    },
+    {
+     "test_name": "Холестерин-ЛПОНП",
+     "result_text": "0,41",
+     "result_num": 0.41,
+     "units": "ммоль/л",
+     "ref_text": "< 0,80",
+     "ref_low": null,
+     "ref_high": 0.8
+    },
+    {
+     "test_name": "Гликированный гемоглобин (HbA1%)",
+     "result_text": "5,2",
+     "result_num": 5.2,
+     "units": "%",
+     "ref_text": "4,0 - 6,0",
+     "ref_low": 4.0,
+     "ref_high": 6.0
+    },
+    {
+     "test_name": "Аланинаминотрансфераза (АЛТ)",
+     "result_text": "22,1",
+     "result_num": 22.1,
+     "units": "Ед/л",
+     "ref_text": "< 40,0",
+     "ref_low": null,
+     "ref_high": 40.0
+    },
+    {
+     "test_name": "Сывороточное железо",
+     "result_text": "17,3",
+     "result_num": 17.3,
+     "units": "мкмоль/л",
+     "ref_text": "9,0 - 30,4",
+     "ref_low": 9.0,
+     "ref_high": 30.4
+    },
+    {
+     "test_name": "С-реактивный белок, высокочувствительный",
+     "result_text": "< 0,30",
+     "result_num": null,
+     "units": "мг/л",
+     "ref_text": "< 1,00",
+     "ref_low": null,
+     "ref_high": 1.0
+    }
+   ]
+  },
+  "mknc_pdf_v1": {
+   "lab_name": null,
+   "doc_date": null,
+   "observations": []
+  }
+ }
+}

@@ -1,0 +1,22 @@
+{
+  "title": "Search everything",
+  "desc": "Notes, milestones and document text, imaging reports, appointments, the diary, infusions, AI answers, lab markers, and medications. Understands word forms: “lesion” also finds “lesions”.",
+  "placeholder": "For example: hepatotoxicity, TSH, paratracheal, levothyroxine",
+  "busy": "Searching…",
+  "emptyTitle": "Nothing found",
+  "emptyDesc": "Try another word, or just the start of it.",
+  "kinds": {
+    "marker": "Markers",
+    "note": "Notes",
+    "milestone": "Treatment history",
+    "document": "Documents",
+    "imaging": "Imaging",
+    "appointment": "Appointments",
+    "contact": "Doctors and contacts",
+    "symptom": "Diary",
+    "infusion": "Infusions and injections",
+    "ai": "AI answers",
+    "labdoc": "Labs",
+    "medication": "Medications"
+  }
+}

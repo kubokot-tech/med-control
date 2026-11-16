@@ -1,0 +1,119 @@
+{
+ "candidates": [
+  "hadassah_pdf_v1",
+  "mknc_pdf_v1"
+ ],
+ "parses": {
+  "helix_pdf_v1": {
+   "lab_name": "Хеликс",
+   "doc_date": null,
+   "observations": []
+  },
+  "hadassah_pdf_v1": {
+   "lab_name": "Хадасса",
+   "doc_date": "2026-03-06",
+   "observations": [
+    {
+     "test_name": "Активированное частичное тромбопластиновое время (АЧТВ)",
+     "result_text": "29,6",
+     "result_num": 29.6,
+     "units": "сек",
+     "ref_text": "22,0 - 28,0",
+     "ref_low": 22.0,
+     "ref_high": 28.0
+    },
+    {
+     "test_name": "МНО",
+     "result_text": "0,97",
+     "result_num": 0.97,
+     "units": "Ед",
+     "ref_text": "0,85 - 1,15",
+     "ref_low": 0.85,
+     "ref_high": 1.15
+    },
+    {
+     "test_name": "Протромбин по Квику",
+     "result_text": "104,2",
+     "result_num": 104.2,
+     "units": "%",
+     "ref_text": "76,0 - 122,0",
+     "ref_low": 76.0,
+     "ref_high": 122.0
+    },
+    {
+     "test_name": "Протромбиновое время",
+     "result_text": "10,4",
+     "result_num": 10.4,
+     "units": "сек",
+     "ref_text": "9,9 - 11,8",
+     "ref_low": 9.9,
+     "ref_high": 11.8
+    },
+    {
+     "test_name": "Тромбиновое время",
+     "result_text": "17,9",
+     "result_num": 17.9,
+     "units": "сек",
+     "ref_text": "15,5 - 24,0",
+     "ref_low": 15.5,
+     "ref_high": 24.0
+    },
+    {
+     "test_name": "Фибриноген",
+     "result_text": "4,35",
+     "result_num": 4.35,
+     "units": "г/л",
+     "ref_text": "2,00 - 4,00",
+     "ref_low": 2.0,
+     "ref_high": 4.0
+    },
+    {
+     "test_name": "Д-димер",
+     "result_text": "212,0",
+     "result_num": 212.0,
+     "units": "нг/мл",
+     "ref_text": "0,0 - 500,0",
+     "ref_low": 0.0,
+     "ref_high": 500.0
+    },
+    {
+     "test_name": "Фенотип по антигенам резус",
+     "result_text": "CcDee",
+     "result_num": null,
+     "units": null,
+     "ref_text": null,
+     "ref_low": null,
+     "ref_high": null
+    },
+    {
+     "test_name": "Kell антиген (К)",
+     "result_text": "Отрицательный",
+     "result_num": null,
+     "units": null,
+     "ref_text": null,
+     "ref_low": null,
+     "ref_high": null
+    },
+    {
+     "test_name": "Аллоиммунные антиэритроцитарные антитела (непрямая проба Кумбса)",
+     "result_text": "не обнаружено",
+     "result_num": null,
+     "units": null,
+     "ref_text": null,
+     "ref_low": null,
+     "ref_high": null
+    }
+   ]
+  },
+  "dnkom_pdf_v1": {
+   "lab_name": "ДНКОМ",
+   "doc_date": null,
+   "observations": []
+  },
+  "mknc_pdf_v1": {
+   "lab_name": null,
+   "doc_date": null,
+   "observations": []
+  }
+ }
+}

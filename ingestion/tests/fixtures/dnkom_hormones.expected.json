@@ -1,0 +1,65 @@
+{
+ "candidates": [
+  "dnkom_pdf_v1",
+  "mknc_pdf_v1"
+ ],
+ "parses": {
+  "helix_pdf_v1": {
+   "lab_name": "Хеликс",
+   "doc_date": null,
+   "observations": []
+  },
+  "hadassah_pdf_v1": {
+   "lab_name": "Хадасса",
+   "doc_date": null,
+   "observations": []
+  },
+  "dnkom_pdf_v1": {
+   "lab_name": "ДНКОМ",
+   "doc_date": "2026-02-01",
+   "observations": [
+    {
+     "test_name": "(2-OHE1+2-OHE2)/16a-OHE1",
+     "result_text": "2,10",
+     "result_num": 2.1,
+     "units": null,
+     "ref_text": "2,00 - 3,50",
+     "ref_low": 2.0,
+     "ref_high": 3.5
+    },
+    {
+     "test_name": "2-OMeE1/2-ОНЕ1",
+     "result_text": "0,210",
+     "result_num": 0.21,
+     "units": null,
+     "ref_text": "0,050 - 0,400",
+     "ref_low": 0.05,
+     "ref_high": 0.4
+    },
+    {
+     "test_name": "16a-гидроксиэстрон (16a-OHE1)",
+     "result_text": "0,105",
+     "result_num": 0.105,
+     "units": "нмоль/ммоль креатинина",
+     "ref_text": "0,020 - 0,500",
+     "ref_low": 0.02,
+     "ref_high": 0.5
+    },
+    {
+     "test_name": "2-OHE1+2-OHE2",
+     "result_text": "0,33",
+     "result_num": 0.33,
+     "units": "нмоль/ммоль креатинина",
+     "ref_text": "0,10 - 2,00",
+     "ref_low": 0.1,
+     "ref_high": 2.0
+    }
+   ]
+  },
+  "mknc_pdf_v1": {
+   "lab_name": null,
+   "doc_date": null,
+   "observations": []
+  }
+ }
+}

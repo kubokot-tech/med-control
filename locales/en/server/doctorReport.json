@@ -1,0 +1,99 @@
+{
+  "title": "Doctor report",
+  "info": "MedControl · Doctor report",
+  "period": "Period {from} to {to} · created {today} · MedControl, patient's treatment history",
+  "diagnosis": "Diagnosis: {text}",
+  "fileName": "MedControl-report-{from}-{to}.pdf",
+  "brandLine": "Report prepared in MedControl · {site}",
+  "footer": "Generated automatically from the patient's records, does not replace medical documents · page {page} of {pages}",
+  "questions": {
+    "title": "Visit questions for {date}{doctor}",
+    "note": "List prepared by AI from MedControl data {date}, reviewed by the patient. Not medical advice."
+  },
+  "anamnesis": {
+    "title": "Medical background",
+    "titleBrief": "Medical background (short)",
+    "written": "Recorded by the patient.",
+    "briefNote": "Short version of the patient's medical background, condensed by the model{model}; the patient has the full text.",
+    "truncated": "\n[the end of the short version was cut off by the model; the patient has the full medical background]"
+  },
+  "therapy": {
+    "title": "Therapy",
+    "line": "{name} {dose}, {schedule}{window}, since {date}.",
+    "window": " at {time}",
+    "adherence": "Doses in the period: {taken} of {days} scheduled dose days ({pct}%).{partial} Skipped on purpose: {skipped}. Not marked: {missed}.",
+    "partial": " Not all doses of the day taken: {n}.",
+    "notMarked": "\"Not marked\" means there is no record in the diary, not necessarily a missed dose.",
+    "timesPerDay": " × {n} a day",
+    "none": "No active medication schedules."
+  },
+  "infusions": {
+    "title": "Infusions and injections in the period"
+  },
+  "milestones": {
+    "title": "Events in the period",
+    "titleAll": "Treatment history: all milestones",
+    "good": "good news",
+    "bad": "bad news",
+    "neutral": "follow-up"
+  },
+  "imaging": {
+    "title": "Imaging and lesion trends",
+    "last": "Latest study: {study} of {date}{response}.",
+    "response": ", assessment: {response}",
+    "sizes": "Target lesion sizes in mm, from imaging reports."
+  },
+  "labs": {
+    "title": "Labs",
+    "intro": "Lab reports uploaded in the period: {n}. {scope}",
+    "scopeAll": "Below are the latest values of all markers.",
+    "scopeKey": "Below are the latest values of key markers and everything out of range.",
+    "legend": "Color: blue is in range, amber is out of range. The reference range comes from the MedControl catalog, from a custom range set in the app, or from the lab report if the catalog has none.",
+    "none": "No lab results."
+  },
+  "symptoms": {
+    "title": "Wellbeing from the diary",
+    "entries": "{n, plural, one {# entry} other {# entries}} over {days, plural, one {# day} other {# days}}.",
+    "bp": "Blood pressure: average {avgS}/{avgD}, highest {maxS}/{maxD}, days with BP ≥ 140/90: {days}.",
+    "weight": "Weight: {from} → {to} {unit}.",
+    "fever": "Days with temperature ≥ {limit}: {n}.",
+    "wellbeing": "Average wellbeing {avg} of 5.",
+    "notes": "Notes: {text}",
+    "none": "No diary entries in the period."
+  },
+  "alerts": {
+    "title": "Alerts in the period",
+    "open": "open",
+    "read": "read"
+  },
+  "documents": {
+    "title": "Documents (short summaries)",
+    "note": "The summaries were written by the model from the document text and reviewed by the patient; the patient has the originals."
+  },
+  "col": {
+    "from": "From",
+    "dose": "Dose",
+    "reason": "Reason",
+    "support": "Supportive medication",
+    "how": "How",
+    "date": "Date",
+    "medication": "Medication",
+    "where": "Where",
+    "wellbeing": "Wellbeing",
+    "what": "What",
+    "assessment": "Assessment",
+    "lesions": "Lesions",
+    "sum": "Sum, mm",
+    "fromBaseline": "From baseline",
+    "lesion": "Lesion",
+    "marker": "Marker",
+    "latest": "Latest",
+    "previous": "Previous",
+    "range": "Ref. range",
+    "unit": "Unit",
+    "symptom": "Symptom",
+    "daysModerate": "Days moderate or severe",
+    "highest": "Highest (0–3)",
+    "status": "Status"
+  }
+}

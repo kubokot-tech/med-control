@@ -1,0 +1,62 @@
+{
+ "candidates": [
+  "helix_pdf_v1",
+  "mknc_pdf_v1"
+ ],
+ "parses": {
+  "helix_pdf_v1": {
+   "lab_name": "Хеликс",
+   "doc_date": "2026-02-03",
+   "observations": [
+    {
+     "test_name": "Гемоглобин",
+     "result_text": "132",
+     "result_num": 132.0,
+     "units": "г/л",
+     "ref_text": "117 - 160",
+     "ref_low": 117.0,
+     "ref_high": 160.0,
+     "deviation_text": null,
+     "criticality_text": null
+    },
+    {
+     "test_name": "Лейкоциты",
+     "result_text": "6.2",
+     "result_num": 6.2,
+     "units": "*10^9/л",
+     "ref_text": "4 - 9",
+     "ref_low": 4.0,
+     "ref_high": 9.0,
+     "deviation_text": null,
+     "criticality_text": null
+    },
+    {
+     "test_name": "Аланинаминотрансфераза (АЛТ)",
+     "result_text": "96",
+     "result_num": 96.0,
+     "units": "Ед/л",
+     "ref_text": "0 - 40",
+     "ref_low": 0.0,
+     "ref_high": 40.0,
+     "deviation_text": null,
+     "criticality_text": null
+    }
+   ]
+  },
+  "hadassah_pdf_v1": {
+   "lab_name": "Хадасса",
+   "doc_date": null,
+   "observations": []
+  },
+  "dnkom_pdf_v1": {
+   "lab_name": "ДНКОМ",
+   "doc_date": null,
+   "observations": []
+  },
+  "mknc_pdf_v1": {
+   "lab_name": null,
+   "doc_date": null,
+   "observations": []
+  }
+ }
+}

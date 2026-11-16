@@ -1,0 +1,151 @@
+{
+  "title": "Medications",
+  "desc": "The main (systemic) medication with a calendar and dose history; below it, supportive medications, each with its own daily mark, dosing instructions and reminder.",
+  "add": "Add",
+  "edit": "Edit",
+  "save": "Save",
+  "saving": "Saving…",
+  "skip": "Skip",
+  "undo": "Undo",
+  "undoLast": "Undo last",
+  "undoMark": "Undo mark",
+  "takeToday": "Mark taken today",
+  "calendarButton": "Calendar",
+  "since": "since {date}, {year}",
+  "stopConfirm": "Discontinue {name}? The dose history is kept and reminders will stop.",
+  "freq": {
+    "DAILY": "once a day",
+    "BID": "twice a day",
+    "TID": "three times a day",
+    "WEEKLY": "once a week"
+  },
+  "dosageForm": {
+    "capsule": "capsules",
+    "tablet": "tablets"
+  },
+  "units": {
+    "mg": "mg",
+    "ml": "mL"
+  },
+  "status": {
+    "TAKEN": "Taken",
+    "SKIPPED": "Skipped",
+    "MISSED": "Not marked",
+    "PAUSED": "Paused",
+    "PARTIAL": "Partly taken",
+    "PLANNED": "Scheduled"
+  },
+  "empty": {
+    "title": "Add the first medication",
+    "desc": "Enter the dose and when to take it. We'll send dose reminders and count the days, so you don't have to keep it all in your head."
+  },
+  "hero": {
+    "mainPill": "main",
+    "markedOf": "Marked today: {marked} of {times}.",
+    "markedOfAt": "Marked today: {marked} of {times}, at {at}.",
+    "takeNth": "Mark dose {n} taken",
+    "takeFirst": "Mark dose 1 taken",
+    "takenOf": "Taken today: {taken} of {times}",
+    "takenOfAt": "Taken today: {taken} of {times}, at {at}",
+    "takenToday": "Taken today",
+    "takenTodayAt": "Taken today at {time}",
+    "paused": "Treatment paused today",
+    "skipped": "Skipped today",
+    "todayStatus": "Today: {status}",
+    "notDue": "No dose due today ({schedule}). You can still mark one taken off schedule.",
+    "notDueNext": "No dose due today ({schedule}). Next: {date}. You can still mark one taken off schedule."
+  },
+  "streak": {
+    "title": "Last 4 weeks",
+    "stats": "{taken} of {total} · {pct}%",
+    "dosesInRow": "{n, plural, one {{n} dose in a row} other {{n} doses in a row}}",
+    "daysInRow": "{n, plural, one {{n} day in a row} other {{n} days in a row}}"
+  },
+  "support": {
+    "title": "Supportive · {n}",
+    "remindAt": "reminder at {time}",
+    "noRemind": "no reminder",
+    "todayOf": "today: {taken} of {times}",
+    "todayOfAt": "today: {taken} of {times}, at {at}",
+    "takeNth": "Mark dose {n} taken",
+    "takeFirst": "Mark dose 1 taken",
+    "todayStatus": "today: {status}",
+    "todayStatusAt": "today: {status} at {time}",
+    "notDue": "no dose today",
+    "notDueNext": "no dose today, next {date}",
+    "stats": "{taken} of {total} in 2 weeks",
+    "statsSchedule": "{taken} of {total} scheduled doses in 2 weeks"
+  },
+  "dose": {
+    "change": "Change dose",
+    "history": "Dose history",
+    "required": "Enter the dose and date",
+    "current": "Current dose: {dose}. The new dose takes effect on the date you enter; the old one stays in the history.",
+    "newLabel": "New dose, {unit}",
+    "fromDay": "Effective from",
+    "reason": "Reason",
+    "reasonPlaceholder": "e.g., blood pressure and hand-foot syndrome"
+  },
+  "medForm": {
+    "titleNew": "New medication",
+    "title": "Medication",
+    "name": "Name",
+    "namePlaceholder": "Levothyroxine sodium",
+    "role": "Role",
+    "roleSupport": "Supportive",
+    "roleSystemic": "Main (systemic)",
+    "dose": "Dose",
+    "unit": "Unit",
+    "unitPlaceholder": "mg, mcg, mL",
+    "startDate": "Start date",
+    "timesPerDay": "Times a day",
+    "remindAt": "Telegram reminder",
+    "howOften": "How often",
+    "freqOptions": {
+      "daily": "every day",
+      "weekly": "on days of the week",
+      "everyNDays": "every N days"
+    },
+    "noDaysHint": "If no days are selected, it uses the weekday of the start date.",
+    "interval": "Every N days, counted from the start date",
+    "instructions": "Dosing instructions",
+    "instructionsPlaceholder": "in the morning on an empty stomach, 30 minutes before breakfast; recheck TSH and free T4 in 8 weeks",
+    "note": "There is one daily mark per medication, even with several doses a day. The main medication sends reminders on the schedule from Settings, supportive medications at the time you set.",
+    "stop": "Discontinue medication (stop dosing)"
+  },
+  "journal": {
+    "title": "Log",
+    "empty": "No entries yet. Click “Taken today” and the first one will appear here.",
+    "showAll": "Show all ({n})"
+  },
+  "calendar": {
+    "title": "Dose calendar",
+    "prevMonth": "Previous month",
+    "nextMonth": "Next month",
+    "actions": {
+      "TAKEN": "Taken",
+      "SKIPPED": "Skipped",
+      "PAUSED": "Paused",
+      "CLEAR": "Clear"
+    },
+    "label": {
+      "TAKEN": "taken",
+      "SKIPPED": "skipped",
+      "PAUSED": "paused",
+      "MISSED": "not marked",
+      "PARTIAL": "not all doses taken"
+    },
+    "dayCleared": "{day}: mark cleared",
+    "daySet": "{day}: {status}",
+    "rangeCleared": "{from} – {to}: marks cleared, {days, plural, one {{days} day} other {{days} days}}",
+    "rangeSet": "{from} – {to}: {status}, {days, plural, one {{days} day} other {{days} days}}",
+    "dayTitle": "{day}: {status}",
+    "dayNow": "{day} · now: {status}",
+    "takenAll": "all {times} doses taken",
+    "partial": "not all doses",
+    "period": "Mark a period",
+    "from": "From",
+    "to": "To",
+    "pauseHint": "Paused means days when a doctor has stopped the medication: they don't count as skipped and aren't included in the adherence percentage."
+  }
+}

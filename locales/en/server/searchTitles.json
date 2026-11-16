@@ -1,0 +1,16 @@
+{
+  "appointment": "Appointment: {doctor}",
+  "doctor": "doctor",
+  "document": "document",
+  "diary": "Diary {date}",
+  "shot": "Injection: {what}",
+  "drip": "Infusion: {what}",
+  "aiAnswer": "AI answer · {subject}",
+  "aiQuestion": "AI question: {question}",
+  "labs": "Labs {date}",
+  "labsAt": "Labs {date} · {lab}",
+  "medication": "Medication: {name}",
+  "marker": "Marker: {name}",
+  "urine": "urine",
+  "blood": "blood"
+}

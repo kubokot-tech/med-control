@@ -1,0 +1,86 @@
+{
+  "ALT": {
+    "fullName": "Alanine aminotransferase (ALT)",
+    "what": "An enzyme found mainly in liver cells. When they are damaged, it leaks into the blood.",
+    "whyMatters": "The main marker of hepatotoxicity: many drugs are metabolized in the liver, and ALT is monitored regularly.",
+    "highMeans": "Hepatocyte damage. At >3× the upper limit of normal (ULN): caution; at >5× ULN: a dose reduction or treatment pause may be needed.",
+    "lowMeans": "Not clinically significant."
+  },
+  "AST": {
+    "fullName": "Aspartate aminotransferase (AST)",
+    "what": "An enzyme present in the liver, heart, and muscles. Less specific to the liver than ALT.",
+    "whyMatters": "Together with ALT, it helps assess the type and severity of liver damage.",
+    "highMeans": "Damage to the liver or muscle tissue. The AST/ALT ratio (De Ritis ratio) helps differentiate the cause.",
+    "lowMeans": "Not clinically significant."
+  },
+  "CREA": {
+    "fullName": "Creatinine",
+    "what": "A breakdown product of creatine phosphate in muscle. Excreted by the kidneys. Reflects the glomerular filtration rate (GFR).",
+    "whyMatters": "Many drugs affect the kidneys. Creatinine is the basic marker of kidney function.",
+    "highMeans": "Reduced kidney function. A dose adjustment may be needed.",
+    "lowMeans": "Usually linked to low muscle mass, not a disorder."
+  },
+  "HGB": {
+    "fullName": "Hemoglobin",
+    "what": "The oxygen-carrying protein in red blood cells. The main marker of anemia.",
+    "whyMatters": "Anemia occurs with many long-term conditions and during treatment, for example chemotherapy. It affects quality of life and treatment tolerance.",
+    "highMeans": "Hemoconcentration, dehydration, less often polycythemia.",
+    "lowMeans": "Anemia. Fatigue, shortness of breath, reduced exercise tolerance. At <80 g/L a transfusion may be needed."
+  },
+  "WBC": {
+    "fullName": "White blood cells (WBC)",
+    "what": "White blood cells are the basis of immune defense. The total count includes neutrophils, lymphocytes, monocytes, and others.",
+    "whyMatters": "Leukopenia raises the risk of infection. Some drugs, including targeted therapy, can suppress blood cell production.",
+    "highMeans": "Infection, inflammation, stress. Less often, hematologic disease.",
+    "lowMeans": "Weakened immunity, higher risk of infection. At <2.0 a consultation is needed."
+  },
+  "PLT": {
+    "fullName": "Platelets (PLT)",
+    "what": "Blood components responsible for clotting and for stopping bleeding.",
+    "whyMatters": "Thrombocytopenia raises the risk of bleeding. Thrombocytosis may point to inflammation.",
+    "highMeans": "Inflammation, infection, iron deficiency, reactive thrombocytosis.",
+    "lowMeans": "Risk of bleeding. At <50×10⁹/L surgical procedures are restricted. At <20, risk of spontaneous bleeding."
+  },
+  "NEUT_abs": {
+    "fullName": "Neutrophils (absolute count)",
+    "what": "The main cells of innate immunity. The first line of defense against bacterial infections.",
+    "whyMatters": "Neutropenia (<1.5) raises the risk of severe infections. During treatment that suppresses blood cell production, such as cancer treatment, it is the main factor in that risk.",
+    "highMeans": "Bacterial infection, inflammation, stress, corticosteroid use.",
+    "lowMeans": "Neutropenia. <1.0: high risk of infection, a dose reduction may be needed. <0.5: febrile neutropenia, an emergency."
+  },
+  "NEUT_pct": {
+    "fullName": "Neutrophils (relative count, %)",
+    "what": "The share of neutrophils in the total white blood cell count.",
+    "whyMatters": "Helps assess the balance of immune cells. The absolute count (NEUT#) is clinically more important.",
+    "highMeans": "Bacterial infection, stress.",
+    "lowMeans": "Relative neutropenia. Assess together with NEUT#."
+  },
+  "TSH": {
+    "fullName": "Thyroid-stimulating hormone (TSH)",
+    "what": "A pituitary hormone that regulates thyroid function. It rises in hypothyroidism and falls in hyperthyroidism.",
+    "whyMatters": "TSH is used to follow thyroid function. Hypothyroidism can also be a side effect of medication, for example of a number of targeted drugs; TSH is then monitored regularly.",
+    "highMeans": "Hypothyroidism (the thyroid is underactive). Symptoms: fatigue, feeling cold, weight gain, constipation. Treated with replacement therapy (levothyroxine).",
+    "lowMeans": "Hyperthyroidism or TSH suppression. Less common."
+  },
+  "TAC": {
+    "fullName": "Tacrolimus (blood level)",
+    "what": "The trough level of tacrolimus, an immunosuppressant used after transplantation. Blood is drawn in the morning before the next dose (C0).",
+    "whyMatters": "The window between too little protection from rejection and toxicity is narrow, so the dose is adjusted by blood level.",
+    "highMeans": "Risk of toxicity: tremor, headache, rising creatinine and potassium, elevated blood sugar.",
+    "lowMeans": "Risk of transplant rejection. Causes: a missed dose, taking it with food, interactions with other medications."
+  },
+  "HbA1c": {
+    "fullName": "Glycated hemoglobin (HbA1c)",
+    "what": "Shows the average blood glucose level over the last 2–3 months. More stable than a single glucose test.",
+    "whyMatters": "Helps assess carbohydrate metabolism during stress and treatment.",
+    "highMeans": "Impaired carbohydrate metabolism. >6.5%: diabetes. 5.7–6.4%: prediabetes.",
+    "lowMeans": "Usually not clinically significant. May occur with anemia."
+  },
+  "eAG": {
+    "fullName": "Estimated average glucose (eAG)",
+    "what": "Calculated from HbA1c. Shows the average blood sugar level in mmol/L.",
+    "whyMatters": "A more intuitive reading of HbA1c in glucose units.",
+    "highMeans": "Corresponds to an elevated HbA1c.",
+    "lowMeans": "Corresponds to a low HbA1c."
+  }
+}

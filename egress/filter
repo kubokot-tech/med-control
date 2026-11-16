@@ -1,0 +1,8 @@
+# hosts allowed through the egress proxy: one extended regular expression per line (FilterType ere in tinyproxy.conf).
+# Every line is anchored on both sides: the host itself or its subdomains, never a look-alike («evilopenrouter.ai»).
+(^|\.)openrouter\.ai$
+(^|\.)api\.anthropic\.com$
+(^|\.)api\.openai\.com$
+(^|\.)api\.deepseek\.com$
+(^|\.)api\.telegram\.org$
+(^|\.)api\.ipify\.org$

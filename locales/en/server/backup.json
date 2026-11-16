@@ -1,0 +1,17 @@
+{
+  "dumpFailed": "the dump was not made",
+  "mirrorFailed": "the copy to the second disk failed",
+  "cloudFailed": "the cloud copy failed",
+  "cloudNotEncrypted": "the cloud copy is not encrypted: CLOUD_REMOTE is not an rclone crypt remote, so the medical history and .env lie readable at the provider",
+  "warning": "\n⚠️ Warning: {text}",
+  "restoreFailed": "the restore test failed",
+  "stale": "the last backup was {hours} h ago",
+  "unknown": "Backup: status unknown (file not found)",
+  "mb": "{n} MB",
+  "off": "off",
+  "ok": "ok",
+  "skipped": "skipped",
+  "error": "ERROR",
+  "restore": "; restore test: {state}",
+  "line": "{icon} Backup {when}: database {database}, files {files}; second disk: {mirror}; cloud: {cloud}{restore}"
+}

@@ -1,0 +1,16 @@
+{
+  "appointment": "Приём: {doctor}",
+  "doctor": "врач",
+  "document": "документ",
+  "diary": "Дневник {date}",
+  "shot": "Укол: {what}",
+  "drip": "Капельница: {what}",
+  "aiAnswer": "Ответ ИИ · {subject}",
+  "aiQuestion": "Вопрос ИИ: {question}",
+  "labs": "Анализы {date}",
+  "labsAt": "Анализы {date} · {lab}",
+  "medication": "Препарат: {name}",
+  "marker": "Показатель: {name}",
+  "urine": "моча",
+  "blood": "кровь"
+}

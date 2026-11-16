@@ -1,0 +1,30 @@
+{
+  "title": "Doctors and contacts",
+  "desc": "Who provides care, where they see patients, and how to reach them, so a number doesn't get lost in a message thread.",
+  "add": "Add",
+  "emptyTitle": "All the numbers you need in one place",
+  "emptyDesc": "Treating doctor, front desk, treatment room: add everyone you need to call.",
+  "pinnedTitle": "Pinned",
+  "edit": "Edit",
+  "confirmDelete": "Delete contact “{name}”?",
+  "sheet": {
+    "newTitle": "New contact",
+    "title": "Contact",
+    "name": "Name",
+    "namePlaceholder": "for example, Jane Smith",
+    "role": "Who this is",
+    "rolePlaceholder": "treating doctor, front desk, nurse",
+    "clinic": "Where they see patients",
+    "clinicPlaceholder": "clinic, department",
+    "phones": "Phone numbers",
+    "phonesPlaceholder": "+1 555 123-4567; +1 555 000-0000 #12",
+    "email": "Email",
+    "address": "Address, room",
+    "url": "Website or patient portal",
+    "notes": "Notes",
+    "notesPlaceholder": "office hours, how to book, what to bring",
+    "pin": "Pin to top",
+    "save": "Save",
+    "delete": "Delete"
+  }
+}

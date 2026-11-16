@@ -1,0 +1,13 @@
+{
+  "bottomSheet": {
+    "close": "Close"
+  },
+  "markdown": {
+    "externalImage": "[external image: {alt}]",
+    "open": "open",
+    "image": "[image]"
+  },
+  "api": {
+    "errorCode": "Error: {code}"
+  }
+}

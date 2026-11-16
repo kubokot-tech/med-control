@@ -1,0 +1,80 @@
+{
+  "header": {
+    "therapyDay": "Day {day} of therapy",
+    "therapy": "Therapy",
+    "streakSchedule": "{n} in a row on schedule",
+    "streakDaily": "{n, plural, one {{n} day} other {{n} days}} of doses in a row"
+  },
+  "dose": {
+    "mg": "mg",
+    "ml": "mL",
+    "saving": "Saving…",
+    "takeNth": "Mark dose {n} taken: {dose}",
+    "take": "Mark taken: {dose}",
+    "marked": "Marked {n} of {total}",
+    "markedAt": "Marked {n} of {total}: at {times}",
+    "undoLast": "Undo last",
+    "skip": "Skip",
+    "takenOf": "Taken {n} of {total}",
+    "takenOfAt": "Taken {n} of {total}: at {times}",
+    "taken": "Taken",
+    "takenAt": "Taken at {time}",
+    "paused": "Therapy paused",
+    "skipped": "Skipped today",
+    "undo": "Undo",
+    "notDue": "No dose today",
+    "notDueNext": "No dose today · next {date}",
+    "offSchedule": "Taken off schedule",
+    "usually": "Usually at {window}",
+    "yesterday": "yesterday at {time}"
+  },
+  "appt": {
+    "overdue": "How did the {date} appointment go?",
+    "overdueHint": "Upload the doctor's report or mark the appointment as done",
+    "next": "Appointment {d, plural, =0 {today} =1 {tomorrow} other {in {d} days}}: {doctor}, {date}",
+    "nextAt": "Appointment {d, plural, =0 {today} =1 {tomorrow} other {in {d} days}}: {doctor}, {date} at {time}",
+    "doctor": "doctor",
+    "questionsReady": "Visit questions are ready",
+    "questionsMissing": "You can prepare visit questions ahead of time"
+  },
+  "attention": {
+    "title": "Needs attention",
+    "high": "{name} {value} · above range",
+    "low": "{name} {value} · below range",
+    "ref": "Reference range {range} · lab result from {date}",
+    "refUnit": "Reference range {range} {unit} · lab result from {date}",
+    "missed": "Mark this week's doses?",
+    "missedSub": "{n, plural, one {{n} day} other {{n} days}} not marked · open log"
+  },
+  "actions": {
+    "upload": "Upload labs",
+    "summary": "Summary"
+  },
+  "feed": {
+    "empty": "Treatment history will appear here",
+    "emptyDesc": "Appointments, lab results, and entries will show up in this feed. The easiest way to start is with the latest lab report.",
+    "loading": "Loading…",
+    "more": "Show more"
+  },
+  "human": {
+    "greet": "{part, select, morning {Good morning} day {Good afternoon} evening {Good evening} other {Hello}}",
+    "greetName": "{part, select, morning {Good morning} day {Good afternoon} evening {Good evening} other {Hello}}, {name}",
+    "moodSelf": "How are you today?",
+    "moodRelative": "How are they feeling today?",
+    "moodRelativeName": "How is {name} today?",
+    "moodHint": "One tap and it's in the diary. You can add details later.",
+    "moodSaved": "Saved to the <link>diary</link>. You can change it until the end of the day.",
+    "goodNews": "Good news",
+    "labNormal": "{name} is back in range",
+    "labNormalSub": "lab result from {date}",
+    "hide": "Hide",
+    "moment": {
+      "therapyDays": "{n} days of therapy",
+      "therapyYears": "{n, plural, one {A year since therapy started} other {{n} years since therapy started}}",
+      "streakDays": "{n, plural, one {{n} day of doses in a row} other {{n} days of doses in a row}}",
+      "streakDoses": "{n, plural, one {{n} dose in a row} other {{n} doses in a row}}"
+    },
+    "quietNote": "Day streaks and milestones are hidden for now.",
+    "quietResume": "Show again"
+  }
+}

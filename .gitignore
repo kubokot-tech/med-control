@@ -1,0 +1,43 @@
+# Secrets
+.env
+.env.*
+!.env.example
+*.env.local
+
+# Local assistant state
+.claude/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+
+# Node
+node_modules/
+.next/
+dist/
+
+# DB / uploads
+data/
+backups/
+backups-*/
+*.db
+*.sqlite
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+.deploy/
+backups/predeploy/
+.release.log
+
+# TypeScript incremental build state
+*.tsbuildinfo
+
+# Local test builds
+builds/

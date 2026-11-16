@@ -1,0 +1,23 @@
+{
+  "eventCard": {
+    "labTitle": "Анализы · {lab}",
+    "labDefault": "лаборатория",
+    "labFlagged": "{total, plural, one {{total} показатель} few {{total} показателя} many {{total} показателей} other {{total} показателя}}, <warn>{flagged} вне нормы</warn>",
+    "labAllNormal": "{total, plural, one {{total} показатель} few {{total} показателя} many {{total} показателей} other {{total} показателя}}, все в норме",
+    "labUploaded": "Загружен документ",
+    "medDefault": "Препарат",
+    "medTaken": "{name} принят",
+    "medSkipped": "{name} пропущен",
+    "medPaused": "{name} пауза",
+    "medMissed": "{name} не отмечен",
+    "milestoneDefault": "Веха",
+    "noteDefault": "Заметка",
+    "doseChangeDefault": "Изменение дозы",
+    "infusionDefault": "Введение препарата",
+    "symptomPrefix": "Дневник: "
+  },
+  "day": {
+    "today": "Сегодня",
+    "yesterday": "Вчера, {date}"
+  }
+}

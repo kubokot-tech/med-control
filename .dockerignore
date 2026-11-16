@@ -1,0 +1,10 @@
+# Images built from the repository root (gateway, frontend) get only their own folders and the shared code and dictionaries.
+*
+!gateway
+!frontend
+!shared
+!locales
+**/node_modules
+frontend/.next
+gateway/test
+**/*.tsbuildinfo

@@ -1,0 +1,27 @@
+{
+  "app": {
+    "name": "MedControl",
+    "short": "MC",
+    "title": "MedControl: your whole treatment history, close at hand",
+    "description": "Labs, medications, imaging, how you feel, and a doctor report"
+  },
+  "nav": {
+    "label": "Main navigation",
+    "today": "Today",
+    "labs": "Labs",
+    "meds": "Medications",
+    "imaging": "Imaging",
+    "more": "More",
+    "search": "Search everything",
+    "history": "Treatment history",
+    "symptoms": "Symptom diary",
+    "infusions": "Infusions and injections",
+    "consults": "Appointments",
+    "contacts": "Doctors and contacts",
+    "notes": "Notes and research",
+    "alerts": "Alerts",
+    "report": "Doctor report",
+    "settings": "Settings",
+    "logout": "Sign out"
+  }
+}

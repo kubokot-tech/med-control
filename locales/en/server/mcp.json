@@ -1,0 +1,63 @@
+{
+  "instructions": "MedControl: medical data of one patient (lab results, medications, imaging, diary, history, appointments). Start with get_patient_profile. Lab values are in SI units, dates are YYYY-MM-DD. This is patient data, not prescriptions: do not give medical recommendations in place of a doctor; point out what is important to discuss with the treating doctor.",
+  "error": "Error: {code}",
+  "failed": "could not be completed",
+  "noteTag": "ai-agent",
+  "args": {
+    "markerKey": "marker key, for example ALT, HGB",
+    "fromIso": "from date, YYYY-MM-DD",
+    "from": "from date",
+    "toInclusive": "to date, inclusive",
+    "entryDay": "day of the entry"
+  },
+  "tools": {
+    "get_patient_profile": {
+      "title": "Patient profile",
+      "description": "A summary of the patient in one text: medical background, treatment protocol, current therapy, latest lab results, milestones, diary. The same context the built-in AI assistant gets. Start with it."
+    },
+    "list_lab_markers": {
+      "title": "Lab markers",
+      "description": "Catalog of markers (key, name, unit, blood or urine) with the date of the latest result and the number of results. The keys are needed for get_lab_results."
+    },
+    "get_lab_results": {
+      "title": "Lab results",
+      "description": "Lab results with the reference range in effect (custom, catalog or from the lab report; field ref_source) and the range of the lab report. Filters: marker key (from list_lab_markers), period. By default the latest 200 results."
+    },
+    "get_medications": {
+      "title": "Medications and doses",
+      "description": "Current medications (doses, schedule) and dose marks for the last days (30 by default)."
+    },
+    "get_diary": {
+      "title": "Wellbeing diary",
+      "description": "Diary entries: wellbeing 1–5, symptom scales 0–3, blood pressure, pulse, weight (kg), temperature (°C), steps, note. By default the last 30 days."
+    },
+    "get_appointments": {
+      "title": "Appointments",
+      "description": "Planned and past appointments: date, time, doctor, place, notes, visit questions."
+    },
+    "get_history": {
+      "title": "Treatment history",
+      "description": "Milestones: surgeries, radiation therapy, histology, studies, consultations, documents, with dates, notes and a list of files (without content)."
+    },
+    "get_imaging": {
+      "title": "Imaging",
+      "description": "CT, MRI and PET studies: imaging reports, response assessment (RECIST), lesions and their sizes by date."
+    },
+    "get_contacts": {
+      "title": "Doctors and contacts",
+      "description": "Doctors, front desks and other contacts: name, role, clinic, phones, email, address, notes."
+    },
+    "search": {
+      "title": "Search everything",
+      "description": "Full-text search across notes, history, document texts, imaging, appointments, diary, infusions, AI answers, medications and contacts."
+    },
+    "add_note": {
+      "title": "Add a note",
+      "description": "Writes a note to the Notes section (Markdown). Use it for conclusions and summaries the user asked to save. The note gets the tag \"ai-agent\"."
+    },
+    "add_diary_entry": {
+      "title": "Add to the diary",
+      "description": "Adds values to the diary for a day (what is not passed stays unchanged): wellbeing 1–5, blood pressure, pulse, weight in kg, temperature in °C, note (added to the existing one)."
+    }
+  }
+}

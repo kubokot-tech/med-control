@@ -1,0 +1,15 @@
+# The service for the site's server. It listens on 127.0.0.1 only: a reverse proxy with https sits in front of it.
+services:
+  samples:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3900:3900"
+    environment:
+      SAMPLES_TOKEN: ${SAMPLES_TOKEN:?see README.md}
+      SAMPLES_RETAIN_DAYS: ${SAMPLES_RETAIN_DAYS:-180}
+      SAMPLES_TRUST_PROXY: "1"
+    volumes:
+      - samples-data:/data
+volumes:
+  samples-data:

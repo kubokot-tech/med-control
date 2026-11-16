@@ -1,0 +1,82 @@
+# Desktop app installers (docs/DESKTOP.md).
+# - A tag vX.Y.Z builds them and attaches them to the GitHub Release of that tag under fixed names, so the
+#   README links (releases/latest/download/<name>) always point at the latest version.
+# - Run by hand (Actions → desktop → Run workflow) it only keeps them as artifacts of the run, to test a branch.
+# The installers are not signed by a developer yet (the macOS app carries an ad-hoc signature).
+name: desktop
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: macos-arm64, os: macos-latest, target: aarch64-apple-darwin, bundle: dmg, ext: dmg, file: MedControl-macOS-AppleSilicon.dmg }
+          - { name: macos-x64, os: macos-latest, target: x86_64-apple-darwin, bundle: dmg, ext: dmg, file: MedControl-macOS-Intel.dmg }
+          - { name: windows-x64, os: windows-latest, target: x86_64-pc-windows-msvc, bundle: nsis, ext: exe, file: MedControl-Windows-Setup.exe }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - name: Frontend dependencies
+        run: npm ci
+        working-directory: frontend
+      - name: Desktop dependencies
+        run: npm ci
+        working-directory: desktop
+      - name: Stage Node, gateway and frontend
+        run: node scripts/prepare.mjs --target ${{ matrix.target }}
+        working-directory: desktop
+      - name: Build the app
+        run: npx tauri build --target ${{ matrix.target }}
+        working-directory: desktop
+      - name: Give the installer its fixed name
+        shell: bash
+        run: |
+          mkdir -p dist
+          src=$(ls desktop/src-tauri/target/${{ matrix.target }}/release/bundle/${{ matrix.bundle }}/*.${{ matrix.ext }} | head -n1)
+          [ -n "$src" ] || { echo "no installer built"; exit 1; }
+          cp "$src" "dist/${{ matrix.file }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.file }}
+          path: dist/${{ matrix.file }}
+          if-no-files-found: error
+          retention-days: 14
+
+  release:
+    name: attach to the release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Create the release if needed and attach the installers
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          ls -l dist
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 \
+            || gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --title "MedControl $TAG" \
+                 --notes "История версий: CHANGELOG.md. Changelog: CHANGELOG.md."
+          gh release upload "$TAG" dist/* --repo "$GITHUB_REPOSITORY" --clobber

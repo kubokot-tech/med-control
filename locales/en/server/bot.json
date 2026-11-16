@@ -1,0 +1,101 @@
+{
+  "help": "Here is what I can do:\n• \"taken\" or \"+\" marks the main medication for today, \"taken levothyroxine\" marks a supportive one, \"skip\" records a skipped dose;\n• \"status\" shows today's doses;\n• a diary entry in one line: \"pressure 135/85, fatigue 2, weight 71, temp 37.1, wellbeing 4, sleep bad\" (you can start with \"yesterday\");\n• a lab PDF: I read it and save it to MedControl, you can send several files in a row. AI reads a report from an unknown lab, and you confirm the result.",
+  "dose": {
+    "noActive": "No active medication.",
+    "notFound": "I did not find \"{name}\" among the active medications.",
+    "today": "today",
+    "already": "{name} for {when} is already marked: {state}. You can change it in the calendar: {url}",
+    "of": " (dose {n} of {times})",
+    "at": " at {time}",
+    "taken": "✅ {name}{dose} marked taken for {when}{of}{at}.",
+    "skipped": "Marked: {name} skipped for {when}{of}."
+  },
+  "state": {
+    "taken": "taken",
+    "skipped": "skipped",
+    "paused": "paused",
+    "missed": "not marked",
+    "planned": "planned",
+    "partial": "taken {taken} of {times}"
+  },
+  "status": {
+    "noDose": "no dose today ({schedule})",
+    "notMarked": "not marked yet",
+    "hint": "To mark a supportive medication: \"taken levothyroxine\"."
+  },
+  "callback": {
+    "notYourChat": "Not your chat",
+    "draftDone": "This draft was already handled",
+    "canceled": "Canceled",
+    "canceledNote": "❎ Canceled, nothing was saved.",
+    "saved": "Saved",
+    "saveFailed": "Could not save, try on the site",
+    "marked": "Marked",
+    "notFound": "Not found",
+    "apptDone": "✅ Appointment marked as done, I will not remind you again.",
+    "failed": "That did not work",
+    "doseFailed": "Could not record it, try on the site"
+  },
+  "pdf": {
+    "aiRead": "🤖 I do not know this lab's format, so AI read the report ({model}).",
+    "labUnknown": "lab not stated",
+    "dateUnknown": "date not found",
+    "aiSummary": "{lab}, {date}: {n, plural, one {# marker} other {# markers}}, {flagged} out of range.",
+    "doubts": "The model is unsure about: {text}",
+    "review": "You can check it line by line on the site: {url}",
+    "saveAsIs": "✅ Save as is",
+    "cancel": "Cancel",
+    "why": {
+      "format": "the format is unknown and no AI key is set",
+      "empty": "the model found no lab results in the document",
+      "tooBig": "the file is larger than 20 MB",
+      "server": "server error"
+    },
+    "failed": "❌ Could not upload \"{file}\": {why}.\nUpload it on the site: {url}",
+    "file": "file",
+    "only": "For now I accept only PDFs from the lab's patient portal. I do not read photos or screenshots."
+  },
+  "diary": {
+    "saved": "📝 Diary for {when}: {summary}.",
+    "yesterday": "yesterday",
+    "alert": "⚠️ This entry raised an alert, see {url}",
+    "unknown": "I could not read this and put it in the note: {text}",
+    "failed": "❌ Could not save the diary: {error}. Fill it in on the site: {url}"
+  },
+  "commit": {
+    "already": "This file is already in MedControl{where}.\n{link}",
+    "loaded": "✅ Uploaded: {where}.",
+    "labsFallback": "lab results",
+    "count": "{n, plural, one {# marker} other {# markers}}",
+    "flagged": ", {n} out of range:",
+    "andMore": "… and {n} more",
+    "allInRange": ", all in range",
+    "alerts": "⚠️ Alerts: {n}"
+  },
+  "remind": {
+    "doseCounted": "💊 {name}{dose}: {done} of {times} doses marked today.\n{url}",
+    "doseAgain": "💊 One more reminder: {name}{dose} is not marked for today.\n{url}",
+    "dose": "💊 {name}{dose} is not marked yet today.{how}\nTaken? Mark it: {url}",
+    "taken": "✅ Mark taken",
+    "skip": "Skip",
+    "appointment": "appointment with {doctor} on {date}{time}{place}",
+    "doctor": "the doctor",
+    "at": " at {time}",
+    "apptWeek": "📅 In a week: {label}. Prepare questions about the lab results so far: {url}",
+    "apptTomorrow": "📅 Tomorrow: {label}.{questions}: {url}",
+    "questionsReady": " The list of questions is ready",
+    "questionsMissing": " The list of questions is not prepared yet",
+    "apptToday": "📅 Today: {label}. Questions and what to show: {url}\nAfter the appointment, upload the doctor's report and I will stop reminding you.",
+    "apptReport": "📄 How did the {label} go? If there is a doctor's report, upload it: {url}",
+    "apptNoReport": "Done, no report",
+    "course": "💧 Course \"{name}\": {done}{of} done, next session planned {when}.\nRecord a session: {url}",
+    "courseOf": " of {n}",
+    "courseWas": "for {date}",
+    "backupFail": "⚠️ Backup: {problems}\n{url}",
+    "backupNoStatus": "status not found, is the backup service running?",
+    "labsStale": "🧪 The latest lab results are from {when}. {hint}\n{url}",
+    "labsLongAgo": "a long time ago",
+    "labsDaysAgo": "{days, plural, one {# day} other {# days}} ago",
+    "labsAskDoctor": "Ask the doctor how often to have blood tests."
+  }
+}

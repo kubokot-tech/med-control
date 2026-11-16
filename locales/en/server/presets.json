@@ -1,0 +1,218 @@
+{
+  "base": {
+    "rules": {
+      "NEUT#_RED_lt": "Neutrophils {v} {u}: severe neutropenia, risk of infection. Contact the treating doctor today.",
+      "NEUT#_YELLOW_lt": "Neutrophils {v} {u}: low. Avoid contact with sick people, repeat the test in a week.",
+      "PLT_RED_lt": "Platelets {v} {u}: risk of bleeding. Tell the doctor.",
+      "PLT_YELLOW_lt": "Platelets {v} {u}: below the reference range, keep watching.",
+      "HGB_RED_lt": "Hemoglobin {v} {u}: marked anemia.",
+      "HGB_YELLOW_lt": "Hemoglobin {v} {u}: anemia, discuss with the doctor.",
+      "ALT_RED_gtRef": "ALT {v} {u}: more than 3× the upper limit (upper limit {ref}). Treatment may need to pause, see a doctor.",
+      "AST_RED_gtRef": "AST {v} {u}: more than 3× the upper limit (upper limit {ref}). See a doctor.",
+      "BIL_YELLOW_gtRef": "Bilirubin {v} {u}: above the reference range ({ref}).",
+      "CREA_YELLOW_gtRef": "Creatinine {v} {u}: over 1.5× the upper limit, check kidney function.",
+      "K_YELLOW_gt": "Potassium {v} {u}: outside the safe range.",
+      "K_YELLOW_lt": "Potassium {v} {u}: outside the safe range."
+    }
+  },
+  "hypothyroidism": {
+    "name": "Hypothyroidism (levothyroxine)",
+    "summary": "Hypothyroidism, including autoimmune thyroiditis, on levothyroxine: TSH, how you feel, weight, pulse. Example, not reviewed by a doctor: the target TSH is set by your treating doctor.",
+    "aiNotes": "The patient takes levothyroxine for hypothyroidism. The main marker is TSH; after a dose change it takes 6–8 weeks to settle, so an earlier result is too early to judge. The target TSH range is set by the doctor: it is different in pregnancy and after treatment for thyroid cancer. Signs of too low a dose: fatigue, feeling cold, constipation, swelling, weight gain. Signs of too high a dose: palpitations, tremor, anxiety, poor sleep, weight loss. Iron and calcium supplements interfere with levothyroxine absorption.",
+    "labCadenceHint": "After a levothyroxine dose change, TSH is usually checked in 6–8 weeks; on a stable dose, every 6–12 months.",
+    "rules": {
+      "TSH_YELLOW_gt": "TSH {v} {u}: well above the reference range, the levothyroxine dose may be too low. Discuss with the doctor.",
+      "TSH_YELLOW_lt": "TSH {v} {u}: strongly suppressed, the levothyroxine dose may be too high. Discuss with the doctor."
+    },
+    "regimen": {
+      "name": "Levothyroxine",
+      "doseUnit": "mcg",
+      "instructions": "In the morning on an empty stomach, 30–60 minutes before food, with water. Iron and calcium supplements no sooner than 4 hours later."
+    },
+    "markerNotes": {
+      "TSH": "TSH changes slowly: after a dose change it takes 6–8 weeks to settle. It is best tested in the morning, before the tablet. Biotin in supplements can distort the result."
+    }
+  },
+  "endometriosis": {
+    "name": "Endometriosis (hormonal therapy)",
+    "summary": "Endometriosis on long-term hormonal therapy: pain, how you feel, hemoglobin and iron stores, cyst sizes on ultrasound or MRI. Example, not reviewed by a doctor: check the thresholds with your treating doctor.",
+    "aiNotes": "The patient is followed for endometriosis and is on long-term hormonal therapy (for example, dienogest). What is tracked: pain and how it relates to the cycle, bleeding or spotting (often irregular in the first months of therapy), mood and sleep, the size of endometriomas on ultrasound or MRI over time. With heavy bleeding, iron deficiency is possible: read hemoglobin and ferritin together, ferritin can be raised by inflammation. RECIST criteria do not apply to endometriosis lesions.",
+    "labCadenceHint": "How often to test blood counts and ferritin is for the doctor to decide; after a course of iron they are usually checked in 4–8 weeks.",
+    "rules": {
+      "FERR_YELLOW_lt": "Ferritin {v} {u}: iron stores are depleted. Discuss iron supplements with the doctor."
+    },
+    "regimen": {
+      "name": "Dienogest",
+      "doseUnit": "mg",
+      "instructions": "Every day at the same time, without breaks."
+    },
+    "agents": {
+      "ferricCarboxymaltose": {
+        "name": "Ferric carboxymaltose",
+        "shortName": "IV iron",
+        "doseUnit": "mg",
+        "notes": "Intravenous iron for deficiency when tablets do not help or are poorly tolerated. The doctor calculates the dose and the number of infusions; ferritin is usually rechecked no sooner than 4 weeks after the course."
+      }
+    },
+    "markerNotes": {
+      "HGB": "With heavy periods hemoglobin falls gradually; the trend matters more than one value.",
+      "FERR": "Ferritin shows iron stores. Inflammation can raise it, so it is read together with hemoglobin and C-reactive protein."
+    }
+  },
+  "lenvatinib": {
+    "name": "Lenvatinib",
+    "summary": "Targeted therapy with lenvatinib: liver, thyroid, blood pressure, blood counts, protein in urine. The thresholds were recorded by one patient from their own experience; agree on them with your doctor.",
+    "aiNotes": "The patient takes lenvatinib. Known effects: arterial hypertension, proteinuria, raised ALT/AST, hypothyroidism (rising TSH), low platelets and neutrophils, diarrhea, fatigue, hand-foot syndrome, weight loss.",
+    "labCadenceHint": "On lenvatinib, blood is usually tested every 2–4 weeks.",
+    "rules": {
+      "TSH_YELLOW_gt": "TSH {v} {u}: possible hypothyroidism (a common side effect of lenvatinib), discuss with the doctor.",
+      "U-PRO_YELLOW_gte": "Protein in urine {v} {u}: proteinuria (a common side effect of lenvatinib), discuss with the doctor."
+    },
+    "regimen": {
+      "name": "Lenvatinib",
+      "doseUnit": "mg",
+      "instructions": "Every day, at the same time"
+    },
+    "agents": {
+      "ivc": {
+        "name": "Vitamin C, high dose (IVC)",
+        "shortName": "IVC",
+        "doseUnit": "g",
+        "notes": "High-dose intravenous vitamin C. Dose 25–50 g, given slowly; G6PD and kidney function are usually checked before a course."
+      },
+      "glutathione": {
+        "name": "Glutathione",
+        "shortName": "Glutathione",
+        "doseUnit": "mg",
+        "notes": "Antioxidant, often given after vitamin C as a separate infusion."
+      },
+      "heptral": {
+        "name": "Heptral (ademetionine)",
+        "shortName": "Heptral",
+        "doseUnit": "mg",
+        "notes": "Hepatoprotector; used for drug-induced liver toxicity (usually 400 mg twice a day)."
+      }
+    },
+    "markerNotes": {
+      "ALT": "Lenvatinib is metabolized in the liver. Rising ALT is an early sign of hepatotoxicity; it is usually checked every 2 weeks. Above 5×ULN a dose reduction or a pause may be needed.",
+      "AST": "Followed together with ALT to monitor lenvatinib hepatotoxicity.",
+      "CREA": "Kidney toxicity is a known side effect of VEGFR inhibitors. Monitor together with a urine protein test.",
+      "HGB": "Watch the trend. A moderate decline on lenvatinib is acceptable, a sharp drop is a reason to see a doctor.",
+      "WBC": "Lenvatinib can cause moderate leukopenia. It is important to follow the absolute neutrophil count (NEUT#).",
+      "PLT": "Lenvatinib can lower platelets. It is important to check them before any procedure.",
+      "NEUT#": "Key safety marker on lenvatinib. At NEUT# <1.0 the drug is usually paused.",
+      "TSH": "Hypothyroidism is one of the most common side effects of lenvatinib (up to 70% of patients): the drug inhibits VEGFR and FGFR and disrupts the blood supply to the thyroid. TSH is checked every 4 weeks; at TSH >10 levothyroxine is usually prescribed."
+    }
+  },
+  "chemotherapy": {
+    "name": "Chemotherapy (cytotoxic drugs)",
+    "summary": "Cycles of cytotoxic drugs: blood counts at the nadir (usually day 7–14 of a cycle), liver, kidneys, nausea, stomatitis, neuropathy. Example, not reviewed by a doctor: check the thresholds with your treating doctor.",
+    "aiNotes": "The patient receives cyclic cytotoxic chemotherapy. Main risks: falling neutrophils and platelets, usually lowest on day 7–14 of a cycle; a temperature of 38 °C or higher with low neutrophils is an emergency (febrile neutropenia). Common effects: nausea and vomiting, stomatitis, diarrhea or constipation, fatigue, anemia, peripheral neuropathy (taxanes, platinum drugs), hair loss. Blood, liver and kidneys are usually checked before each cycle.",
+    "labCadenceHint": "On chemotherapy, blood is usually tested before each cycle and at the nadir (day 7–14).",
+    "rules": {
+      "NEUT#_RED_lt": "Neutrophils {v} {u}: severe neutropenia. With a temperature of 38 °C or higher, see a doctor at once.",
+      "NEUT#_YELLOW_lt": "Neutrophils {v} {u}: low; the cycle may be delayed, discuss with the doctor.",
+      "PLT_RED_lt": "Platelets {v} {u}: high risk of bleeding. Tell the doctor today.",
+      "PLT_YELLOW_lt": "Platelets {v} {u}: low, the cycle may be delayed."
+    },
+    "markerNotes": {
+      "NEUT#": "Usually lowest on day 7–14 of a cycle. Below 1.0 with a temperature of 38 °C or higher is febrile neutropenia and needs urgent care.",
+      "PLT": "Usually lowest at the same time as neutrophils. Below 50, avoid injuries, intramuscular injections and procedures not agreed with the doctor.",
+      "HGB": "Anemia builds up from cycle to cycle; tell the doctor about marked weakness and shortness of breath."
+    }
+  },
+  "immunotherapy": {
+    "name": "Immunotherapy (checkpoint inhibitors)",
+    "summary": "Pembrolizumab, nivolumab and similar drugs: immune-related side effects in the thyroid, liver, bowel, lungs, skin, blood sugar. Example, not reviewed by a doctor: check the thresholds with your treating doctor.",
+    "aiNotes": "The patient receives immunotherapy with checkpoint inhibitors (for example pembrolizumab or nivolumab). Side effects are immune-related and can appear at any time, even months after the start: thyroiditis and hypothyroidism (TSH), hepatitis (ALT/AST), colitis (new diarrhea), pneumonitis (cough, shortness of breath), rash and itching, nephritis (creatinine), diabetes (sharp rise in glucose), hypophysitis (weakness, headache, low sodium). Any new symptom is worth reporting to the doctor: early side effects are easier to treat.",
+    "labCadenceHint": "On immunotherapy, labs are usually done before each infusion.",
+    "rules": {
+      "ALT_RED_gtRef": "ALT {v} {u}: more than 3× the upper limit (upper limit {ref}). Possible immune hepatitis, see a doctor.",
+      "AST_RED_gtRef": "AST {v} {u}: more than 3× the upper limit (upper limit {ref}). See a doctor.",
+      "BIL_YELLOW_gtRef": "Bilirubin {v} {u}: above the reference range ({ref}).",
+      "TSH_YELLOW_gt": "TSH {v} {u}: above the reference range, possible immune thyroiditis or hypothyroidism. Discuss with the doctor.",
+      "TSH_YELLOW_lt": "TSH {v} {u}: below the reference range, possibly the early phase of thyroiditis. Discuss with the doctor.",
+      "CREA_YELLOW_gtRef": "Creatinine {v} {u}: over 1.5× the upper limit, possible nephritis.",
+      "GLU_RED_gt": "Glucose {v} {u}: very high. With thirst and frequent urination, see a doctor today.",
+      "GLU_YELLOW_gt": "Glucose {v} {u}: elevated, repeat the test fasting and tell the doctor.",
+      "NA_YELLOW_lt": "Sodium {v} {u}: low; together with weakness and headache, a reason to check hormones."
+    },
+    "markerNotes": {
+      "TSH": "Thyroiditis on immunotherapy often has two phases: first TSH falls (hyperthyroidism), then it rises (hypothyroidism).",
+      "ALT": "Immune hepatitis is usually symptom-free, which is why the liver is checked before each infusion.",
+      "GLU": "Immune diabetes develops fast; a sharp rise in glucose with thirst is a reason to see a doctor the same day."
+    }
+  },
+  "kidney-transplant": {
+    "name": "Kidney transplant (tacrolimus)",
+    "summary": "After a kidney transplant on tacrolimus: tacrolimus level, creatinine, potassium, magnesium, blood sugar, blood counts, protein in urine, tremor and swelling. Example, not reviewed by a doctor: check the thresholds with your treating doctor.",
+    "aiNotes": "The patient has had a kidney transplant and takes tacrolimus for immunosuppression (often with mycophenolate and prednisolone). Important: a rise in creatinine from the personal baseline may mean rejection or tacrolimus toxicity; hyperkalemia and low magnesium are typical of tacrolimus; post-transplant diabetes; tremor and headache at high drug levels; infections under immunosuppression. The tacrolimus level (C0, before the morning dose) is compared with the target range set by the transplant center; it depends on the time since the transplant and on other drugs, the thresholds below are only an example.",
+    "labCadenceHint": "After a transplant, labs follow the transplant center's schedule.",
+    "rules": {
+      "CREA_YELLOW_gtRef": "Creatinine {v} {u}: above the reference range. Compare with your usual level and tell the transplant center.",
+      "K_RED_gt": "Potassium {v} {u}: dangerously high. Contact the doctor today.",
+      "K_YELLOW_gt": "Potassium {v} {u}: elevated (common with tacrolimus), discuss diet and treatment.",
+      "MG_YELLOW_lt": "Magnesium {v} {u}: low (common with tacrolimus).",
+      "GLU_YELLOW_gt": "Glucose {v} {u}: elevated, possible post-transplant diabetes.",
+      "WBC_YELLOW_lt": "White blood cells {v} {u}: low under immunosuppression, tell the doctor.",
+      "HGB_YELLOW_lt": "Hemoglobin {v} {u}: anemia, discuss with the doctor.",
+      "U-PRO_YELLOW_gte": "Protein in urine {v} {u}: protein has appeared, tell the transplant center.",
+      "TAC_YELLOW_gt": "Tacrolimus {v} {u}: high level, risk of toxicity (tremor, kidneys, blood sugar). Tell the transplant center.",
+      "TAC_YELLOW_lt": "Tacrolimus {v} {u}: low level, risk of rejection. Compare with the target range and tell the center."
+    },
+    "markerNotes": {
+      "CREA": "What matters is not the lab's reference range but your baseline after the transplant: a rise of 20–25% from it is a reason to call the center.",
+      "K": "Tacrolimus raises potassium; together with diet and some drugs (for example ACE inhibitors) potassium can become dangerous.",
+      "TAC": "Blood is drawn before the morning dose (C0). The center sets the target range: usually higher in the first months, lower later. Grapefruit, some antibiotics and antifungals, and diarrhea change the level."
+    }
+  },
+  "hemodialysis": {
+    "name": "Hemodialysis",
+    "summary": "Maintenance hemodialysis: potassium, hemoglobin, calcium, sodium; weight gain between sessions, swelling, shortness of breath, cramps, itching. Example, not reviewed by a doctor: check the thresholds with your treating doctor.",
+    "aiNotes": "The patient is on maintenance hemodialysis. Creatinine and urea are high by the nature of the disease; their level is assessed by the nephrologist. Main risks: hyperkalemia (dangerous for the heart), anemia (target hemoglobin is usually 100–115 g/L), calcium and phosphorus disorders, fluid overload. Weight gain between sessions can be seen in the diary; a large gain together with shortness of breath and swelling is a reason to tell the doctor at the dialysis center.",
+    "labCadenceHint": "On dialysis, labs are usually drawn at the center once a month.",
+    "rules": {
+      "K_RED_gt": "Potassium {v} {u}: dangerously high. Contact the dialysis center today.",
+      "K_YELLOW_gt": "Potassium {v} {u}: elevated, check the diet.",
+      "HGB_RED_lt": "Hemoglobin {v} {u}: marked anemia.",
+      "HGB_YELLOW_lt": "Hemoglobin {v} {u}: below target, discuss with the nephrologist.",
+      "CA_YELLOW_lt": "Calcium {v} {u}: low.",
+      "CA_YELLOW_gt": "Calcium {v} {u}: elevated.",
+      "NA_YELLOW_lt": "Sodium {v} {u}: low, check how much fluid is being drunk."
+    },
+    "markerNotes": {
+      "K": "Potassium above 6.0 is dangerous because of heart rhythm disorders. Bananas, dried fruit, potatoes and tomatoes are high in potassium.",
+      "CREA": "On dialysis creatinine is always high; it is judged by the trend before and after a session, not by the reference range."
+    }
+  },
+  "methotrexate": {
+    "name": "Methotrexate (rheumatology)",
+    "summary": "Methotrexate once a week for rheumatoid arthritis and other autoimmune diseases: liver, blood counts, kidneys, joints, mouth ulcers. Example, not reviewed by a doctor: check the thresholds with your treating doctor.",
+    "aiNotes": "The patient takes methotrexate once a week (not daily!) for an autoimmune disease, usually with folic acid. Monitoring: liver (ALT/AST), blood (white cells, neutrophils, platelets), creatinine. Side effects: nausea on the day of the dose, mouth ulcers, raised liver enzymes, low white cells, rarely pneumonitis (dry cough, shortness of breath). Disease activity shows in joint pain and morning stiffness. Alcohol increases the toxicity to the liver.",
+    "labCadenceHint": "On methotrexate, blood and liver are usually checked every 1–3 months.",
+    "rules": {
+      "ALT_RED_gtRef": "ALT {v} {u}: more than 3× the upper limit (upper limit {ref}). Discuss pausing methotrexate with the doctor.",
+      "ALT_YELLOW_gtRef": "ALT {v} {u}: more than 2× the upper limit (upper limit {ref}). Tell the rheumatologist.",
+      "AST_YELLOW_gtRef": "AST {v} {u}: more than 2× the upper limit (upper limit {ref}).",
+      "WBC_RED_lt": "White blood cells {v} {u}: low, contact the doctor before the next dose.",
+      "WBC_YELLOW_lt": "White blood cells {v} {u}: below the reference range, repeat the test.",
+      "NEUT#_YELLOW_lt": "Neutrophils {v} {u}: low.",
+      "PLT_YELLOW_lt": "Platelets {v} {u}: low.",
+      "CREA_YELLOW_gtRef": "Creatinine {v} {u}: above the reference range; methotrexate is cleared by the kidneys, tell the doctor.",
+      "HGB_YELLOW_lt": "Hemoglobin {v} {u}: anemia, discuss with the doctor."
+    },
+    "regimen": {
+      "name": "Methotrexate",
+      "doseUnit": "mg",
+      "instructions": "Once a week, on the same day; folic acid as prescribed by the doctor."
+    },
+    "markerNotes": {
+      "ALT": "Methotrexate can raise liver enzymes; alcohol and fatty liver increase the effect.",
+      "WBC": "Low white cells raise the risk of infection; with a fever on low white cells, see a doctor."
+    }
+  },
+  "generic": {
+    "name": "General lab monitoring",
+    "summary": "For any long-term monitoring, not tied to a condition or a drug: basic thresholds for blood, liver, kidneys and potassium. Example, not reviewed by a doctor."
+  }
+}

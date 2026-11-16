@@ -1,0 +1,87 @@
+{
+  "title": "Doctor report",
+  "desc": "One PDF per appointment: visit questions, therapy and doses, events, imaging with lesion changes, key labs, wellbeing and alerts for the period.",
+  "period": "Period",
+  "presets": {
+    "3m": "3 months",
+    "6m": "6 months",
+    "12m": "1 year"
+  },
+  "customDates": "Dates",
+  "from": "From",
+  "to": "To",
+  "audience": "For",
+  "audienceNew": "New doctor",
+  "audienceNewHint": "Brief medical background, all milestones, imaging, labs, diary, document summaries",
+  "audienceOwn": "Treating doctor",
+  "audienceOwnHint": "Selected period only: therapy, milestones, imaging, labs, diary, alerts",
+  "audienceAll": "Everything",
+  "questions": "Visit questions on the first page",
+  "questionsHint": "The list from Appointments (if prepared): what to tell the doctor, what to ask, what to show.",
+  "sections": {
+    "anamnesis": {
+      "label": "Medical background",
+      "hint": "who the patient is and what happened before this period"
+    },
+    "therapy": {
+      "label": "Therapy",
+      "hint": "medication, dose, doses taken in the period"
+    },
+    "infusions": {
+      "label": "Infusions and injections",
+      "hint": "sessions in the period"
+    },
+    "milestones": {
+      "label": "Milestones",
+      "hint": "surgeries, radiation, histology, follow-ups"
+    },
+    "imaging": {
+      "label": "Imaging and lesions",
+      "hint": "latest study, RECIST, sizes"
+    },
+    "labs": {
+      "label": "Labs",
+      "hint": "latest values, reference range, previous value"
+    },
+    "symptoms": {
+      "label": "Wellbeing",
+      "hint": "diary for the period"
+    },
+    "alerts": {
+      "label": "Alerts",
+      "hint": "what was triggered in the period"
+    },
+    "documents": {
+      "label": "Document summaries",
+      "hint": "abstracts of discharge summaries and reports, made with “Summary (AI)”"
+    }
+  },
+  "opts": {
+    "anamnesisBrief": "brief (AI)",
+    "anamnesisFull": "full",
+    "milestonesPeriod": "for the period",
+    "milestonesAll": "all",
+    "labsKey": "key and out of range",
+    "labsAll": "all"
+  },
+  "noPatient": "The report header won't show the patient's name and diagnosis. Add them in <link>Settings → Patient and medical background</link>.",
+  "building": "Building…",
+  "downloadPdf": "Download PDF",
+  "footnote": "The report is built from your records and does not replace discharge summaries. Lab values are in the units chosen in Settings; reference ranges are the ones in effect (catalog, custom or from the lab report).",
+  "dossier": {
+    "title": "File for AI",
+    "desc": "The same data for the selected period as one text file (Markdown) for the Claude app, ChatGPT or another AI: medical background, therapy and doses, all lab values with reference ranges, studies, diary, alerts, appointments. The file starts with instructions for the model. Upload it to a chat as a file, or paste the text, and ask your questions.",
+    "notes": "Notes and research",
+    "notesHint": "Pinned notes and the latest 12, up to 2,500 characters each.",
+    "docs": "Document text from the treatment history",
+    "docsHint": "Discharge summaries, histology and doctor's reports with extracted text; up to 8,000 characters per file.",
+    "allLabs": "All-time labs",
+    "allLabsHint": "Otherwise only the selected period. The file gets larger.",
+    "ai": "Past AI answers from MedControl",
+    "aiHint": "Visit questions and the latest lab assessment, labeled “AI answer, not fact”.",
+    "download": "Download .md",
+    "copy": "Copy text",
+    "downloaded": "The {size} KB file is downloading. Next: open the Claude or ChatGPT app, attach the file to a message and ask your question.",
+    "copied": "Copied {n}K characters. Paste them into an AI chat as the first message."
+  }
+}

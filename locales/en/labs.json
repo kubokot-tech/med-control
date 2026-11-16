@@ -1,0 +1,312 @@
+{
+  "loading": "Loading…",
+  "layout": {
+    "title": "Labs",
+    "refs": "Reference ranges",
+    "monthReview": "AI: monthly summary",
+    "tabsLabel": "Labs sections",
+    "tabs": {
+      "summary": "Summary",
+      "series": "Trends",
+      "documents": "Documents",
+      "upload": "Upload"
+    }
+  },
+  "summary": {
+    "cat": {
+      "blood": "Blood",
+      "urine": "Urine"
+    },
+    "range": {
+      "3m": "3M",
+      "6m": "6M",
+      "12m": "12M",
+      "all": "All"
+    },
+    "pickTitle": "Which value to show when a month has several lab results",
+    "pick": {
+      "worst": "Worst of the month",
+      "latest": "Latest"
+    },
+    "filters": "Filters",
+    "export": "Export",
+    "marker": "Marker",
+    "whatIsIt": "What is this marker",
+    "cellTip": "Lab results this month: {n}, showing the {pick, select, latest {latest} other {worst}} value from {date}",
+    "empty": "No markers for the selected period. Change the filters or upload lab results.",
+    "scrollHint": "The table scrolls sideways, the marker name stays in place",
+    "lab": "Lab",
+    "allLabs": "All",
+    "period": "Period",
+    "fromMonth": "From month",
+    "toMonth": "To month",
+    "apply": "Show",
+    "reset": "Reset",
+    "exportTitle": "Export lab results",
+    "exportNow": "On screen now: {cat, select, urine {urine} other {blood}}{hasLab, select, yes {, {lab}} other {}}, {period}, {pick, select, latest {latest} other {worst}} value of the month. The files match the table as is.",
+    "exportPeriod": {
+      "3m": "3 months",
+      "6m": "6 months",
+      "12m": "12 months",
+      "all": "all time"
+    },
+    "exportAll": "Use all time, not the period on screen",
+    "exportXlsx": "three sheets: summary with highlighting, all results with filters, marker reference",
+    "exportPdfTitle": "PDF for the doctor",
+    "exportPdf": "report style: blood and urine separately, reference ranges, out-of-range values highlighted",
+    "exportCsv": "one result per row; opens in Excel and Numbers, works for AI and scripts",
+    "exportJsonl": "the same in JSON, one line per result",
+    "exportFailed": "Export failed: {error}"
+  },
+  "series": {
+    "mixedUnits": "Labs reported different units ({units}), so the values on the chart are not comparable.",
+    "noTest": "No marker specified"
+  },
+  "documents": {
+    "emptyTitle": "Your lab results will appear here",
+    "emptyDesc": "Upload a PDF from the lab: known lab report formats are read right away, and AI helps with the rest.",
+    "upload": "Upload",
+    "untitled": "Document",
+    "markers": "{n, plural, one {{n} marker} other {{n} markers}}",
+    "aiComment": "AI comment"
+  },
+  "doc": {
+    "back": "All documents",
+    "untitled": "Document",
+    "manual": "entered manually",
+    "error": "Error: {error}",
+    "downloadFailed": "Could not download the file: {error}",
+    "noData": "No data",
+    "table": {
+      "test": "Marker",
+      "value": "Value",
+      "unit": "Unit",
+      "ref": "Ref"
+    }
+  },
+  "sample": {
+    "invite": "Is your lab not on the list? Send a sample lab report so it can be added in future versions of MedControl.",
+    "pick": "Choose lab report PDF",
+    "fromFile": "Prepare a sample lab report",
+    "title": "Sample lab report",
+    "preparing": "Preparing text…",
+    "intro": "A new lab only needs the text of the lab report, the PDF itself is not sent anywhere. Names, addresses, and unknown words below are masked, all digits are replaced with random ones, and all dates are the same.",
+    "check": "Read the whole text. The automatic cleanup may have missed something: if you see a name, date of birth, address, phone number, or document number, delete it right here.",
+    "textLabel": "Lab report text",
+    "restore": "If a marker name got masked, you can type it back in.",
+    "labName": "Lab name",
+    "consent": "I have read the text and it contains no personal data",
+    "whereTo": "The text goes to the MedControl developers. It is kept for no more than 180 days and deleted as soon as the lab is added.",
+    "offNote": "Sending samples is not set up yet. You can copy the text.",
+    "send": "Send",
+    "copy": "Copy text",
+    "copied": "Copied",
+    "thanks": "Thank you! The sample was sent. If we can add this lab, it will appear in a future version.",
+    "another": "Send another"
+  },
+  "upload": {
+    "fromTelegram": "from Telegram",
+    "rejected": "{n, plural, one {# file skipped} other {# files skipped}}: only PDF is supported",
+    "status": {
+      "pending": "Waiting",
+      "uploading": "Uploading…",
+      "done": "Uploaded",
+      "duplicate": "Duplicate",
+      "error": "Error",
+      "review": "Read by AI, needs review"
+    },
+    "intro": "Drag PDFs from the lab here or choose files. You can add several at once.",
+    "drop": "Drop the files",
+    "dropHint": "Click or drag PDF files here",
+    "parsers": "Known lab report formats are read right away; reports from other labs are read by AI (requires a key in Settings → “AI assistant”), and you check the rows before saving. Without AI, use “Enter manually” below.",
+    "parsersTitle": "{n, plural, one {{n} lab is read without AI} other {{n} labs are read without AI}}",
+    "progress": "Uploading… ({done}/{total})",
+    "uploadN": "{n, plural, one {Upload {n} file} other {Upload {n} files}}",
+    "clear": "Clear list",
+    "sizeKb": "{size} KB",
+    "inserted": "{n, plural, one {# marker} other {# markers}}",
+    "already": "Already uploaded",
+    "retry": "Retry",
+    "hideResults": "▾ Hide results",
+    "showResults": "▸ Show results",
+    "table": {
+      "test": "Test",
+      "value": "Value",
+      "unit": "Unit",
+      "ref": "Ref"
+    }
+  },
+  "manual": {
+    "title": "Enter manually",
+    "desc": "A paper lab report or a lab MedControl doesn't know, without AI.",
+    "open": "Enter",
+    "collapse": "Collapse",
+    "date": "Test date",
+    "lab": "Lab (optional)",
+    "labPlaceholder": "for example, City Clinic",
+    "marker": "Marker",
+    "markerPick": "Marker…",
+    "category": {
+      "blood": "Blood",
+      "urine": "Urine"
+    },
+    "otherMarker": "Other marker…",
+    "name": "Marker name",
+    "namePlaceholder": "name as on the lab report",
+    "value": "Result",
+    "valuePlaceholder": "result",
+    "unit": "Unit",
+    "unitPlaceholder": "unit",
+    "range": "reference range",
+    "rangeLow": "Range low",
+    "rangeLowPlaceholder": "low",
+    "rangeHigh": "Range high",
+    "rangeHighPlaceholder": "high",
+    "hint": "Enter the result as on the lab report: “5.5”, “<0.6”, “negative”. The unit is filled in from the catalog; change it if the lab report uses a different one, and the value will be converted. You can skip the range from the lab report: the catalog range or your own applies.",
+    "addRow": "Add row",
+    "saving": "Saving…",
+    "save": "Save",
+    "saveN": "Save ({n})",
+    "saved": "Markers saved: {n}. <open>Open</open> · <summary>Summary</summary>",
+    "savedFlagged": "Markers saved: {n}, out of range: {flagged}. <open>Open</open> · <summary>Summary</summary>"
+  },
+  "review": {
+    "parsed": "The lab format is unfamiliar, so the model read the document. Check the rows and save. Nothing has been recorded yet.",
+    "parsedByModel": "The lab format is unfamiliar, so the model {model} read the document. Check the rows and save. Nothing has been recorded yet.",
+    "warnings": "The model is unsure about: {warnings}",
+    "lab": "Lab",
+    "labPlaceholder": "name",
+    "date": "Date",
+    "table": {
+      "test": "Marker",
+      "value": "Value",
+      "unit": "Unit",
+      "refLow": "Ref. from",
+      "refHigh": "to"
+    },
+    "removeRow": "Remove row",
+    "noRows": "No rows to save",
+    "noDate": "Enter the test date",
+    "saving": "Saving…",
+    "save": "{n, plural, one {Save # marker} other {Save # markers}}",
+    "discard": "Discard"
+  },
+  "batchUpload": {
+    "title": "Upload documents",
+    "desc": "Each file gets its own entry in the history. The date and modality are filled in from the file name, please check and correct them.",
+    "needDateTitle": "Each file needs a date and a name",
+    "created": "Entries created: {ok} of {total}.",
+    "failed": "Failed: {files}.",
+    "sizeMb": "{size} MB",
+    "removeFile": "Remove file",
+    "date": "Date",
+    "kind": "Type",
+    "kinds": {
+      "document": "Document from a doctor",
+      "imaging": "Image / imaging report",
+      "consult": "Consultation",
+      "histology": "Histology",
+      "radiation": "Radiation",
+      "surgery": "Surgery",
+      "other": "Other"
+    },
+    "name": "Name",
+    "uploading": "Uploading…",
+    "create": "{n, plural, =1 {Create entry} other {Create {n} entries}}",
+    "done": "Done"
+  },
+  "monthReview": {
+    "title": "Monthly lab review",
+    "desc": "The model looks at all of the month's lab results together: blood, liver, kidneys, thyroid, urine, plus the last six months of history, imaging, treatment, and the diary. The summary is saved in “Treatment history” and appears in the feed.",
+    "empty": "No lab results yet.",
+    "results": "{n, plural, one {# result} other {# results}} for {month}",
+    "resultsReviewed": "{n, plural, one {# result} other {# results}} for {month} · reviewed {when}",
+    "resultsReviewedModel": "{n, plural, one {# result} other {# results}} for {month} · reviewed {when}, {model}",
+    "busy": "Putting the month together, this takes 30–90 seconds…",
+    "failed": "Failed: {error}",
+    "noKey": "AI key not set",
+    "again": "Review again",
+    "run": "Review {month}"
+  },
+  "refs": {
+    "title": "Lab reference ranges",
+    "desc": "Results are compared with one reference range per marker, not with the one each lab printed. By default this is the MedControl catalog for adults; if a marker is not in the catalog, the range from the lab report is used. For any marker you can set a custom range or choose “as on the lab report”. The catalog is approximate: a doctor can give the exact ranges.",
+    "sex": "Sex for reference ranges",
+    "sexNone": "not specified",
+    "sexF": "female",
+    "sexM": "male",
+    "sexHint": "Hemoglobin, creatinine, ferritin, and several other markers have different ranges for men and women. If sex is not specified, the range from the lab report is used for them.",
+    "allCount": "All markers ({n})",
+    "ownCount": "Custom ranges ({n})",
+    "noOwn": "No custom ranges yet",
+    "urine": "(urine)",
+    "edit": "Edit",
+    "showOwn": "Show custom only",
+    "showAll": "All markers and their ranges",
+    "labChosen": "as on the lab report · your choice",
+    "labNoSex": "from the lab report until sex is specified",
+    "labNotInCatalog": "from the lab report, not in the catalog"
+  },
+  "refSource": {
+    "user": "custom",
+    "catalog": "catalog",
+    "lab": "lab report"
+  },
+  "flag": {
+    "ok": "In range",
+    "high": "High",
+    "low": "Low"
+  },
+  "refSheet": {
+    "title": "Reference range: {name}",
+    "desc": "All results for this marker are compared with this range: the “High” and “Low” flags, the Summary, alerts, AI texts, and the doctor report. The range from the lab report is kept with each result and shown in the document.",
+    "catalog": "MedControl catalog",
+    "lab": "As on the lab report",
+    "labHint": "Each result has its own range, as printed by the lab",
+    "custom": "Custom range",
+    "customRange": "from <low></low> to <high></high>",
+    "customHint": "You can leave one limit empty: “up to 40” or “from 1”.",
+    "low": "Lower limit",
+    "high": "Upper limit",
+    "note": {
+      "notInCatalog": "not in the catalog: range from the lab report",
+      "forSex": "for sex: {sex, select, m {male} f {female} other {}}",
+      "anySex": "regardless of sex (sex not specified)",
+      "bySex": "depends on sex: specify it in Labs → “Reference ranges”, until then the range from the lab report applies"
+    },
+    "save": "Save",
+    "cancel": "Cancel"
+  },
+  "biomarkerInfo": {
+    "show": "What is this marker?",
+    "hide": "Hide description",
+    "what": "What it is: ",
+    "whyMatters": "Why it matters: ",
+    "high": "High",
+    "low": "Low"
+  },
+  "biomarkerSheet": {
+    "above": "{pct}% above range",
+    "below": "{pct}% below range",
+    "inRange": "in range",
+    "last": "latest value",
+    "range": "reference range {range}",
+    "noRange": "reference range not specified",
+    "what": "What it is",
+    "whyMatters": "Why it matters",
+    "high": "If above range",
+    "low": "If below range",
+    "noInfo": "No description for this marker yet."
+  },
+  "chart": {
+    "noData": "No data for the selected period",
+    "notEnough": "Not enough data for a chart (at least 2 points needed)",
+    "above": "+{pct}% above range",
+    "below": "-{pct}% below range",
+    "inRange": "in range"
+  },
+  "sparkline": {
+    "noData": "No data",
+    "single": "one value"
+  }
+}

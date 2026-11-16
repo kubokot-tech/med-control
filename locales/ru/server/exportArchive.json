@@ -1,0 +1,5 @@
+{
+  "dossierName": "medcontrol-dossier-{date}.{ext}",
+  "zipName": "medcontrol-export-{date}.zip",
+  "readme": "МедКонтроль, полный экспорт данных от {date}.\n\ntables/*.json   все таблицы базы (только ваши строки): события, анализы, приёмы, снимки, дневник, тревоги, капельницы, приёмы у врача, комментарии ИИ и вопросы.\nlabs.csv        результаты анализов одной таблицей (разделитель «;», кодировка UTF-8, открывается в Excel/Numbers).\nanamnesis.txt   текущий анамнез для ИИ; история версий в tables/anamnesis_versions.json.\nnotes/          заметки в Markdown с front matter (title, tags, url, source, date); файлы заметок в files/milestones.\nfiles/          загруженные файлы: PDF анализов ({pdf}, связь через tables/attachments.json), отчёты врачей и снимки (files/milestones).\nmanifest.json   дата экспорта и число строк по таблицам.\n\nАрхив не зашифрован и содержит медицинские данные: храните его так же бережно, как бумажную карту.\n"
+}

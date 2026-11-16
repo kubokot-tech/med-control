@@ -1,0 +1,209 @@
+{
+ "candidates": [
+  "hadassah_pdf_v1",
+  "mknc_pdf_v1"
+ ],
+ "parses": {
+  "helix_pdf_v1": {
+   "lab_name": "Хеликс",
+   "doc_date": null,
+   "observations": []
+  },
+  "hadassah_pdf_v1": {
+   "lab_name": "Хадасса",
+   "doc_date": "2026-03-06",
+   "observations": [
+    {
+     "test_name": "Цвет (моча)",
+     "result_text": "желтый",
+     "result_num": null,
+     "units": null,
+     "ref_text": "соломенно-желтый, желтый, светло-желтый",
+     "ref_low": null,
+     "ref_high": null
+    },
+    {
+     "test_name": "Мутность (моча)",
+     "result_text": "слабо мутная",
+     "result_num": null,
+     "units": null,
+     "ref_text": "прозрачная",
+     "ref_low": null,
+     "ref_high": null
+    },
+    {
+     "test_name": "Относительная плотность (моча)",
+     "result_text": "1,018",
+     "result_num": 1.018,
+     "units": null,
+     "ref_text": "1,010 - 1,025",
+     "ref_low": 1.01,
+     "ref_high": 1.025
+    },
+    {
+     "test_name": "РН реакция (моча)",
+     "result_text": "6,0",
+     "result_num": 6.0,
+     "units": null,
+     "ref_text": "4,5 - 8,0",
+     "ref_low": 4.5,
+     "ref_high": 8.0
+    },
+    {
+     "test_name": "Белок (моча)",
+     "result_text": "0,15",
+     "result_num": 0.15,
+     "units": "г/л",
+     "ref_text": "Не обнаружено",
+     "ref_low": null,
+     "ref_high": null
+    },
+    {
+     "test_name": "Глюкоза (моча)",
+     "result_text": "Не обнаружено",
+     "result_num": null,
+     "units": "ммоль/л",
+     "ref_text": "Не обнаружено",
+     "ref_low": null,
+     "ref_high": null
+    },
+    {
+     "test_name": "Кетоновые тела (моча)",
+     "result_text": "Не обнаружено",
+     "result_num": null,
+     "units": "ммоль/л",
+     "ref_text": "Не обнаружено",
+     "ref_low": null,
+     "ref_high": null
+    },
+    {
+     "test_name": "Билирубин (моча)",
+     "result_text": "Не обнаружено",
+     "result_num": null,
+     "units": "мкмоль/л",
+     "ref_text": "Не обнаружено",
+     "ref_low": null,
+     "ref_high": null
+    },
+    {
+     "test_name": "Уробилиноген (моча)",
+     "result_text": "< 25",
+     "result_num": null,
+     "units": "мкмоль/л",
+     "ref_text": "< 25",
+     "ref_low": null,
+     "ref_high": 25.0
+    },
+    {
+     "test_name": "Реакция на лейкоциты (моча)",
+     "result_text": "Положительно",
+     "result_num": null,
+     "units": "кл/мкл",
+     "ref_text": "Отрицательно",
+     "ref_low": null,
+     "ref_high": null
+    },
+    {
+     "test_name": "Реакция на кровь (мг/дл) (моча)",
+     "result_text": "Отрицательно",
+     "result_num": null,
+     "units": "мг/дл",
+     "ref_text": "Отрицательно",
+     "ref_low": null,
+     "ref_high": null
+    },
+    {
+     "test_name": "Нитриты (моча)",
+     "result_text": "Не обнаружено",
+     "result_num": null,
+     "units": null,
+     "ref_text": "Не обнаружено",
+     "ref_low": null,
+     "ref_high": null
+    },
+    {
+     "test_name": "Эпителий плоский (моча)",
+     "result_text": "2,30",
+     "result_num": 2.3,
+     "units": "кл/мкл",
+     "ref_text": "0,00 - 7,10",
+     "ref_low": 0.0,
+     "ref_high": 7.1
+    },
+    {
+     "test_name": "Эпителий почечный (моча)",
+     "result_text": "Не обнаружено",
+     "result_num": null,
+     "units": "кл/мкл",
+     "ref_text": "Не обнаружено",
+     "ref_low": null,
+     "ref_high": null
+    },
+    {
+     "test_name": "Лейкоциты (моча)",
+     "result_text": "18,20",
+     "result_num": 18.2,
+     "units": "кл/мкл",
+     "ref_text": "0,00 - 11,70",
+     "ref_low": 0.0,
+     "ref_high": 11.7
+    },
+    {
+     "test_name": "Эритроциты (моча)",
+     "result_text": "4,10",
+     "result_num": 4.1,
+     "units": "кл/мкл",
+     "ref_text": "0,00 - 11,10",
+     "ref_low": 0.0,
+     "ref_high": 11.1
+    },
+    {
+     "test_name": "Цилиндры (гиалиновые) (моча)",
+     "result_text": "0",
+     "result_num": 0.0,
+     "units": "ед/мкл",
+     "ref_text": "0 - 0,86",
+     "ref_low": 0.0,
+     "ref_high": 0.86
+    },
+    {
+     "test_name": "Бактерии (моча)",
+     "result_text": "12,60",
+     "result_num": 12.6,
+     "units": "10^3/мл",
+     "ref_text": "0,00 - 10,00",
+     "ref_low": 0.0,
+     "ref_high": 10.0
+    },
+    {
+     "test_name": "Грибы (моча)",
+     "result_text": "Не обнаружено",
+     "result_num": null,
+     "units": "кл/мкл",
+     "ref_text": "Не обнаружено",
+     "ref_low": null,
+     "ref_high": null
+    },
+    {
+     "test_name": "Слизь (моча)",
+     "result_text": "0,2",
+     "result_num": 0.2,
+     "units": null,
+     "ref_text": "Не нормировано",
+     "ref_low": null,
+     "ref_high": null
+    }
+   ]
+  },
+  "dnkom_pdf_v1": {
+   "lab_name": "ДНКОМ",
+   "doc_date": null,
+   "observations": []
+  },
+  "mknc_pdf_v1": {
+   "lab_name": null,
+   "doc_date": null,
+   "observations": []
+  }
+ }
+}

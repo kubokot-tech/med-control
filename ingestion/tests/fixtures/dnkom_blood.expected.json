@@ -1,0 +1,164 @@
+{
+ "candidates": [
+  "dnkom_pdf_v1",
+  "mknc_pdf_v1"
+ ],
+ "parses": {
+  "helix_pdf_v1": {
+   "lab_name": "Хеликс",
+   "doc_date": null,
+   "observations": []
+  },
+  "hadassah_pdf_v1": {
+   "lab_name": "Хадасса",
+   "doc_date": null,
+   "observations": []
+  },
+  "dnkom_pdf_v1": {
+   "lab_name": "ДНКОМ",
+   "doc_date": "2026-02-01",
+   "observations": [
+    {
+     "test_name": "Гемоглобин (Hb)",
+     "result_text": "141,00",
+     "result_num": 141.0,
+     "units": "г/л",
+     "ref_text": "120,00 - 150,00",
+     "ref_low": 120.0,
+     "ref_high": 150.0
+    },
+    {
+     "test_name": "Эритроциты (RBC)",
+     "result_text": "4,61",
+     "result_num": 4.61,
+     "units": "10^12/л",
+     "ref_text": "3,80 - 5,10",
+     "ref_low": 3.8,
+     "ref_high": 5.1
+    },
+    {
+     "test_name": "Гетерогенность эритроцитов по объему (RDW-SD)",
+     "result_text": "41,20",
+     "result_num": 41.2,
+     "units": "фл",
+     "ref_text": "35,10 - 46,30",
+     "ref_low": 35.1,
+     "ref_high": 46.3
+    },
+    {
+     "test_name": "Нормобласты, абс.",
+     "result_text": "0,00",
+     "result_num": 0.0,
+     "units": "10^9/л",
+     "ref_text": "0,00 - 0,02",
+     "ref_low": 0.0,
+     "ref_high": 0.02
+    },
+    {
+     "test_name": "Нормобласты, %",
+     "result_text": "0,00",
+     "result_num": 0.0,
+     "units": "%",
+     "ref_text": "0,00 - 0,40",
+     "ref_low": 0.0,
+     "ref_high": 0.4
+    },
+    {
+     "test_name": "Тромбоциты (PLT)",
+     "result_text": "214",
+     "result_num": 214.0,
+     "units": "10^9/л",
+     "ref_text": "150 - 401,5",
+     "ref_low": 150.0,
+     "ref_high": 401.5
+    },
+    {
+     "test_name": "Лейкоциты (WBC)",
+     "result_text": "5,12",
+     "result_num": 5.12,
+     "units": "10^9/л",
+     "ref_text": "4,00 - 9,00",
+     "ref_low": 4.0,
+     "ref_high": 9.0
+    },
+    {
+     "test_name": "Нейтрофилы, абс.",
+     "result_text": "2,95",
+     "result_num": 2.95,
+     "units": "10^9/л",
+     "ref_text": "1,80 - 6,10",
+     "ref_low": 1.8,
+     "ref_high": 6.1
+    },
+    {
+     "test_name": "Лимфоциты, абс.",
+     "result_text": "1,70",
+     "result_num": 1.7,
+     "units": "10^9/л",
+     "ref_text": "1,20 - 3,00",
+     "ref_low": 1.2,
+     "ref_high": 3.0
+    },
+    {
+     "test_name": "Незрелые гранулоциты, абс.",
+     "result_text": "0,02",
+     "result_num": 0.02,
+     "units": "10^9/л",
+     "ref_text": "0,00 - 0,03",
+     "ref_low": 0.0,
+     "ref_high": 0.03
+    },
+    {
+     "test_name": "Нейтрофилы, %",
+     "result_text": "57,60",
+     "result_num": 57.6,
+     "units": "%",
+     "ref_text": "45,00 - 72,00",
+     "ref_low": 45.0,
+     "ref_high": 72.0
+    },
+    {
+     "test_name": "Лимфоциты, %",
+     "result_text": "33,20",
+     "result_num": 33.2,
+     "units": "%",
+     "ref_text": "19,00 - 37,00",
+     "ref_low": 19.0,
+     "ref_high": 37.0
+    },
+    {
+     "test_name": "Палочкоядерные нейтрофилы",
+     "result_text": "2,00",
+     "result_num": 2.0,
+     "units": "%",
+     "ref_text": "1,00 - 6,00",
+     "ref_low": 1.0,
+     "ref_high": 6.0
+    },
+    {
+     "test_name": "Эозинофилы",
+     "result_text": "1,90",
+     "result_num": 1.9,
+     "units": "%",
+     "ref_text": "0,50 - 5,00",
+     "ref_low": 0.5,
+     "ref_high": 5.0
+    },
+    {
+     "test_name": "СОЭ (по Вестергрену)",
+     "result_text": "9",
+     "result_num": 9.0,
+     "units": "мм/ч",
+     "ref_text": "2 - 20",
+     "ref_low": 2.0,
+     "ref_high": 20.0
+    }
+   ]
+  },
+  "mknc_pdf_v1": {
+   "lab_name": null,
+   "doc_date": null,
+   "observations": []
+  }
+ }
+}

@@ -1,0 +1,20 @@
+{
+  "page": {
+    "title": "Alerts",
+    "desc": "Rules check every uploaded lab result and diary entry: neutrophils, platelets, liver, blood pressure, temperature.",
+    "open": "Open",
+    "recheck": "Recheck",
+    "emptyTitle": "All quiet",
+    "emptyDesc": "If something important shows up in lab results or the diary, it will appear here.",
+    "read": "Read",
+    "showAll": "Show all ({n})"
+  },
+  "card": {
+    "important": "Important",
+    "watch": "Watch",
+    "acked": "read",
+    "closed": "closed",
+    "ack": "Got it",
+    "open": "Open"
+  }
+}

@@ -1,0 +1,290 @@
+{
+  "ALT": {
+    "name": "Alanine aminotransferase (ALT)",
+    "short": "ALT"
+  },
+  "AST": {
+    "name": "Aspartate aminotransferase (AST)",
+    "short": "AST"
+  },
+  "BIL": {
+    "name": "Total bilirubin",
+    "short": "Bilirubin"
+  },
+  "G6PD": {
+    "name": "Glucose-6-phosphate dehydrogenase (G6PD)",
+    "short": "G6PD"
+  },
+  "LDH": {
+    "name": "Lactate dehydrogenase (LDH)",
+    "short": "LDH"
+  },
+  "CREA": {
+    "name": "Creatinine",
+    "short": "Creatinine"
+  },
+  "UREA": {
+    "name": "Urea",
+    "short": "Urea"
+  },
+  "HbA1c": {
+    "name": "Glycated hemoglobin (HbA1c)",
+    "short": "HbA1c"
+  },
+  "eAG": {
+    "name": "Estimated average glucose (eAG)",
+    "short": "eAG"
+  },
+  "GLU": {
+    "name": "Glucose",
+    "short": "Glucose"
+  },
+  "MCH": {
+    "name": "Mean corpuscular hemoglobin (MCH)",
+    "short": "MCH"
+  },
+  "MCHC": {
+    "name": "Mean corpuscular hemoglobin concentration (MCHC)",
+    "short": "MCHC"
+  },
+  "MCV": {
+    "name": "Mean corpuscular volume (MCV)",
+    "short": "MCV"
+  },
+  "RDW": {
+    "name": "Red cell distribution width (RDW)",
+    "short": "RDW"
+  },
+  "HGB": {
+    "name": "Hemoglobin",
+    "short": "Hemoglobin"
+  },
+  "HCT": {
+    "name": "Hematocrit",
+    "short": "Hematocrit"
+  },
+  "RBC": {
+    "name": "Red blood cells (RBC)",
+    "short": "Red blood cells"
+  },
+  "ESR": {
+    "name": "Erythrocyte sedimentation rate (ESR)",
+    "short": "ESR"
+  },
+  "WBC": {
+    "name": "White blood cells (WBC)",
+    "short": "White blood cells"
+  },
+  "NEUT#": {
+    "name": "Neutrophils (absolute)",
+    "short": "Neutrophils"
+  },
+  "NEUT%": {
+    "name": "Neutrophils (%)",
+    "short": "Neutrophils %"
+  },
+  "LYM#": {
+    "name": "Lymphocytes (absolute)",
+    "short": "Lymphocytes"
+  },
+  "LYM%": {
+    "name": "Lymphocytes (%)",
+    "short": "Lymphocytes %"
+  },
+  "MONO#": {
+    "name": "Monocytes (absolute)",
+    "short": "Monocytes"
+  },
+  "MONO%": {
+    "name": "Monocytes (%)",
+    "short": "Monocytes %"
+  },
+  "EO#": {
+    "name": "Eosinophils (absolute)",
+    "short": "Eosinophils"
+  },
+  "EO%": {
+    "name": "Eosinophils (%)",
+    "short": "Eosinophils %"
+  },
+  "BASO#": {
+    "name": "Basophils (absolute)",
+    "short": "Basophils"
+  },
+  "BASO%": {
+    "name": "Basophils (%)",
+    "short": "Basophils %"
+  },
+  "PCT": {
+    "name": "Plateletcrit (PCT)",
+    "short": "PCT"
+  },
+  "PDW": {
+    "name": "Platelet distribution width (PDW)",
+    "short": "PDW"
+  },
+  "MPV": {
+    "name": "Mean platelet volume (MPV)",
+    "short": "MPV"
+  },
+  "PLT": {
+    "name": "Platelets (PLT)",
+    "short": "Platelets"
+  },
+  "CRP": {
+    "name": "C-reactive protein (CRP)",
+    "short": "CRP"
+  },
+  "FERR": {
+    "name": "Ferritin",
+    "short": "Ferritin"
+  },
+  "FE": {
+    "name": "Serum iron",
+    "short": "Iron"
+  },
+  "TIBC": {
+    "name": "Total iron-binding capacity (TIBC)",
+    "short": "TIBC"
+  },
+  "UIBC": {
+    "name": "Unsaturated iron-binding capacity (UIBC)",
+    "short": "UIBC"
+  },
+  "TRF": {
+    "name": "Transferrin",
+    "short": "Transferrin"
+  },
+  "DDIM": {
+    "name": "D-dimer",
+    "short": "D-dimer"
+  },
+  "FIB": {
+    "name": "Fibrinogen",
+    "short": "Fibrinogen"
+  },
+  "APTT": {
+    "name": "Activated partial thromboplastin time (aPTT)",
+    "short": "aPTT"
+  },
+  "PT": {
+    "name": "Prothrombin time",
+    "short": "PT"
+  },
+  "PTQ": {
+    "name": "Prothrombin activity (Quick)",
+    "short": "Prothrombin"
+  },
+  "AT3": {
+    "name": "Antithrombin III",
+    "short": "Antithrombin"
+  },
+  "INR": {
+    "name": "International normalized ratio (INR)",
+    "short": "INR"
+  },
+  "TT": {
+    "name": "Thrombin time",
+    "short": "TT"
+  },
+  "K": {
+    "name": "Potassium",
+    "short": "Potassium"
+  },
+  "NA": {
+    "name": "Sodium",
+    "short": "Sodium"
+  },
+  "CL": {
+    "name": "Chloride",
+    "short": "Chloride"
+  },
+  "MG": {
+    "name": "Magnesium",
+    "short": "Magnesium"
+  },
+  "CA": {
+    "name": "Calcium",
+    "short": "Calcium"
+  },
+  "ZN": {
+    "name": "Zinc",
+    "short": "Zinc"
+  },
+  "PROT": {
+    "name": "Total protein",
+    "short": "Total protein"
+  },
+  "CHOL": {
+    "name": "Total cholesterol",
+    "short": "Cholesterol"
+  },
+  "HDL": {
+    "name": "HDL cholesterol",
+    "short": "HDL"
+  },
+  "LDL": {
+    "name": "LDL cholesterol",
+    "short": "LDL"
+  },
+  "VLDL": {
+    "name": "VLDL cholesterol",
+    "short": "VLDL"
+  },
+  "NONHDL": {
+    "name": "Non-HDL cholesterol",
+    "short": "Non-HDL"
+  },
+  "TG": {
+    "name": "Triglycerides",
+    "short": "Triglycerides"
+  },
+  "TSH": {
+    "name": "Thyroid-stimulating hormone (TSH)",
+    "short": "TSH"
+  },
+  "TAC": {
+    "name": "Tacrolimus (blood level)",
+    "short": "Tacrolimus"
+  },
+  "U-LEU": {
+    "name": "Leukocytes in urine",
+    "short": "Leukocytes (urine)"
+  },
+  "U-RBC": {
+    "name": "Red blood cells in urine",
+    "short": "RBC (urine)"
+  },
+  "U-PRO": {
+    "name": "Protein in urine",
+    "short": "Protein (urine)"
+  },
+  "U-GLU": {
+    "name": "Glucose in urine",
+    "short": "Glucose (urine)"
+  },
+  "U-KET": {
+    "name": "Ketone bodies in urine",
+    "short": "Ketones (urine)"
+  },
+  "U-BIL": {
+    "name": "Bilirubin in urine",
+    "short": "Bilirubin (urine)"
+  },
+  "U-URO": {
+    "name": "Urobilinogen",
+    "short": "Urobilinogen"
+  },
+  "U-NIT": {
+    "name": "Nitrites",
+    "short": "Nitrites"
+  },
+  "U-SG": {
+    "name": "Urine specific gravity",
+    "short": "Specific gravity"
+  },
+  "U-PH": {
+    "name": "Urine pH",
+    "short": "pH"
+  }
+}

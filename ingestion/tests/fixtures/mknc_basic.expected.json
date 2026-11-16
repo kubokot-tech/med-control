@@ -1,0 +1,50 @@
+{
+ "candidates": [
+  "mknc_pdf_v1"
+ ],
+ "parses": {
+  "helix_pdf_v1": {
+   "lab_name": "Хеликс",
+   "doc_date": null,
+   "observations": []
+  },
+  "hadassah_pdf_v1": {
+   "lab_name": "Хадасса",
+   "doc_date": null,
+   "observations": []
+  },
+  "dnkom_pdf_v1": {
+   "lab_name": "ДНКОМ",
+   "doc_date": null,
+   "observations": []
+  },
+  "mknc_pdf_v1": {
+   "lab_name": "Демо-центр лабораторной диагностики",
+   "doc_date": "2026-03-05",
+   "observations": [
+    {
+     "test_name": "Гемоглобин",
+     "result_text": "132",
+     "result_num": 132.0,
+     "ref_text": "120 - 160",
+     "ref_low": 120.0,
+     "ref_high": 160.0,
+     "deviation_text": "-",
+     "criticality_text": "-",
+     "units": "г/л"
+    },
+    {
+     "test_name": "Аланинаминотрансфераза",
+     "result_text": "96",
+     "result_num": 96.0,
+     "ref_text": "0 - 40",
+     "ref_low": 0.0,
+     "ref_high": 40.0,
+     "deviation_text": "-",
+     "criticality_text": "-",
+     "units": "ЕД/л"
+    }
+   ]
+  }
+ }
+}

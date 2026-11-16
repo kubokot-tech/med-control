@@ -1,0 +1,434 @@
+{
+ "candidates": [
+  "hadassah_pdf_v1",
+  "mknc_pdf_v1"
+ ],
+ "parses": {
+  "helix_pdf_v1": {
+   "lab_name": "Хеликс",
+   "doc_date": null,
+   "observations": []
+  },
+  "hadassah_pdf_v1": {
+   "lab_name": "Хадасса",
+   "doc_date": "2026-03-05",
+   "observations": [
+    {
+     "test_name": "Лейкоциты (WBC)",
+     "result_text": "6,12",
+     "result_num": 6.12,
+     "units": "10^9/л",
+     "ref_text": "3,70 - 9,50",
+     "ref_low": 3.7,
+     "ref_high": 9.5
+    },
+    {
+     "test_name": "Эритроциты (RBC)",
+     "result_text": "4,31",
+     "result_num": 4.31,
+     "units": "10^12/л",
+     "ref_text": "4,40 - 5,70",
+     "ref_low": 4.4,
+     "ref_high": 5.7
+    },
+    {
+     "test_name": "Гемоглобин (HGB)",
+     "result_text": "128",
+     "result_num": 128.0,
+     "units": "г/л",
+     "ref_text": "130 - 168",
+     "ref_low": 130.0,
+     "ref_high": 168.0
+    },
+    {
+     "test_name": "Гематокрит (HCT)",
+     "result_text": "38,40",
+     "result_num": 38.4,
+     "units": "%",
+     "ref_text": "39,85 - 50,99",
+     "ref_low": 39.85,
+     "ref_high": 50.99
+    },
+    {
+     "test_name": "Средний объем эритроцита (MCV)",
+     "result_text": "89,20",
+     "result_num": 89.2,
+     "units": "фл",
+     "ref_text": "81,66 - 97,89",
+     "ref_low": 81.66,
+     "ref_high": 97.89
+    },
+    {
+     "test_name": "Среднее содержание гемоглобина в эритроците (MCH)",
+     "result_text": "29,70",
+     "result_num": 29.7,
+     "units": "пг",
+     "ref_text": "27,74 - 33,18",
+     "ref_low": 27.74,
+     "ref_high": 33.18
+    },
+    {
+     "test_name": "Средняя концентрация гемоглобина в эритроцитах (MCHC)",
+     "result_text": "333",
+     "result_num": 333.0,
+     "units": "г/л",
+     "ref_text": "316 - 357",
+     "ref_low": 316.0,
+     "ref_high": 357.0
+    },
+    {
+     "test_name": "Индекс распределения эритроцитов (RDW-CV)",
+     "result_text": "13,1",
+     "result_num": 13.1,
+     "units": "%",
+     "ref_text": "12,2 - 14,6",
+     "ref_low": 12.2,
+     "ref_high": 14.6
+    },
+    {
+     "test_name": "Нормобласты (NRBC)",
+     "result_text": "0,00",
+     "result_num": 0.0,
+     "units": "%",
+     "ref_text": "0,00 - 0,01",
+     "ref_low": 0.0,
+     "ref_high": 0.01
+    },
+    {
+     "test_name": "Нормобласты",
+     "result_text": "0,00",
+     "result_num": 0.0,
+     "units": "10^9/л",
+     "ref_text": "0",
+     "ref_low": null,
+     "ref_high": null
+    },
+    {
+     "test_name": "Стандартное отклонение ширины распределения эритроцитов (RDW-SD)",
+     "result_text": "42,3",
+     "result_num": 42.3,
+     "units": "фл",
+     "ref_text": "37,1 - 45,7",
+     "ref_low": 37.1,
+     "ref_high": 45.7
+    },
+    {
+     "test_name": "Незрелые гранулоциты, абс.",
+     "result_text": "0,03",
+     "result_num": 0.03,
+     "units": "10^9/л",
+     "ref_text": "0,00 - 0,09",
+     "ref_low": 0.0,
+     "ref_high": 0.09
+    },
+    {
+     "test_name": "Незрелые гранулоциты, %",
+     "result_text": "0,5",
+     "result_num": 0.5,
+     "units": "%",
+     "ref_text": "0,0 - 0,6",
+     "ref_low": 0.0,
+     "ref_high": 0.6
+    },
+    {
+     "test_name": "Нейтрофилы, абс.",
+     "result_text": "4,05",
+     "result_num": 4.05,
+     "units": "10^9/л",
+     "ref_text": "1,40 - 6,60",
+     "ref_low": 1.4,
+     "ref_high": 6.6
+    },
+    {
+     "test_name": "Нейтрофилы, %",
+     "result_text": "49,40",
+     "result_num": 49.4,
+     "units": "%",
+     "ref_text": "38,80 - 70,37",
+     "ref_low": 38.8,
+     "ref_high": 70.37
+    },
+    {
+     "test_name": "Эозинофилы, абс.",
+     "result_text": "0,510",
+     "result_num": 0.51,
+     "units": "10^9/л",
+     "ref_text": "0,000 - 0,400",
+     "ref_low": 0.0,
+     "ref_high": 0.4
+    },
+    {
+     "test_name": "Эозинофилы, %",
+     "result_text": "8,30",
+     "result_num": 8.3,
+     "units": "%",
+     "ref_text": "0,35 - 5,25",
+     "ref_low": 0.35,
+     "ref_high": 5.25
+    },
+    {
+     "test_name": "Базофилы, абс.",
+     "result_text": "0,03",
+     "result_num": 0.03,
+     "units": "10^9/л",
+     "ref_text": "0,01 - 0,08",
+     "ref_low": 0.01,
+     "ref_high": 0.08
+    },
+    {
+     "test_name": "Базофилы, %",
+     "result_text": "0,4",
+     "result_num": 0.4,
+     "units": "%",
+     "ref_text": "0,2 - 1,2",
+     "ref_low": 0.2,
+     "ref_high": 1.2
+    },
+    {
+     "test_name": "Моноциты, абс.",
+     "result_text": "0,48",
+     "result_num": 0.48,
+     "units": "10^9/л",
+     "ref_text": "0,30 - 1,10",
+     "ref_low": 0.3,
+     "ref_high": 1.1
+    },
+    {
+     "test_name": "Моноциты, %",
+     "result_text": "7,80",
+     "result_num": 7.8,
+     "units": "%",
+     "ref_text": "6,00 - 14,00",
+     "ref_low": 6.0,
+     "ref_high": 14.0
+    },
+    {
+     "test_name": "Лимфоциты, абс.",
+     "result_text": "1,02",
+     "result_num": 1.02,
+     "units": "10^9/л",
+     "ref_text": "1,20 - 3,40",
+     "ref_low": 1.2,
+     "ref_high": 3.4
+    },
+    {
+     "test_name": "Лимфоциты, %",
+     "result_text": "16,70",
+     "result_num": 16.7,
+     "units": "%",
+     "ref_text": "19,28 - 46,22",
+     "ref_low": 19.28,
+     "ref_high": 46.22
+    },
+    {
+     "test_name": "Реактивные лимфоциты RE-LYMPH, абс.",
+     "result_text": "0,07",
+     "result_num": 0.07,
+     "units": "10^9/л",
+     "ref_text": "0,00 - 0,50",
+     "ref_low": 0.0,
+     "ref_high": 0.5
+    },
+    {
+     "test_name": "Реактивные лимфоциты RE-LYMPH, %",
+     "result_text": "0,9",
+     "result_num": 0.9,
+     "units": "%",
+     "ref_text": "0,0 - 5,0",
+     "ref_low": 0.0,
+     "ref_high": 5.0
+    },
+    {
+     "test_name": "Плазматические клетки AS-LYMPH, абс.",
+     "result_text": "0,01",
+     "result_num": 0.01,
+     "units": "10^9/л",
+     "ref_text": "0,00 - 0,01",
+     "ref_low": 0.0,
+     "ref_high": 0.01
+    },
+    {
+     "test_name": "Плазматические клетки AS-LYMPH, %",
+     "result_text": "0,1",
+     "result_num": 0.1,
+     "units": "%",
+     "ref_text": "0,0 - 1,0",
+     "ref_low": 0.0,
+     "ref_high": 1.0
+    },
+    {
+     "test_name": "Гиперхромные эритроциты",
+     "result_text": "1",
+     "result_num": 1.0,
+     "units": "%",
+     "ref_text": "0 - 5",
+     "ref_low": 0.0,
+     "ref_high": 5.0
+    },
+    {
+     "test_name": "Гипохромные эритроциты",
+     "result_text": "0",
+     "result_num": 0.0,
+     "units": "%",
+     "ref_text": "0 - 5",
+     "ref_low": 0.0,
+     "ref_high": 5.0
+    },
+    {
+     "test_name": "Макроциты (MacroR)",
+     "result_text": "4",
+     "result_num": 4.0,
+     "units": "%",
+     "ref_text": "0 - 5",
+     "ref_low": 0.0,
+     "ref_high": 5.0
+    },
+    {
+     "test_name": "Микроциты (MicroR)",
+     "result_text": "2",
+     "result_num": 2.0,
+     "units": "%",
+     "ref_text": "0 - 5",
+     "ref_low": 0.0,
+     "ref_high": 5.0
+    },
+    {
+     "test_name": "Ретикулоциты, относительное количество (RET%)",
+     "result_text": "1,21",
+     "result_num": 1.21,
+     "units": "%",
+     "ref_text": "0,90 - 2,22",
+     "ref_low": 0.9,
+     "ref_high": 2.22
+    },
+    {
+     "test_name": "Ретикулоциты, абсолютное количество (RET#)",
+     "result_text": "52,2",
+     "result_num": 52.2,
+     "units": "10^9/л",
+     "ref_text": "46,4 - 121,2",
+     "ref_low": 46.4,
+     "ref_high": 121.2
+    },
+    {
+     "test_name": "Фракция незрелых ретикулоцитов (IRF)",
+     "result_text": "9,8",
+     "result_num": 9.8,
+     "units": "%",
+     "ref_text": "3,3 - 13,2",
+     "ref_low": 3.3,
+     "ref_high": 13.2
+    },
+    {
+     "test_name": "Ретикулоциты низкой флюоресценции (LFR)",
+     "result_text": "89,9",
+     "result_num": 89.9,
+     "units": "%",
+     "ref_text": "87,2 - 97,9",
+     "ref_low": 87.2,
+     "ref_high": 97.9
+    },
+    {
+     "test_name": "Ретикулоциты средней флюоресценции (MFR)",
+     "result_text": "9,0",
+     "result_num": 9.0,
+     "units": "%",
+     "ref_text": "3,2 - 11,3",
+     "ref_low": 3.2,
+     "ref_high": 11.3
+    },
+    {
+     "test_name": "Ретикулоциты сильной флюоресценции (HFR)",
+     "result_text": "0,9",
+     "result_num": 0.9,
+     "units": "%",
+     "ref_text": "0,2 - 1,4",
+     "ref_low": 0.2,
+     "ref_high": 1.4
+    },
+    {
+     "test_name": "Содержание гемоглобина в ретикулоцитах (RET-Hе)",
+     "result_text": "33,4",
+     "result_num": 33.4,
+     "units": "пг",
+     "ref_text": "31,2 - 36,2",
+     "ref_low": 31.2,
+     "ref_high": 36.2
+    },
+    {
+     "test_name": "Тромбоциты (PLT)",
+     "result_text": "141",
+     "result_num": 141.0,
+     "units": "10^9/л",
+     "ref_text": "150 - 400",
+     "ref_low": 150.0,
+     "ref_high": 400.0
+    },
+    {
+     "test_name": "Процент незрелых тромбоцитов (IPF%)",
+     "result_text": "3,1",
+     "result_num": 3.1,
+     "units": "%",
+     "ref_text": "1,2 - 8,9",
+     "ref_low": 1.2,
+     "ref_high": 8.9
+    },
+    {
+     "test_name": "Процент больших тромбоцитов (P-LCR)",
+     "result_text": "17,2",
+     "result_num": 17.2,
+     "units": "%",
+     "ref_text": "19,3 - 47,1",
+     "ref_low": 19.3,
+     "ref_high": 47.1
+    },
+    {
+     "test_name": "Тромбокрит (PCT)",
+     "result_text": "0,14",
+     "result_num": 0.14,
+     "units": "%",
+     "ref_text": "0,16 - 0,33",
+     "ref_low": 0.16,
+     "ref_high": 0.33
+    },
+    {
+     "test_name": "Средний объем тромбоцита (MPV)",
+     "result_text": "10,20",
+     "result_num": 10.2,
+     "units": "фл",
+     "ref_text": "8,80 - 11,86",
+     "ref_low": 8.8,
+     "ref_high": 11.86
+    },
+    {
+     "test_name": "Индекс распределения тромбоцитов (PDW)",
+     "result_text": "9,6",
+     "result_num": 9.6,
+     "units": "фл",
+     "ref_text": "9,8 - 15,2",
+     "ref_low": 9.8,
+     "ref_high": 15.2
+    },
+    {
+     "test_name": "Скорость оседания эритроцитов (СОЭ)",
+     "result_text": "21",
+     "result_num": 21.0,
+     "units": "мм/час",
+     "ref_text": "2 - 15",
+     "ref_low": 2.0,
+     "ref_high": 15.0
+    }
+   ]
+  },
+  "dnkom_pdf_v1": {
+   "lab_name": "ДНКОМ",
+   "doc_date": null,
+   "observations": []
+  },
+  "mknc_pdf_v1": {
+   "lab_name": null,
+   "doc_date": null,
+   "observations": []
+  }
+ }
+}

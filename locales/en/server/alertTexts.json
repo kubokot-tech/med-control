@@ -1,0 +1,9 @@
+{
+  "bpRed": "Blood pressure {sys}/{dia}: grade 2 hypertension. If it persists, see a doctor, the dose may need adjusting.",
+  "bpYellow": "Blood pressure {sys}/{dia}: above 140/90. Measure twice a day, tell the doctor if it persists.",
+  "tempRed": "Temperature {t} °C: during treatment, a reason to contact the doctor today.",
+  "diarrhea": "Severe diarrhea: risk of dehydration, loperamide and water, tell the doctor.",
+  "handFoot": "Marked reaction of the palms and soles: discuss a dose reduction with the doctor.",
+  "nausea": "Severe nausea: discuss anti-nausea medication.",
+  "ivcG6pd": "A high-dose vitamin C infusion, but MedControl has no G6PD result. In G6PD deficiency high doses cause hemolysis: upload the result (if you have one) or talk to your doctor."
+}

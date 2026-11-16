@@ -1,0 +1,63 @@
+{
+  # Real client address: trust only private proxies (router, the HTTPS proxy), parse X-Forwarded-For right to left.
+  servers {
+    trusted_proxies static private_ranges
+    trusted_proxies_strict
+  }
+}
+
+# Single front door on port 3001: the app, and Orthanc's web viewer under /orthanc.
+# Both ingress paths (Caddy from the internet, the router proxy on the LAN) point here.
+:3001 {
+  # uploads up to 30MB; only loading an exported archive back (Настройки → Экспорт) may be bigger
+  @not_archive not path /api/gateway/import/archive
+  request_body @not_archive {
+    max_size 30MB
+  }
+  request_body /api/gateway/import/archive {
+    max_size 2049MB
+  }
+  header {
+    Strict-Transport-Security "max-age=31536000"
+    X-Content-Type-Options "nosniff"
+    X-Frame-Options "DENY"
+    Referrer-Policy "no-referrer"
+    -Server
+  }
+  # Orthanc: read-only viewer paths only (Stone viewer, DICOMweb, REST reads); no tools/jobs/modalities, no writes;
+  # every request needs the viewer cookie of a signed-in session (gateway /orthanc-auth).
+  @orthanc_ro {
+    path /orthanc/stone-webviewer/* /orthanc/dicom-web/* /orthanc/app/* /orthanc/studies* /orthanc/series* /orthanc/instances* /orthanc/patients* /orthanc/system /orthanc/statistics
+    method GET HEAD OPTIONS
+  }
+  handle @orthanc_ro {
+    # The browser never sends Orthanc's password: the gateway checks the viewer cookie (given to a signed-in «Снимки»
+    # page, only for /orthanc) and answers with Orthanc's basic auth, which goes on to Orthanc. Without the cookie: 401.
+    forward_auth gateway:3000 {
+      uri /orthanc-auth
+      copy_headers Authorization
+    }
+    uri strip_prefix /orthanc
+    reverse_proxy orthanc:8042
+  }
+  handle /orthanc/* {
+    respond "forbidden" 403
+  }
+  # Loading an export archive back (up to 2 GB) goes straight to the gateway: the Next server cuts any request off after
+  # 5 minutes, too short for a big archive over a slow line. The browser sends its session token itself.
+  handle /api/gateway/import/archive {
+    uri strip_prefix /api/gateway
+    reverse_proxy gateway:3000 {
+      header_up X-Forwarded-For {client_ip}
+    }
+  }
+  handle /_next/image* {
+    respond "not found" 404
+  }
+  handle {
+    header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; font-src 'self'; connect-src 'self'; worker-src 'self'; frame-src 'self' blob:; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'"
+    reverse_proxy frontend:3001 {
+      header_up X-Forwarded-For {client_ip}
+    }
+  }
+}

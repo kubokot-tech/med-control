@@ -1,0 +1,13 @@
+{
+  "bottomSheet": {
+    "close": "Закрыть"
+  },
+  "markdown": {
+    "externalImage": "[внешняя картинка: {alt}]",
+    "open": "открыть",
+    "image": "[картинка]"
+  },
+  "api": {
+    "errorCode": "Ошибка: {code}"
+  }
+}

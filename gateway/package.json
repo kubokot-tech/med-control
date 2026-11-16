@@ -1,0 +1,45 @@
+{
+  "name": "medcontrol-gateway",
+  "version": "0.3.0",
+  "license": "AGPL-3.0-only",
+  "author": "Авторы MedControl",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node src/server.js",
+    "start": "node src/server.js",
+    "test": "node --test test/*.test.js",
+    "test:integration": "node --test test/integration/*.test.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.123.0",
+    "@fastify/cors": "^10.0.0",
+    "@fastify/jwt": "^10.2.6",
+    "@fastify/multipart": "^9.0.3",
+    "@fastify/swagger": "^9.5.0",
+    "@fastify/swagger-ui": "^6.1.2",
+    "@simplewebauthn/server": "^14.0.1",
+    "@tesseract.js-data/eng": "1.0.0",
+    "@tesseract.js-data/rus": "1.0.0",
+    "archiver": "^7.0.1",
+    "exceljs": "^4.4.0",
+    "fastify": "^5.2.0",
+    "intl-messageformat": "11.2.15",
+    "pdfjs-dist": "6.4.299",
+    "pdfkit": "^0.16.0",
+    "pg": "^8.13.1",
+    "tesseract.js": "7.0.0",
+    "undici": "^7.29.1",
+    "unzipper": "0.10.14",
+    "zod": "^4.6.7"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "optionalDependencies": {
+    "@electric-sql/pglite": "0.5.10"
+  },
+  "devDependencies": {
+    "@formatjs/icu-messageformat-parser": "3.5.18"
+  }
+}

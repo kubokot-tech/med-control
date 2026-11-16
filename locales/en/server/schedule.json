@@ -1,0 +1,25 @@
+{
+  "daily": "once a day",
+  "timesPerDay": "{n, plural, one {once a day} =2 {twice a day} other {# times a day}}",
+  "onDay": {
+    "1": "on Mondays",
+    "2": "on Tuesdays",
+    "3": "on Wednesdays",
+    "4": "on Thursdays",
+    "5": "on Fridays",
+    "6": "on Saturdays",
+    "7": "on Sundays"
+  },
+  "dayShort": {
+    "1": "Mon",
+    "2": "Tue",
+    "3": "Wed",
+    "4": "Thu",
+    "5": "Fri",
+    "6": "Sat",
+    "7": "Sun"
+  },
+  "onDays": "on {days}",
+  "withTimes": "{schedule}, {times}",
+  "everyNDays": "{n, plural, one {every day} other {every # days}}"
+}

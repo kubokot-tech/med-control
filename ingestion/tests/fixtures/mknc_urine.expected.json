@@ -1,0 +1,105 @@
+{
+ "candidates": [
+  "mknc_pdf_v1"
+ ],
+ "parses": {
+  "helix_pdf_v1": {
+   "lab_name": "Хеликс",
+   "doc_date": null,
+   "observations": []
+  },
+  "hadassah_pdf_v1": {
+   "lab_name": "Хадасса",
+   "doc_date": null,
+   "observations": []
+  },
+  "dnkom_pdf_v1": {
+   "lab_name": "ДНКОМ",
+   "doc_date": null,
+   "observations": []
+  },
+  "mknc_pdf_v1": {
+   "lab_name": "Демо-центр лабораторной диагностики",
+   "doc_date": "2026-05-22",
+   "observations": [
+    {
+     "test_name": "Прозрачность",
+     "result_text": "мутная отклонение",
+     "result_num": null,
+     "ref_text": null,
+     "ref_low": null,
+     "ref_high": null,
+     "deviation_text": null,
+     "criticality_text": null,
+     "units": null
+    },
+    {
+     "test_name": "Удельный вес",
+     "result_text": "1,018",
+     "result_num": 1.018,
+     "ref_text": "1,010 - 1,025",
+     "ref_low": 1.01,
+     "ref_high": 1.025,
+     "deviation_text": "-",
+     "criticality_text": "-",
+     "units": "единицы рН"
+    },
+    {
+     "test_name": "Цвет",
+     "result_text": "соломенно-желтый",
+     "result_num": null,
+     "ref_text": null,
+     "ref_low": null,
+     "ref_high": null,
+     "deviation_text": null,
+     "criticality_text": null,
+     "units": null
+    },
+    {
+     "test_name": "Кровь полуколичественно",
+     "result_text": "0",
+     "result_num": 0.0,
+     "ref_text": "0 - 0",
+     "ref_low": 0.0,
+     "ref_high": 0.0,
+     "deviation_text": "-",
+     "criticality_text": "-",
+     "units": "количество/мкл"
+    },
+    {
+     "test_name": "Уробилин качественно",
+     "result_text": "17",
+     "result_num": 17.0,
+     "ref_text": "0 - 34",
+     "ref_low": 0.0,
+     "ref_high": 34.0,
+     "deviation_text": "-",
+     "criticality_text": "-",
+     "units": "мкмоль/л"
+    },
+    {
+     "test_name": "Белок общий",
+     "result_text": "0,3",
+     "result_num": 0.3,
+     "ref_text": "0 - 0,14",
+     "ref_low": 0.0,
+     "ref_high": 0.14,
+     "deviation_text": "Выше нормы",
+     "criticality_text": "Ненормальный результат",
+     "units": "г/л"
+    },
+    {
+     "test_name": "Лейкоциты",
+     "result_text": "12",
+     "result_num": 12.0,
+     "ref_text": "0 - 5",
+     "ref_low": 0.0,
+     "ref_high": 5.0,
+     "deviation_text": "повышен",
+     "criticality_text": "-",
+     "units": "количество/мкл"
+    }
+   ]
+  }
+ }
+}

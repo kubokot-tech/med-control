@@ -1,0 +1,59 @@
+{
+  "failed": "Failed: {error}",
+  "noKey": "AI key not set",
+  "chat": {
+    "introFab": "What AI can do",
+    "introTitle": "AI assistant",
+    "close": "Close",
+    "introLead": "With AI connected, MedControl:",
+    "introParse": "reads lab PDFs from unfamiliar labs and CT and MRI reports;",
+    "introComment": "comments on lab results and imaging studies and writes a monthly summary;",
+    "introConsult": "prepares visit questions and drafts the medical background;",
+    "introChat": "answers questions in this window, seeing your data and the open page.",
+    "introKeys": "You need your own key: OpenRouter, ChatGPT, Claude, DeepSeek, YandexGPT, GigaChat, or your own model on a home server. Everything else works without AI, and this button won't appear again.",
+    "introConnect": "Connect AI",
+    "introOk": "Got it",
+    "fab": "Ask AI",
+    "dialog": "Conversation with AI",
+    "threads": "Conversations",
+    "assistant": "Assistant",
+    "back": "Back",
+    "history": "History",
+    "new": "New",
+    "loading": "Loading…",
+    "noThreads": "No conversations yet.",
+    "untitled": "Untitled",
+    "threadMeta": "{when} · messages: {n}",
+    "disclaimer": "Sees your profile, therapy, lab results, milestones, and the page that is open now. This is not a doctor: treatment decisions are made by a doctor.",
+    "placeholder": "Ask anything…",
+    "deep": "Detailed (main model, slower and more expensive)"
+  },
+  "comment": {
+    "intro": {
+      "lab_document": "The model will look at the markers in this lab result, past values, and therapy, and write what to pay attention to. This is not medical advice.",
+      "imaging_study": "The model will explain the imaging report, the lesions, and the changes compared with past studies. This is not medical advice.",
+      "note": "The main model will read the note along with your profile and write what it is about, what applies to this case, what is doubtful, and what to ask a doctor. This is not medical advice."
+    },
+    "thinking": "Thinking, this takes 20–60 seconds…",
+    "askAgain": "Ask again",
+    "send": "Send to AI",
+    "title": "AI comment",
+    "titleAt": "AI comment · {when}",
+    "titleNone": "AI comment · none yet"
+  },
+  "ask": {
+    "confirmClear": "Delete the whole conversation ({n})? This can't be undone.",
+    "open": "Ask AI",
+    "dialog": "Conversation with AI · {n}",
+    "dialogLast": "Conversation with AI · {n} · last {when}",
+    "clear": "Delete conversation",
+    "deleteOne": "Delete question and answer",
+    "delete": "Delete",
+    "placeholder": "Follow up with AI…",
+    "thinking": "Thinking…",
+    "submit": "Ask"
+  },
+  "context": {
+    "summary": "What the model saw"
+  }
+}

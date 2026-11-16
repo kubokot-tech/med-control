@@ -1,0 +1,67 @@
+{
+  "title": "Symptom diary",
+  "desc": "Half a minute a day: wellbeing, blood pressure, weight. Helps catch side effects in time. <link>Set up scales</link>",
+  "prevDay": "Previous day",
+  "nextDay": "Next day",
+  "today": "Today",
+  "yesterday": "Yesterday",
+  "wellbeing": "Wellbeing",
+  "levels": {
+    "none": "none",
+    "mild": "mild",
+    "moderate": "moderate",
+    "severe": "severe"
+  },
+  "wellbeingLevels": {
+    "bad": "bad",
+    "meh": "so-so",
+    "ok": "okay",
+    "good": "good",
+    "great": "great"
+  },
+  "fields": {
+    "bpSys": "BP, systolic",
+    "bpDia": "diastolic",
+    "weight": "Weight, {unit}",
+    "temperature": "Temperature, {unit}",
+    "pulse": "Pulse",
+    "steps": "Steps",
+    "notes": "Note",
+    "notesPlaceholder": "Anything else worth remembering"
+  },
+  "saving": "Saving…",
+  "save": "Save",
+  "savedAt": "Saved at {time}",
+  "bp": {
+    "title": "Blood pressure",
+    "hint": "Blood pressure above 140/90 for several days in a row is a reason to tell the doctor."
+  },
+  "weight": {
+    "title": "Weight"
+  },
+  "noEntries": "no entries",
+  "recent": {
+    "title": "Recent entries",
+    "empty": "Your entries will appear here. Marking wellbeing is enough; the rest is optional."
+  },
+  "summary": {
+    "wellbeing": "wellbeing {value}/5",
+    "bp": "BP {sys}/{dia}",
+    "pulse": "pulse {value}",
+    "scale": "{scale} {level}",
+    "none": "no complaints"
+  },
+  "streak": {
+    "label": "Doses by day",
+    "dayTitle": "{date}: {status}",
+    "todayOpen": "today, not marked yet",
+    "noData": "no data",
+    "status": {
+      "TAKEN": "taken",
+      "SKIPPED": "skipped",
+      "PAUSED": "paused",
+      "MISSED": "not marked",
+      "OFF": "no dose scheduled"
+    }
+  }
+}

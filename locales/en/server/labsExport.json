@@ -1,0 +1,80 @@
+{
+  "month": {
+    "1": "Jan",
+    "2": "Feb",
+    "3": "Mar",
+    "4": "Apr",
+    "5": "May",
+    "6": "Jun",
+    "7": "Jul",
+    "8": "Aug",
+    "9": "Sep",
+    "10": "Oct",
+    "11": "Nov",
+    "12": "Dec"
+  },
+  "flag": {
+    "high": "above range",
+    "low": "below range",
+    "ok": "in range"
+  },
+  "pick": {
+    "worst": "worst value of the month",
+    "latest": "latest value of the month",
+    "max": "highest value of the month"
+  },
+  "category": {
+    "urine": "urine",
+    "blood": "blood",
+    "all": "all"
+  },
+  "slug": {
+    "urine": "urine",
+    "blood": "blood",
+    "all": "all"
+  },
+  "monthRange": "{from} to {to}",
+  "labFilter": "lab: {lab}",
+  "fileStem": "medcontrol-labs-{cat}-{from}{to}",
+  "fileEmpty": "empty",
+  "jsonlName": "medcontrol-labs-{cat}.jsonl",
+  "sheet": {
+    "summary": "Summary",
+    "results": "All results",
+    "catalog": "Catalog"
+  },
+  "xlsxTitle": "MedControl · Lab summary · {what} · exported {date}",
+  "xlsxNote": "One value per month. Highlight: amber is outside the lab's reference range, green is in range. Units are converted to the MedControl catalog.",
+  "cellNote": "Results this month: {n}. Shown: {pick} of {date}.",
+  "yes": "yes",
+  "col": {
+    "marker": "Marker",
+    "unit": "Unit",
+    "range": "Reference range",
+    "date": "Date",
+    "asPrinted": "As printed",
+    "category": "Category",
+    "value": "Value",
+    "text": "Result as printed",
+    "rangeFrom": "Range from",
+    "rangeTo": "Range to",
+    "deviation": "Deviation",
+    "lab": "Lab",
+    "unitPrinted": "Unit as printed",
+    "document": "Document",
+    "rangeShort": "Ref. range",
+    "key": "Key",
+    "short": "Short",
+    "unitCatalog": "MedControl unit",
+    "isKey": "Key marker"
+  },
+  "pdfInfo": "MedControl · Lab summary",
+  "pdfTitle": "Lab summary",
+  "pdfSubtitle": "{what} · exported {date} · MedControl, patient's treatment history",
+  "pdfEmpty": "No results for the selected filters.",
+  "pdfBlood": "Blood",
+  "pdfUrine": "Urine",
+  "pdfLegend": "Color: blue is in range, amber is outside the lab's reference range. Values are converted to the units of the MedControl catalog. \"·2\" next to a value: two or more results this month, shown: {pick}. Key markers are in bold.",
+  "pdfBrandLine": "Summary prepared in MedControl · {site}",
+  "pdfFooter": "Generated automatically from uploaded lab results, does not replace lab reports · page {page} of {pages}"
+}
