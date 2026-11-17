@@ -9,6 +9,10 @@
 //! - downloads (`<a download>` of a blob: export ZIP, report PDF, Excel, CSV) ask where to save, as a browser does;
 //! - links outside the app (http(s), mailto:, tel:) open in the system browser, mail or phone app;
 //! - `window.open` of an attachment (a blob: URL) opens a second app window to view it.
+//!
+//! Updates: update.rs.
+
+mod update;
 
 use std::fs::{self, OpenOptions};
 use std::io::{Read, Write};
@@ -347,7 +351,7 @@ fn main_window(app: &AppHandle) -> tauri::Result<()> {
 /// Windows gets no menu bar: the shortcuts for editing work in the WebView itself.
 #[cfg(target_os = "macos")]
 fn app_menu(app: &AppHandle) -> tauri::Result<tauri::menu::Menu<tauri::Wry>> {
-    use tauri::menu::{AboutMetadata, Menu, MenuItem, PredefinedMenuItem as P, Submenu};
+    use tauri::menu::{AboutMetadata, CheckMenuItem, Menu, MenuItem, PredefinedMenuItem as P, Submenu};
     let about = AboutMetadata {
         name: Some(app_name().into()),
         version: Some(app.package_info().version.to_string()),
@@ -356,6 +360,8 @@ fn app_menu(app: &AppHandle) -> tauri::Result<tauri::menu::Menu<tauri::Wry>> {
     };
     let main = Submenu::with_items(app, app_name(), true, &[
         &P::about(app, Some(tr("О МедКонтроле", "About MedControl")), Some(about))?,
+        &MenuItem::with_id(app, "update_check", tr("Проверить обновления…", "Check for Updates…"), true, None::<&str>)?,
+        &CheckMenuItem::with_id(app, "update_on_start", tr("Проверять обновления при запуске", "Check for Updates at Startup"), true, update::check_on_start(app), None::<&str>)?,
         &P::separator(app)?,
         &P::hide(app, Some(tr("Скрыть МедКонтроль", "Hide MedControl")))?,
         &P::hide_others(app, Some(tr("Скрыть остальные", "Hide Others")))?,
@@ -396,6 +402,19 @@ fn on_menu(app: &AppHandle, id: &str) {
                 let _ = w.eval("location.reload()");
             }
         }
+        "update_check" => {
+            let handle = app.clone();
+            thread::spawn(move || update::check(&handle, update::Trigger::Menu));
+        }
+        "update_on_start" => {
+            // the menu item has already flipped its tick; store what it shows now
+            let on = app
+                .menu()
+                .and_then(|m| m.get("update_on_start"))
+                .and_then(|i| i.as_check_menuitem().and_then(|c| c.is_checked().ok()))
+                .unwrap_or(!update::check_on_start(app));
+            update::set_check_on_start(app, on);
+        }
         "data_dir" => {
             if let Ok(dir) = data_dir(app) {
                 let _ = fs::create_dir_all(&dir);
@@ -416,6 +435,7 @@ pub fn run() {
                 let _ = w.set_focus();
             }
         }))
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .manage(Servers::default())
         .on_menu_event(|app, event| on_menu(app, event.id().as_ref()));
     #[cfg(target_os = "macos")]
@@ -430,6 +450,9 @@ pub fn run() {
                     if let Some(w) = handle.get_webview_window("main") {
                         let _ = w.navigate(url);
                     }
+                    // look for an update once the app is usable; a dialog appears only if there is one
+                    thread::sleep(Duration::from_secs(5));
+                    update::check(&handle, update::Trigger::Startup);
                 }
                 Err(e) => {
                     stop(&handle);

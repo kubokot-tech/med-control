@@ -30,6 +30,16 @@
     document.getElementById('name').textContent = 'МедКонтроль';
     document.getElementById('status').textContent = 'Запускается… При первом запуске это может занять до минуты.';
   }
+  // Shown while an update installs (update.rs).
+  if (location.hash === '#update') {
+    document.getElementById('status').textContent = document.documentElement.lang === 'ru'
+      ? 'Сохраняется копия базы…' : 'Saving a copy of the database…';
+  }
+  window.showStatus = function (text) {
+    var el = document.getElementById('status');
+    el.className = '';
+    el.textContent = text;
+  };
   // Called by the app when the servers could not start.
   window.showError = function (text) {
     var el = document.getElementById('status');

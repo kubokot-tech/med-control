@@ -2,6 +2,8 @@
 # - A tag vX.Y.Z builds them and attaches them to the GitHub Release of that tag under fixed names, so the
 #   README links (releases/latest/download/<name>) always point at the latest version.
 # - Run by hand (Actions → desktop → Run workflow) it only keeps them as artifacts of the run, to test a branch.
+# - With the update key in the secrets (TAURI_SIGNING_PRIVATE_KEY, …_PASSWORD) it also builds signed update packages and
+#   attaches latest.json, which installed apps read to offer the update (docs/DESKTOP.md, «Обновления»).
 # The installers are not signed by a developer yet (the macOS app carries an ad-hoc signature).
 name: desktop
 
@@ -21,9 +23,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { name: macos-arm64, os: macos-latest, target: aarch64-apple-darwin, bundle: dmg, ext: dmg, file: MedControl-macOS-AppleSilicon.dmg }
-          - { name: macos-x64, os: macos-latest, target: x86_64-apple-darwin, bundle: dmg, ext: dmg, file: MedControl-macOS-Intel.dmg }
-          - { name: windows-x64, os: windows-latest, target: x86_64-pc-windows-msvc, bundle: nsis, ext: exe, file: MedControl-Windows-Setup.exe }
+          - { name: macos-arm64, os: macos-latest, target: aarch64-apple-darwin, bundle: dmg, ext: dmg, file: MedControl-macOS-AppleSilicon.dmg, pkgdir: macos, pkgglob: '*.app.tar.gz', pkg: MedControl-macOS-AppleSilicon.app.tar.gz }
+          - { name: macos-x64, os: macos-latest, target: x86_64-apple-darwin, bundle: dmg, ext: dmg, file: MedControl-macOS-Intel.dmg, pkgdir: macos, pkgglob: '*.app.tar.gz', pkg: MedControl-macOS-Intel.app.tar.gz }
+          - { name: windows-x64, os: windows-latest, target: x86_64-pc-windows-msvc, bundle: nsis, ext: exe, file: MedControl-Windows-Setup.exe, pkgdir: nsis, pkgglob: '*-setup.exe', pkg: MedControl-Windows-Setup.exe }
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -42,8 +44,18 @@ jobs:
         run: node scripts/prepare.mjs --target ${{ matrix.target }}
         working-directory: desktop
       - name: Build the app
-        run: npx tauri build --target ${{ matrix.target }}
+        shell: bash
         working-directory: desktop
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: |
+          if [ -n "$TAURI_SIGNING_PRIVATE_KEY" ]; then
+            npx tauri build --target ${{ matrix.target }} --config updater.conf.json
+          else
+            echo "::warning::No update key in the secrets: building without update packages"
+            npx tauri build --target ${{ matrix.target }}
+          fi
       - name: Give the installer its fixed name
         shell: bash
         run: |
@@ -51,10 +63,16 @@ jobs:
           src=$(ls desktop/src-tauri/target/${{ matrix.target }}/release/bundle/${{ matrix.bundle }}/*.${{ matrix.ext }} | head -n1)
           [ -n "$src" ] || { echo "no installer built"; exit 1; }
           cp "$src" "dist/${{ matrix.file }}"
+          pkg=$(ls desktop/src-tauri/target/${{ matrix.target }}/release/bundle/${{ matrix.pkgdir }}/${{ matrix.pkgglob }} 2>/dev/null | head -n1)
+          if [ -n "$pkg" ] && [ -f "$pkg.sig" ]; then
+            cp "$pkg" "dist/${{ matrix.pkg }}"
+            cp "$pkg.sig" "dist/${{ matrix.pkg }}.sig"
+          fi
+          ls -l dist
       - uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.file }}
-          path: dist/${{ matrix.file }}
+          name: ${{ matrix.name }}
+          path: dist/*
           if-no-files-found: error
           retention-days: 14
 
@@ -66,11 +84,12 @@ jobs:
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
           path: dist
           merge-multiple: true
-      - name: Create the release if needed and attach the installers
+      - name: Create the release if needed and attach the installers and latest.json
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.ref_name }}
@@ -79,4 +98,12 @@ jobs:
           gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 \
             || gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --title "MedControl $TAG" \
                  --notes "История версий: CHANGELOG.md. Changelog: CHANGELOG.md."
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json body -q .body > release-body.md
+          if ls dist/*.sig >/dev/null 2>&1; then
+            node scripts/updater-manifest.mjs "$TAG" "$GITHUB_REPOSITORY" dist release-body.md > dist/latest.json
+            cat dist/latest.json
+          else
+            echo "::warning::No update packages: installed apps will not see this release"
+          fi
+          rm -f dist/*.sig
           gh release upload "$TAG" dist/* --repo "$GITHUB_REPOSITORY" --clobber

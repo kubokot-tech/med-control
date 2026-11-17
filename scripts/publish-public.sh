@@ -130,7 +130,8 @@ if [ -z "$NOTES" ]; then
   NOTES="$WORK/notes.md"
   B="https://github.com/$REPO"
   {
-    awk -v v="## $VERSION" 'index($0, v)==1 {on=1; next} on && /^## / {exit} on && /^Подробно:/ {exit} on {print}' CHANGELOG.md | sed '/./,$!d'
+    awk -v v="## $VERSION" 'index($0, v)==1 {on=1; next} on && /^## / {exit} on && /^Подробно:/ {exit} on {print}' CHANGELOG.md | sed '/./,$!d' \
+      | sed -E "s#\]\(([^)#:]+)\)#](https://github.com/$REPO/blob/main/\1)#g"
     echo "Подробно: [CHANGELOG.md]($B/blob/main/CHANGELOG.md)."
     cat <<EOF
 

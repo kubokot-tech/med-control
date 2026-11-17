@@ -7,6 +7,18 @@
 
 Переносит код один скрипт: `scripts/publish-public.sh`. Руками в публичный репозиторий ничего не пушим.
 
+## Один раз: ключ обновлений настольной версии
+
+Пакеты обновления подписываются ключом проекта, без него установленные приложения выпуск не увидят ([DESKTOP.md](DESKTOP.md), «Обновления»). Ключ создаётся один раз, публичная половина уже в `desktop/src-tauri/tauri.conf.json`:
+
+```bash
+cd desktop && npx tauri signer generate -w ~/.tauri/medcontrol-updater.key
+gh secret set TAURI_SIGNING_PRIVATE_KEY --repo kubokot-tech/med-control < ~/.tauri/medcontrol-updater.key
+gh secret set TAURI_SIGNING_PRIVATE_KEY_PASSWORD --repo kubokot-tech/med-control
+```
+
+Ключ и пароль сохранить в менеджере паролей. Если их потерять, установленные копии не смогут обновляться сами: придётся создать новый ключ, поменять `pubkey` и попросить всех один раз поставить новую версию вручную.
+
 ## Один раз: список запретов
 
 Скрипт не запустится без файла со словами, которые не должны попасть в открытый код. Файл лежит вне репозитория и никуда не отправляется.
@@ -80,6 +92,7 @@ scripts/publish-public.sh 0.4.0
 - Страница выпуска: https://github.com/kubokot-tech/med-control/releases/latest, три установщика на месте.
 - Ссылки на скачивание в README открываются.
 - Ход сборки установщиков: `gh run list --repo kubokot-tech/med-control --workflow desktop.yml`.
+- В выпуске есть `latest.json` и пакеты `.app.tar.gz` для Mac: по ним установленные приложения находят обновление. Если их нет, в журнале workflow будет предупреждение о ключе.
 
 ## Если что-то пошло не так
 
