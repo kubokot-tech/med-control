@@ -96,7 +96,7 @@ The builds are not signed by a developer yet, so on the first start the system w
 2. If "Windows protected your PC" appears, click More info → Run anyway. No administrator rights are needed: it installs for your account.
 3. Start MedControl from the Start menu.
 
-The first start takes up to a minute. After that it is the same as the server version: a password, a language and five setup steps. Data lives in your user folder (`~/Library/Application Support/MedControl` on a Mac, `%APPDATA%\MedControl` on Windows) and stays there when you update. From version 0.4.0 the app offers new versions itself: it shows what changed, saves a copy of the database and installs the update once you agree. Earlier versions are updated by installing the new one over them. What the desktop version lacks: phone access, nightly backups (save "Full data archive" yourself), DICOM imaging and Apple Health; Telegram works while the app is open. More: [docs/DESKTOP.md](docs/DESKTOP.md) (Russian).
+The first start takes up to a minute. After that it is the same as the server version: a password, a language and five setup steps. Data lives in your user folder (`~/Library/Application Support/MedControl` on a Mac, `%APPDATA%\MedControl` on Windows) and stays there when you update. From version 0.4.1 the app offers new versions itself: it shows what changed, saves a copy of the database and installs the update once you agree. Earlier versions are updated by installing the new one over them. What the desktop version lacks: phone access, nightly backups (save "Full data archive" yourself), DICOM imaging and Apple Health; Telegram works while the app is open. More: [docs/DESKTOP.md](docs/DESKTOP.md) (Russian).
 
 ## How to try it on a server
 

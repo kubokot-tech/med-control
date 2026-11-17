@@ -2,7 +2,7 @@
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "MedControl",
   "mainBinaryName": "medcontrol",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "identifier": "app.med-control.desktop",
   "build": {
     "frontendDist": "../splash"
@@ -53,7 +53,7 @@
   },
   "plugins": {
     "updater": {
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEY5RDIxMDM4RDY0MzU1RTkKUldUcFZVUFdPQkRTK2FFZlNEZ0VUM0l1cDZ0TUVGWlZLZGc3TXd1QTRLLzNmRC92V3E2b3liN2EK",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDU0OUU0MzJBM0MwQTkyOTUKUldTVmtnbzhLa09lVkU2WDdXaTB1bFJmaVRBK08zbXhmaGQ2ekZHTExSdTU0ZEFBTWlSenRhNnYK",
       "endpoints": [
         "https://github.com/kubokot-tech/med-control/releases/latest/download/latest.json"
       ],
