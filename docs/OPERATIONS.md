@@ -42,12 +42,7 @@ cd /srv/medcontrol/app && sh scripts/rollback.sh       # или sh scripts/rollb
 
 ## Выпуск версии
 
-1. Проверить образцы бланков: `node scripts/lab-samples.mjs`. Есть новые: сначала парсер ([LAB-PARSERS.md](LAB-PARSERS.md), «Перед выпуском версии»). Код выхода 3 значит, что сервис не подключён: выпускать без этого.
-2. Номер версии в одном PR: `gateway/package.json`, `frontend/package.json`, `desktop/package.json` и их `package-lock.json`, `desktop/src-tauri/tauri.conf.json`, `desktop/src-tauri/Cargo.toml` и `Cargo.lock`, `gateway/src/server.js` (заголовок Swagger). В `CHANGELOG.md` раздел «Не выпущено» становится разделом версии с датой, сверху остаётся пустой «Не выпущено».
-3. Пересобрать список лицензий: `node scripts/third-party.mjs > THIRD-PARTY-NOTICES.md` (нужны установленные зависимости в `gateway`, `frontend`, `desktop`).
-4. Дождаться зелёного CI и влить PR.
-5. Создать GitHub Release с тегом `vX.Y.Z` на коммите в `main`, текст из `CHANGELOG.md` на русском и коротким пересказом на английском.
-6. Настольная версия собирается сама: тег запускает workflow `desktop`, он прикладывает к Release установщики под постоянными именами, на них ведут ссылки в README. Если Release ещё не создан, workflow создаёт его с короткой заметкой; текст можно заменить потом. Сборки пока без подписи разработчика ([DESKTOP.md](DESKTOP.md)).
+Как готовится и публикуется версия: [RELEASE.md](RELEASE.md).
 
 Готовых образов Docker нет: серверная версия собирается из исходников командой `docker compose up -d --build`.
 
@@ -184,7 +179,7 @@ GitHub Actions (`.github/workflows/ci.yml`) гоняет юнит- и интег
 - **OpenRouter, Anthropic, ChatGPT** читают PDF и картинки. **DeepSeek, YandexGPT, GigaChat и свой адрес** — только текст: PDF уходит текстовым слоем (pdf.js в gateway), а сканы и фото документов сначала распознаются в gateway (Tesseract в WebAssembly, `lib/ocr.js`, модели русского и английского ставятся с npm-пакетами, в интернет ничего не уходит) и тоже уходят текстом. Распознавание идёт по одному файлу за раз, страница занимает от половины секунды до нескольких секунд, не больше 20 страниц на файл. Снимки КТ и МРТ таким сервисам не отправить, интерфейс об этом скажет.
 - Запросы к OpenRouter, Anthropic, OpenAI и DeepSeek идут через `EGRESS_PROXY`, если он задан; к Яндексу, Сберу и своему адресу — напрямую.
 - **YandexGPT (Алиса AI):** нужны API-ключ сервисного аккаунта с ролью `ai.languageModels.user` и идентификатор каталога. Модель по умолчанию `gpt://<каталог>/yandexgpt/latest`, быстрая `yandexgpt-lite`; другую модель (например, Алиса AI LLM) можно вписать в «Дополнительно».
-- **GigaChat:** ключ авторизации из личного кабинета разработчика Сбера; gateway сам получает 30-минутный токен. Серверы Сбера подписаны корневым сертификатом Минцифры, которого нет в Node.js и браузерах. Он входит в МедКонтроль (`gateway/src/certs/russian_trusted_root_ca.pem`, с gosuslugi.ru/crt) и используется только для адресов GigaChat (`lib/sberTls.js`), остальные соединения ему не доверяют. Ничего настраивать не нужно; если раньше в `.env` был задан `NODE_EXTRA_CA_CERTS` с этим сертификатом, его можно убрать.
+- **GigaChat:** ключ авторизации из личного кабинета разработчика Сбера; gateway сам получает 30-минутный токен. Серверы Сбера подписаны корневым сертификатом Минцифры, которого нет в Node.js и браузерах. Он входит в МедКонтроль (`gateway/src/certs/russian_trusted_root_ca.pem`, с gosuslugi.ru/crt) и используется только для адресов GigaChat (`lib/sberTls.js`), остальные соединения ему не доверяют. Ничего настраивать не нужно.
 - **Свой адрес:** любой OpenAI-совместимый API, например Ollama (`http://<сервер>:11434/v1`) или LM Studio (`http://<сервер>:1234/v1`). Адрес должен быть доступен из контейнера gateway: `localhost` внутри контейнера — это сам контейнер, указывайте адрес машины в сети или `host.docker.internal`. Сервисы самого стека (`postgres`, `gateway` и другие), `0.0.0.0` и адреса метаданных облаков не принимаются.
 - Сменить сервис, адрес или ключ можно только с паролем МедКонтроля; первые 15 минут после входа с паролем он не спрашивается. То же для бота и чата Telegram.
 
@@ -220,7 +215,7 @@ cd /srv/medcontrol/app && docker compose exec -T gateway node src/tools/appleHea
 
 1. Скопировать папку диска целиком в папку `DICOM_DIR` (например, по SMB), имя вида `2026-05-21_КТ_ОГК`.
 2. В МедКонтроле: «Снимки» → «Архив снимков» → «Импортировать». Дата и метод читаются из заголовков, исследование привязывается или создаётся.
-3. Просмотрщик: «Открыть снимки» на карточке, пароль не нужен: edge пускает только с пропуском, который выдаёт вошедшему раздел «Снимки», и сам подставляет `ORTHANC_PASSWORD`. Снаружи доступны только чтение и просмотр, запись в Orthanc через сайт закрыта. Пароль Orthanc руками больше не вводится, поэтому он должен быть длинным и случайным: `openssl rand -hex 24` (gateway предупреждает в журнале, если он короче 16 знаков).
+3. Просмотрщик: «Открыть снимки» на карточке, пароль не нужен: edge пускает только с пропуском, который выдаёт вошедшему раздел «Снимки», и сам подставляет `ORTHANC_PASSWORD`. Снаружи доступны только чтение и просмотр, запись в Orthanc через сайт закрыта. Пароль Orthanc руками не вводится, поэтому он должен быть длинным и случайным: `openssl rand -hex 24` (gateway предупреждает в журнале, если он короче 16 знаков).
 4. Хранилище Orthanc не бэкапится: после восстановления повторить импорт по папкам.
 
 ## Типичные поломки
@@ -231,7 +226,7 @@ cd /srv/medcontrol/app && docker compose exec -T gateway node src/tools/appleHea
 | gateway в цикле перезапуска, в логе `migration failed` | ошибка в новой миграции | откатить код на предыдущий коммит; миграция транзакционная, база цела |
 | gateway не стартует: `DTC_PASSWORD in .env must be at least 8 characters and not a common word` | пароль в `.env` короче 8 символов или словарное слово (пароль от 8 символов, но слабый по правилам нового пароля, старту не мешает: в журнале будет `DTC_PASSWORD in .env is weak`) | задать другой пароль или убрать `DTC_PASSWORD`, тогда пароль задаёт мастер первого запуска |
 | Telegram молчит | в логе `telegram bot: poll error` или `ETIMEDOUT 149.154…`: нет связи с `api.telegram.org`; либо не задан токен или chat id | `grep TELEGRAM_ .env`; `docker compose logs --since 1h gateway \| grep -i telegram`; Настройки → «Отправить тест». Если провайдер блокирует Telegram — убрать `TELEGRAM_PROXY=direct`, чтобы Telegram шёл через egress, и `docker compose up -d gateway watchdog`; либо в роутере направить 149.154.160.0/20 и 91.108.56.0/22 через VPN. Бот после сбоя сам повторяет попытки с паузой до 5 минут |
-| ИИ не отвечает: «Сервис не ответил вовремя» (504 `timeout`), «Нет связи с сервером» (502 `network`), в логе `upstream timeout` или `egress` | VPN роутера упал или сбросил политику; egress-контейнер не запущен | Настройки → «Откуда идут запросы» (ошибка или адрес провайдера — проблема в VPN); `docker compose ps egress`; в роутере проверить, что устройство egress (`EGRESS_IP`) в политике VPN и VPN активен; `docker compose restart egress`. Если адрес VPN, но ответа нет — Настройки → «Помощник ИИ» → «Проверить», возможно, перегружен провайдер модели. ChatGPT и DeepSeek через прокси не проходят, пока их адреса не добавлены в `egress/filter` |
+| ИИ не отвечает: «Сервис не ответил вовремя» (504 `timeout`), «Нет связи с сервером» (502 `network`), в логе `upstream timeout` или `egress` | VPN роутера упал или сбросил политику; egress-контейнер не запущен | Настройки → «Откуда идут запросы» (ошибка или адрес провайдера — проблема в VPN); `docker compose ps egress`; в роутере проверить, что устройство egress (`EGRESS_IP`) в политике VPN и VPN активен; `docker compose restart egress`. Если адрес VPN, но ответа нет — Настройки → «Помощник ИИ» → «Проверить», возможно, перегружен провайдер модели |
 | ИИ отвечает 403 / «Откуда идут запросы» показывает адрес провайдера | egress-прокси не идёт через VPN, провайдер модели не принимает адреса вашей страны | в роутере перевести устройство egress (`EGRESS_IP`) в политику VPN; `docker compose restart egress` |
 | После деплоя нет новых заголовков (CSP), `/_next/image` не закрыт, старое поведение `/orthanc` | edge работает со старым Caddyfile (новый inode после распаковки) | `docker compose up -d --force-recreate --no-deps edge`; проверить `curl -sI http://127.0.0.1:3001/ \| grep -i content-security` |
 | Страница пустая или не грузит скрипты, в консоли браузера `Content-Security-Policy` | CSP на edge запрещает внешний ресурс | ресурсы должны быть со своего домена; правка в `edge/Caddyfile`, затем пересоздать edge |
@@ -262,22 +257,15 @@ cd /srv/medcontrol/app && docker compose exec -T gateway node src/tools/appleHea
 - [ ] Firewall: порт 3001 (edge, HTTP) разрешить только с адреса роутера или HTTPS-прокси.
 - [ ] Общая папка с DICOM-дисками: доступ одному пользователю, не группе.
 - [ ] Закрыть лишние открытые порты сервера.
+- [ ] HSTS с `includeSubDomains` на HTTPS-прокси, если все поддомены на HTTPS.
 
-**В коде и compose (отдельными PR)**
-- [x] Внутренняя сеть `data` (без выхода в интернет) для Postgres, Orthanc и парсера PDF. Выход gateway только через egress — не делаем: egress необязателен.
-- [x] `no-new-privileges` у всех сервисов; `cap_drop: [ALL]` с минимальным `cap_add` у postgres, gateway, ingestion, frontend, edge, backup, watchdog; `read_only` у gateway, ingestion, frontend, edge, watchdog. Orthanc и egress только с `no-new-privileges`; egress, edge, orthanc, postgres и backup сейчас работают от root.
-- [x] Фиксированные теги образов: `postgres:16.13`, `caddy:2.11.4-alpine`, `node:22.23.2-alpine`, `python:3.12.16-slim`. Обновлять осознанно, раз в квартал, после бэкапа.
-- [ ] HSTS с `includeSubDomains`, если все поддомены на HTTPS.
-- [x] Зависимости gateway (ноябрь 2026): `npm audit fix` поднял `fastify` до 5.12, `undici` до 7.30.1, `ajv`, `fast-uri`, `find-my-way`, `yaml`,
-      `bn.js`, `brace-expansion` в пределах их версий; `@fastify/jwt` 9 → 10 (`fast-jwt` 6, критические уязвимости проверки токенов),
-      `@fastify/swagger-ui` 5 → 6 (`@fastify/static` 10, обход путей; Swagger и так включается только с `ENABLE_DOCS=1`).
-- [x] `zod` 3 → 4.6 (ноябрь 2026, уязвимость высокой опасности: память при проверке огромных массивов). В zod 4 `.partial()` подставляет
-      значения по умолчанию, поэтому у схем для PATCH полей с `.default()` быть не должно (см. `MilestonePatch` в `routes/milestones.js`);
-      `z.record` пишется с двумя аргументами. Тексты в `details` ответа 400 у zod 4 другие; интерфейс их не показывает.
-- [ ] Оставшееся в `npm audit` gateway (проверено, в работе не достижимо, `npm audit fix` без `--force` их не исправляет):
-      `glob`, `minimatch`, `readdir-glob` через `archiver` 7, `exceljs` и `@fastify/static` 10 (`glob` 13, исправлено в 14) — обход отмены
-      по `AbortSignal` и ReDoS в шаблонах файлов; шаблонов из запроса у нас нет, `AbortSignal` в `glob` не передаём,
-      архив собирается из перечисленных файлов. `archiver` 8 — только ESM с другим API, обновлять вместе с правкой `routes/export.js`.
-      `uuid` < 11.1.1 через `exceljs` — ошибка только для v3/v5/v6 с переданным буфером, `exceljs` их так не вызывает; `npm` предлагает откат `exceljs` на 3.4, это хуже.
+**Уже сделано в коде и compose**
+- Внутренняя сеть `data` (без выхода в интернет) для Postgres, Orthanc и парсера PDF.
+- `no-new-privileges` у всех сервисов; `cap_drop: [ALL]` с минимальным `cap_add` у postgres, gateway, ingestion, frontend, edge, backup, watchdog; `read_only` у gateway, ingestion, frontend, edge, watchdog. Orthanc и egress только с `no-new-privileges`; egress, edge, orthanc, postgres и backup работают от root.
+- Фиксированные теги образов: `postgres:16.13`, `caddy:2.11.4-alpine`, `node:22.23.2-alpine`, `python:3.12.16-slim`. Обновлять осознанно, раз в квартал, после бэкапа.
+- Оставшееся в `npm audit` gateway проверено и в работе не достижимо (`npm audit fix` без `--force` их не исправляет):
+      `glob`, `minimatch`, `readdir-glob` через `archiver` 7, `exceljs` и `@fastify/static` 10 (`glob` 13, исправлено в 14): обход отмены
+      по `AbortSignal` и ReDoS в шаблонах файлов; шаблонов из запроса нет, `AbortSignal` в `glob` не передаётся,
+      архив собирается из перечисленных файлов. `uuid` < 11.1.1 через `exceljs`: ошибка только для v3/v5/v6 с переданным буфером, `exceljs` их так не вызывает.
       Проверять заново при каждом обновлении: `cd gateway && npm audit`.
-- [x] Next.js обновлён до 15.5 (поддерживаемая ветка), React 19; `postcss` внутри Next поднят до 8.5 через `overrides` в `frontend/package.json` — проверять при обновлении Next, убрать, когда Next сам перейдёт на исправленную версию. `npm audit` фронтенда: 0.
+- `postcss` внутри Next поднят до 8.5 через `overrides` в `frontend/package.json`: при обновлении Next проверить, нужен ли он ещё.

@@ -1,5 +1,5 @@
 /**
- * Treatment protocol presets. `ready` = used by the author for real; `example` = a reasonable starting point written
+ * Treatment protocol presets. `ready` = thresholds taken from a real course of treatment; `example` = a reasonable starting point written
  * from public guidance, NOT reviewed by a doctor (the UI says so). Thresholds use catalog keys only (catalogSeed.js).
  * Here is the structure: thresholds, scales, doses. The words are in locales/<language>/server/presets.json, the
  * message of a rule under `rules.<marker>_<severity>_<op>` of its preset or of `base`.

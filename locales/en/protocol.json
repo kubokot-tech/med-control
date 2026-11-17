@@ -5,7 +5,7 @@
   "cancelChanges": "Discard changes",
   "done": "Done",
   "status": {
-    "ready": "author's preset",
+    "ready": "example from real treatment",
     "example": "example, not reviewed by a doctor",
     "custom": "custom"
   },

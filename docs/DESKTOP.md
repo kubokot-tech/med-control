@@ -1,9 +1,8 @@
 # Настольная версия (macOS и Windows)
 
-Решено 2 ноября 2026: путь А. Нынешнее приложение целиком работает внутри настольного: окно Tauri 2, рядом встроенный Node,
+Приложение целиком работает внутри настольного: окно Tauri 2, рядом встроенный Node,
 база PGlite (Postgres в WebAssembly) вместо сервера Postgres, PDF читается на JS. Без Docker, без своего сервера,
-данные в папке пользователя. Мобильная версия (ядро прямо в WebView, без Node) — позже, отдельно; работа по пути А
-(драйвер PGlite, папка данных) ей пригодится.
+данные в папке пользователя.
 
 Здесь описано, чем настольная версия отличается от серверной, как её собрать и как она устроена.
 
@@ -43,57 +42,48 @@ node scripts/prepare.mjs --target x86_64-apple-darwin && npx tauri build --targe
 в `src-tauri/binaries/node-<target>`, а в `desktop/build/app/`: gateway с production-зависимостями (с PGlite, без нативного
 `@napi-rs/canvas`), `shared/`, `locales/`, `db/migrations`, сборку Next `standalone` со `static` и `public`. Карты исходников и `.d.ts`
 удаляются; если в пакете окажется нативный модуль (`.node`), скрипт останавливается. Раскладка повторяет репозиторий.
-Готовое приложение: `desktop/src-tauri/target/release/bundle/`. Сборки без подписи.
+Готовое приложение: `desktop/src-tauri/target/release/bundle/`. Сборки без подписи разработчика.
 
 Идентификатор приложения `app.med-control.desktop` (папка данных от него не зависит: она называется `MedControl`), иконки собраны из знака на синей плитке (см. `docs/brand/README.md`,
 `npx tauri icon …`). Для проверки без настоящей папки данных: `DTC_DATA_DIR=/tmp/mc <путь к приложению>/Contents/MacOS/medcontrol`.
 
 ## Как устроено
 
-Серверная версия работает как раньше: всё настольное включается переменными окружения, по умолчанию поведение прежнее.
+Всё настольное включается переменными окружения; без них серверная версия работает как обычно.
 
 ### 1. Драйвер PGlite в `gateway/src/lib/db.js`
 
-Готово: `gateway/src/lib/pglite.js` (фасад) и выбор драйвера в `db.js`; PGlite 0.5.10 (внутри Postgres 18) закреплён точной версией
+`gateway/src/lib/pglite.js` (фасад) и выбор драйвера в `db.js`; PGlite 0.5.10 (внутри Postgres 18) закреплён точной версией
 в `optionalDependencies` — серверный образ ставит зависимости с `--omit=optional` и не растёт; для настольной сборки
-ставить без `--omit=optional`. Сессия PGlite в UTC, как Postgres в контейнере. `bigint` приводится к строке, как в `pg`,
-так что отличий в коде нет. Сервер при SIGTERM закрывает базу (`pool.end()`), чтобы PGlite дописал файлы.
-Интеграционные тесты в CI идут дважды: на Postgres и с `TEST_DB=pglite`. Юнит-тесты фасада: `gateway/test/pglite.test.js`.
-
+ставить без `--omit=optional`. Сессия PGlite в UTC, как Postgres в контейнере. Сервер при SIGTERM закрывает базу (`pool.end()`), чтобы PGlite дописал файлы.
+Интеграционные тесты в CI идут дважды: на Postgres и с `TEST_DB=pglite` (`gateway/test/integration/helpers.js`: свежая PGlite
+в памяти на файл вместо `create database`). Юнит-тесты фасада: `gateway/test/pglite.test.js`.
 
 - `DB_DRIVER=pglite` (по умолчанию `pg`), папка базы `PGLITE_DIR` (по умолчанию `DTC_DATA_DIR/pgdata`).
 - PGlite с расширением `pgcrypto` из `@electric-sql/pglite/contrib/pgcrypto` (миграция 001 делает `create extension pgcrypto`).
-  Проверено: все миграции, русский полнотекстовый поиск, часовые пояса, `jsonb`, advisory-блокировки работают
-.
+  Все миграции, русский полнотекстовый поиск, часовые пояса, `jsonb` и advisory-блокировки работают.
 - Фасад, похожий на `pg.Pool`, чтобы остальной код не менялся: `pool.query(sql, params)` → `{ rows, rowCount }`
   (в PGlite поле называется `affectedRows`), `pool.connect()` → клиент с `query` и `release`.
-- **У PGlite одно соединение.** `transaction(fn)` в `db.js` шлёт `BEGIN`/`COMMIT` на клиенте; пока транзакция идёт,
-  запросы других обработчиков не должны попасть в неё. Нужен асинхронный замок: `connect()` берёт его до `release()`,
-  `query()` вне транзакции ждёт его. Другой вариант — `db.transaction()` самого PGlite внутри нашего `transaction(fn)`.
-- Типы как у `pg`: дата (`DATE`, oid 1082) строкой `ГГГГ-ММ-ДД` — парсер `{ [types.DATE]: (v) => v }`;
-  `numeric` уже приходит строкой; `bigint` в PGlite приходит числом (в `pg` — строкой), проверить места, где это важно.
-- `gateway/src/lib/migrate.js` берёт клиента и advisory-блокировку — проверить на фасаде.
-- Тесты: режим `TEST_DB=pglite` в `gateway/test/integration/helpers.js` (свежая PGlite в памяти на файл вместо
-  `create database`), прогнать весь интеграционный набор на PGlite; добавить шаг в CI.
+- **У PGlite одно соединение**, поэтому фасад пускает запросы по очереди: `connect()` держит замок до `release()`,
+  `transaction(fn)` от `BEGIN` до `COMMIT`, `query()` вне транзакции ждёт его.
+- Типы как у `pg`: дата (`DATE`) строкой `ГГГГ-ММ-ДД`, `numeric` и `bigint` строкой, так что отличий в коде нет.
 
 ### 2. Папка данных и окружение
 
-Готово: `gateway/src/lib/desktopEnv.js` — первым импортом в `server.js` и `migrate.js`. При `DTC_EDITION=desktop` всё, что
+`gateway/src/lib/desktopEnv.js` — первым импортом в `server.js` и `migrate.js`. При `DTC_EDITION=desktop` всё, что
 запускающий не задал, получает значения по умолчанию: `DB_DRIVER=pglite`, `PDF_ENGINE=js`, `GATEWAY_HOST=127.0.0.1`,
 `DTC_DATA_DIR` — папка приложения ОС (создаётся с правами 700). Явно заданные переменные важнее. Gateway слушает
-`GATEWAY_HOST:GATEWAY_PORT` (по умолчанию, как раньше, `0.0.0.0:3000`). Утренняя сводка и тревога о бэкапах на десктопе
+`GATEWAY_HOST:GATEWAY_PORT` (по умолчанию `0.0.0.0:3000`). Утренняя сводка и тревога о бэкапах на десктопе
 не отправляются, `/health?deep=1` показывает `backup: off`. Запуск без Tauri для разработки: `scripts/desktop-dev.sh`
-(docs/OPERATIONS.md). Tauri должен задать только `DTC_EDITION=desktop`, `DTC_DATA_DIR`, `GATEWAY_PORT` и `APP_URL`.
+(docs/OPERATIONS.md). Tauri задаёт `DTC_EDITION=desktop`, `DTC_DATA_DIR`, `GATEWAY_PORT` и `APP_URL=http://127.0.0.1:<порт>`, остальное берётся по умолчанию;
+`ORTHANC_*`, `EGRESS_PROXY` и `TELEGRAM_PROXY` в серверы не передаются.
 
-
-- `DTC_DATA_DIR` — папка приложения: macOS `~/Library/Application Support/MedControl`, Windows `%APPDATA%\MedControl`.
-  Там база (`pgdata`), загруженные файлы, секрет сессий (создаётся сам).
-- Окружение, с которым Tauri запускает Node: `DTC_EDITION=desktop`, `DB_DRIVER=pglite`, `PDF_ENGINE=js`,
-  `APP_URL=http://127.0.0.1:<порт>`, без `ORTHANC_*`, `EGRESS_PROXY`, `TELEGRAM_PROXY`.
+`DTC_DATA_DIR`, папка приложения: macOS `~/Library/Application Support/MedControl`, Windows `%APPDATA%\MedControl`.
+Там база (`pgdata`), загруженные файлы, секрет сессий (создаётся сам).
 
 ### 3. Процессы и окно
 
-Готово: папка `desktop/` (см. «Как собрать» ниже). Окно сначала показывает заставку `desktop/splash/index.html`. Код на Rust
+Проект Tauri 2 лежит в `desktop/` (см. «Как собрать»). Окно сначала показывает заставку `desktop/splash/index.html`. Код на Rust
 (`desktop/src-tauri/src/lib.rs`) берёт два свободных порта на `127.0.0.1` и запускает встроенным Node сначала gateway
 (`DTC_EDITION=desktop`, `DTC_DATA_DIR`, `GATEWAY_PORT`, `APP_URL`), потом сервер Next (`desktop-launcher.cjs`, `HOSTNAME=127.0.0.1`,
 `GATEWAY_INTERNAL_URL`). Когда оба ответили, окно переходит на Next. Если запуск не удался, заставка показывает ошибку.
@@ -102,29 +92,22 @@ node scripts/prepare.mjs --target x86_64-apple-darwin && npx tauri build --targe
 
 Остановка без сигналов, одинаково на macOS и Windows: приложение держит stdin обоих серверов и при выходе закрывает его.
 Gateway при `DTC_EXIT_WITH_PARENT=1` по закрытию stdin мягко останавливается и закрывает PGlite. Через 15 секунд всё,
-что не остановилось, убивается. Если приложение упало, stdin закрывается сам. Проверено: выход из меню, SIGTERM и
-`kill -9` приложения — серверы останавливаются, после перезапуска данные на месте. Второй запуск передаёт фокус первому окну
+что не остановилось, убивается. Если приложение упало, stdin закрывается сам, так что после выхода из меню, SIGTERM
+или `kill -9` серверы останавливаются, а данные после перезапуска на месте. Второй запуск передаёт фокус первому окну
 (`tauri-plugin-single-instance`). Плагина `shell` нет: Node запускается напрямую, IPC окну не нужен.
 
-Проверено на macOS arm64: отладочная и релизная сборка, `.dmg` около 71 МБ, приложение около 236 МБ (Node 112 МБ,
-gateway с зависимостями около 130 МБ). На x64 и Windows проверит CI (шаг 6).
+Размер на macOS arm64: `.dmg` около 71 МБ, приложение около 236 МБ (Node 112 МБ, gateway с зависимостями около 130 МБ).
 
-
-- Папка `desktop/` в корне репозитория: проект Tauri 2 (`desktop/src-tauri`), скрипт подготовки ресурсов.
 - Node 22 как sidecar Tauri (`externalBin`) под каждую платформу: macOS arm64 и x64, Windows x64.
-- Ресурсы: `gateway/` с production-зависимостями (`npm ci --omit=dev`: в отличие от Dockerfile, без `--omit=optional`, иначе не будет PGlite; нативных модулей
-  быть не должно — проверить, `pdfjs` без canvas), `shared/`, `locales/` (их читает gateway), `db/migrations`, сборка Next (словари интерфейса уже внутри неё) в режиме `standalone`
-  (`frontend/.next/standalone` + `.next/static` + `public`), файлы wasm PGlite.
-- Запуск: Tauri выбирает два свободных порта на `127.0.0.1`, стартует gateway (`node src/server.js`) и сервер Next
-  (`GATEWAY_INTERNAL_URL=http://127.0.0.1:<порт gateway>`), ждёт `GET /health`, открывает окно на адрес Next.
-  Слушать только `127.0.0.1`. Один экземпляр приложения (single-instance). При выходе — мягкая остановка Node, чтобы PGlite
-  дописал данные.
-- Пути `../shared` и `../locales` в коде относительные: раскладка ресурсов должна повторять репозиторий
+- Ресурсы: `gateway/` с production-зависимостями (`npm ci --omit=dev`: в отличие от Dockerfile, без `--omit=optional`, иначе не будет PGlite;
+  нативных модулей нет, `pdfjs` без canvas), `shared/`, `locales/` (их читает gateway), `db/migrations`, сборка Next (словари интерфейса уже внутри неё)
+  в режиме `standalone` (`frontend/.next/standalone` + `.next/static` + `public`), файлы wasm PGlite.
+- Пути `../shared` и `../locales` в коде относительные: раскладка ресурсов повторяет репозиторий
   (`gateway/` рядом с `shared/` и `locales/`), как в Docker-образах.
 
 ### 4. Что поправить в WebView
 
-Готово: окно создаётся в коде (`desktop/src-tauri/src/lib.rs`), не в `tauri.conf.json`, чтобы повесить обработчики WebView.
+Окно создаётся в коде (`desktop/src-tauri/src/lib.rs`), не в `tauri.conf.json`, чтобы повесить обработчики WebView.
 Фронтенд для скачиваний и ссылок не менялся: работают обычные `<a download>` и `target="_blank"`.
 
 - **Скачивания** (`on_download`): для любого скачивания — ZIP «Архива всех данных», PDF-отчёта, Excel, CSV, PDF бланка —
@@ -141,10 +124,6 @@ gateway с зависимостями около 130 МБ). На x64 и Windows 
 - **Тексты** по редакции (`frontend/app/ui/EditionText.tsx`, `useEdition`): подзаголовок мастера «История лечения на этом
   компьютере», подписи про хранение ключей в мастере и «Помощнике ИИ», раздел Настроек «Приложение → Служебное»
   вместо «Сервер → Для администратора сервера» с советом сохранять «Архив всех данных» в облако или на флешку.
-
-Проверено на macOS arm64 в собранном приложении на временной тестовой странице: диалог сохранения с именем файла,
-отмена, второе окно для `blob:`, внешняя ссылка в системном браузере, отказ для чужого порта, русское меню,
-«Обновить страницу». Сохранение настоящего экспорта после входа проверить вручную (п. 7).
 
 - Service worker PWA (`frontend/app/ui/PwaRegister.tsx`) регистрируется только по `https:`, на `http://127.0.0.1` его не будет —
   так и нужно.

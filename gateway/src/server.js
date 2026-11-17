@@ -72,7 +72,7 @@ await app.register(cors, { origin: (origin, cb) => cb(null, !origin || ORIGINS.i
 await app.register(jwt, { secret: JWT_SECRET });
 // Swagger UI only in development: the app may be published to the internet.
 if (process.env.ENABLE_DOCS === '1') {
-  await app.register(swagger, { openapi: { info: { title: 'MedControl Gateway', version: '0.3.0' } } });
+  await app.register(swagger, { openapi: { info: { title: 'MedControl Gateway', version: '0.3.1' } } });
   await app.register(swaggerUI, { routePrefix: '/docs' });
 }
 await app.register(multipart, {

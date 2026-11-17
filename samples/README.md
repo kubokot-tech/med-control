@@ -38,6 +38,4 @@ docker compose up -d --build
 LAB_SAMPLES_URL=https://адрес-сайта/api/samples
 ```
 
-Чтобы отправка работала у всех из коробки, этот адрес надо сделать значением по умолчанию: в `docker-compose.yml` корня и в окружении настольной версии.
-
 Читать образцы: `node scripts/lab-samples.mjs` (нужны `LAB_SAMPLES_URL` и `LAB_SAMPLES_TOKEN` в окружении или в `.env` корня).
