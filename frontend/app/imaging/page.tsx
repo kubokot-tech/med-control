@@ -1,12 +1,12 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'use-intl';
 import Icon from '../ui/icons';
 import BottomSheet from '../ui/BottomSheet';
 import LabChart from '../ui/LabChart';
-import { apiFetch } from '../ui/labUtils';
+import { apiFetch, openAttachment } from '../ui/labUtils';
 import BatchUploadSheet from '../ui/BatchUploadSheet';
 import AiComment from '../ui/AiComment';
 import SliceSheet from '../ui/SliceSheet';
@@ -16,6 +16,7 @@ import { useFormat } from '../ui/format';
 import { useEdition } from '../ui/edition';
 import EmptyState from '../ui/EmptyState';
 import { useMedLabels } from '../ui/medLabels';
+import FileButton, { takeFiles } from '../ui/FileButton';
 import { MODALITIES, MODALITY_CT } from '../../../shared/medCodes.js';
 
 type Attachment = { sha256: string; filename: string | null; mimeType: string | null };
@@ -56,9 +57,6 @@ export default function ImagingPage() {
   const [parseText, setParseText] = useState('');
   const [report, setReport] = useState<Report | null>(null);
   const [reportMap, setReportMap] = useState<Record<number, string>>({}); // report lesion idx -> lesion id | 'new' | 'skip'
-  const [uploadFor, setUploadFor] = useState<string | null>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
-  const batchRef = useRef<HTMLInputElement>(null);
   const [batchFiles, setBatchFiles] = useState<File[] | null>(null);
   const [pending, setPending] = useState<File[]>([]);
   const [archiveOpen, setArchiveOpen] = useState(false);
@@ -155,11 +153,8 @@ export default function ImagingPage() {
   }
 
   // --- files ---
-  function pickFile(s: Study) { setUploadFor(s.milestoneId); fileRef.current?.click(); }
-  async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
-    // FileList is live: copy it before clearing the input, otherwise nothing is uploaded.
-    const files = Array.from(e.target.files || []); const id = uploadFor; e.target.value = '';
-    if (!files.length || !id) return;
+  async function attach(id: string, files: File[]) {
+    if (!files.length) return;
     setBusy(true); setErr(null);
     try {
       for (const f of files) {
@@ -168,14 +163,11 @@ export default function ImagingPage() {
         if (!r.ok) throw new Error(await r.text());
       }
       await load();
-    } catch (e: any) { setErr(String(e?.message || e)); } finally { setBusy(false); setUploadFor(null); }
+    } catch (e: any) { setErr(String(e?.message || e)); } finally { setBusy(false); }
   }
   async function openFile(a: Attachment) {
-    const r = await apiFetch(`/api/gateway/attachments/${a.sha256}?inline=1`);
-    if (!r.ok) { setErr(await r.text()); return; }
-    const url = URL.createObjectURL(await r.blob());
-    window.open(url, '_blank', 'noopener');
-    setTimeout(() => URL.revokeObjectURL(url), 60000);
+    const out = await openAttachment(a);
+    if (!out.ok) setErr(await out.response.text());
   }
 
   // --- measurements ---
@@ -267,15 +259,13 @@ export default function ImagingPage() {
         <p className="page-header__desc">{t('desc')}</p>
       </div>
       {err && <div className="msg msg--error" style={{ marginBottom: 16 }}>{err}</div>}
-      <input ref={fileRef} type="file" accept="application/pdf,image/*" multiple hidden onChange={onFile} />
 
       <div className="row" style={{ marginBottom: 20 }}>
         <button type="button" className="btn btn--primary" onClick={openNewStudy}><Icon name="plus" />{t('addStudy')}</button>
-        <button type="button" className="btn btn--secondary" onClick={() => batchRef.current?.click()}><Icon name="upload" />{t('uploadReports')}</button>
+        <FileButton className="btn btn--secondary" accept="application/pdf,image/*" multiple onFiles={setBatchFiles}><Icon name="upload" />{t('uploadReports')}</FileButton>
         {data?.orthancEnabled && <button type="button" className="btn btn--secondary" onClick={() => setArchiveOpen(true)}><Icon name="imaging" />{t('archive')}</button>}
         {!ed.available('dicom') && <button type="button" className="btn btn--secondary" disabled title={t('serverOnlyTitle')}><Icon name="imaging" />{t('archiveServerOnly')}</button>}
         <Link href="/history" className="btn btn--ghost">{t('history')}</Link>
-        <input ref={batchRef} type="file" accept="application/pdf,image/*" multiple hidden onChange={(e) => { const fs = Array.from(e.target.files || []); e.target.value = ''; if (fs.length) setBatchFiles(fs); }} />
         <BatchUploadSheet files={batchFiles} defaultKind="imaging" onClose={() => setBatchFiles(null)} onDone={load} />
       </div>
 
@@ -352,9 +342,9 @@ export default function ImagingPage() {
                     <button type="button" className="ms-file__x" aria-label={t('card.removeFile')} onClick={() => removeFile(s, a)}><Icon name="close" size={16} /></button>
                   </span>
                 ))}
-                {s.orthancStudyId && s.studyInstanceUid && <a className="btn btn--soft btn--sm" href={`/orthanc/stone-webviewer/index.html?study=${encodeURIComponent(s.studyInstanceUid)}`} target="_blank" rel="noreferrer"><Icon name="imaging" size={18} />{t('card.openViewer')}</a>}
-                {s.orthancStudyId && <button type="button" className="btn btn--ghost btn--sm" onClick={() => setSliceFor(s)}><Icon name="plus" size={18} />{t('card.saveSlice')}</button>}
-                {s.milestoneId && <button type="button" className="btn btn--ghost btn--sm" onClick={() => pickFile(s)} disabled={busy}><Icon name="upload" size={18} />{t('card.report')}</button>}
+                {ed.available('dicom') && s.orthancStudyId && s.studyInstanceUid && <a className="btn btn--soft btn--sm" href={`/orthanc/stone-webviewer/index.html?study=${encodeURIComponent(s.studyInstanceUid)}`} target="_blank" rel="noreferrer"><Icon name="imaging" size={18} />{t('card.openViewer')}</a>}
+                {ed.available('dicom') && s.orthancStudyId && <button type="button" className="btn btn--ghost btn--sm" onClick={() => setSliceFor(s)}><Icon name="plus" size={18} />{t('card.saveSlice')}</button>}
+                {s.milestoneId && <FileButton className="btn btn--ghost btn--sm" accept="application/pdf,image/*" multiple disabled={busy} onFiles={(files) => attach(s.milestoneId!, files)}><Icon name="upload" size={18} />{t('card.report')}</FileButton>}
                 <button type="button" className="btn btn--ghost btn--sm" onClick={() => openMeasure(s)}>{t('card.measurements')}</button>
                 <button type="button" className="btn btn--soft btn--sm" onClick={() => openParse(s)} disabled={!data?.aiEnabled} title={data?.aiEnabled ? t('card.modelTitle', { model: data.aiModel || '' }) : t('card.needAiKey')}>{t('card.parse')}</button>
                 <button type="button" className="btn btn--ghost btn--sm" onClick={() => openEditStudy(s)}>{t('card.edit')}</button>
@@ -408,7 +398,7 @@ export default function ImagingPage() {
         <label className="field"><span>{t('studySheet.impression')}</span><textarea rows={4} value={form.impression} onChange={(e) => setForm({ ...form, impression: e.target.value })} placeholder={t('studySheet.impressionPlaceholder')} /></label>
         <label className="field"><span>{t('studySheet.dicomPath')}</span><input value={form.dicomPath} onChange={(e) => setForm({ ...form, dicomPath: e.target.value })} placeholder={t('studySheet.dicomPathPlaceholder')} /></label>
         <label className="field"><span>{t('studySheet.files')}</span>
-          <input type="file" accept="application/pdf,image/*" multiple onChange={(e) => setPending(Array.from(e.target.files || []))} />
+          <input type="file" accept="application/pdf,image/*" multiple onChange={(e) => { takeFiles(e.target, setPending); }} />
           {pending.length > 0 && <span className="muted" style={{ fontSize: 13 }}>{pending.map((f) => f.name).join(', ')}</span>}
         </label>
         <button type="button" className="btn btn--primary btn--lg btn--block" onClick={saveStudy} disabled={busy}><Icon name="check" strokeWidth={2.2} />{t('studySheet.save')}</button>

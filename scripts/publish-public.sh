@@ -98,7 +98,7 @@ ok "tree $(git rev-parse --short 'HEAD^{tree}') from $(git rev-parse --short HEA
 echo "Scan"
 # Generic secrets and personal traces. Test fixtures use short or obviously fake values that these do not match.
 SECRETS='sk-ant-[a-z0-9]+-[A-Za-z0-9_-]{30,}|sk-proj-[A-Za-z0-9_-]{30,}|sk-or-v1-[a-f0-9]{40,}|gh[pousr]_[A-Za-z0-9]{36}|github_pat_[A-Za-z0-9_]{40,}|xox[abprs]-[0-9]+-[A-Za-z0-9-]{10,}|AKIA[0-9A-Z]{16}|[0-9]{8,10}:AA[A-Za-z0-9_-]{33}|-----BEGIN [A-Z ]*PRIVATE KEY-----|/Users/[a-z][a-z0-9._-]+/'
-EMAILS_OK='@(example\.(com|org|net)|med-control\.app|users\.noreply\.github\.com|anthropic\.com)$|^git@github\.com$|@[0-9]x\.(png|jpg|webp)$'
+EMAILS_OK='@(example\.(com|org|net)|med-control\.app|users\.noreply\.github\.com|anthropic\.com)$|^git@github\.com$|@[0-9]x(-[0-9]+)?\.(png|jpg|webp)$'
 HITS=$(pgit grep --cached -nIE -e "$SECRETS" -- . ':!scripts/publish-public.sh' | cut -d: -f1,2 || true)
 [ -z "$HITS" ] && ok "no keys, tokens or home paths" || { echo "$HITS" | sed 's/^/  ✗ secret or home path: /' >&2; FAIL=1; }
 HITS=$(pgit grep --cached -ohIE -e '[A-Za-z0-9][A-Za-z0-9._%+-]*@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)*\.[a-z]{2,}' \
@@ -192,9 +192,12 @@ pgit tag -a "$TAG" -m "МедКонтроль $VERSION" HEAD
 pgit push -q origin "refs/tags/$TAG"
 ok "tag $TAG pushed; the desktop workflow builds the installers"
 if gh release view "$TAG" --repo "$REPO" >/dev/null 2>&1; then
-  gh release edit "$TAG" --repo "$REPO" --title "МедКонтроль $VERSION" --notes-file "$NOTES" --latest >/dev/null
+  gh release edit "$TAG" --repo "$REPO" --title "МедКонтроль $VERSION" --notes-file "$NOTES" >/dev/null
 else
-  gh release create "$TAG" --repo "$REPO" --verify-tag --latest --title "МедКонтроль $VERSION" --notes-file "$NOTES" >/dev/null
+  # Not «latest» yet: README download links and installed apps follow releases/latest, so the desktop
+  # workflow marks the release latest only once the installers and latest.json are attached.
+  gh release create "$TAG" --repo "$REPO" --verify-tag --latest=false --title "МедКонтроль $VERSION" --notes-file "$NOTES" >/dev/null
 fi
 ok "release: https://github.com/$REPO/releases/tag/$TAG"
-echo "Installers appear on the release in about 15 minutes: gh run list --repo $REPO --workflow desktop.yml"
+echo "Installers appear on the release in about 15 minutes, then it becomes the latest one:"
+echo "  gh run list --repo $REPO --workflow desktop.yml"

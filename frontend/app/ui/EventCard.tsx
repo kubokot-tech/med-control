@@ -7,6 +7,7 @@ import Icon, { type IconName } from './icons';
 import type { Format } from '../../../shared/format.js';
 import { useFormat } from './format';
 import { DEFAULT_LANGUAGE, LANGUAGES, isLanguage } from '../i18n/messages';
+import { labDocumentHref, noteHref } from './recordLink';
 
 export type FeedItem = {
   id: string;
@@ -39,7 +40,7 @@ export function describe(item: FeedItem, f: Format, t: FeedT): { icon: IconName;
           ? t.rich('eventCard.labFlagged', { total, flagged, warn: (c) => <span style={{ color: 'var(--warn)', fontWeight: 600 }}>{c}</span> })
           : t('eventCard.labAllNormal', { total })
         : t('eventCard.labUploaded'),
-      href: lab?.documentId ? `/labs/documents/${lab.documentId}` : '/labs/documents',
+      href: lab?.documentId ? labDocumentHref(lab.documentId) : '/labs/documents',
     };
   }
   if (item.type === 'MED_ADMIN') {
@@ -63,7 +64,7 @@ export function describe(item: FeedItem, f: Format, t: FeedT): { icon: IconName;
     const icon: IconName = kind === 'imaging' ? 'imaging' : kind === 'histology' ? 'labs' : kind === 'consult' ? 'consult' : 'doc';
     return { icon, kind: `ms-${item.milestone?.tone || 'neutral'}`, title: item.title || t('eventCard.milestoneDefault'), sub: item.notes || '', href: kind === 'imaging' ? '/imaging' : '/history' };
   }
-  if (item.type === 'NOTE' && item.source === 'notes') return { icon: 'doc', kind: 'other', title: item.title || t('eventCard.noteDefault'), sub: item.notes || '', href: item.note?.id ? `/notes/${item.note.id}` : '/notes' };
+  if (item.type === 'NOTE' && item.source === 'notes') return { icon: 'doc', kind: 'other', title: item.title || t('eventCard.noteDefault'), sub: item.notes || '', href: item.note?.id ? noteHref(item.note.id) : '/notes' };
   if (item.type === 'NOTE' && item.source === 'meds') return { icon: 'meds', kind: 'meds', title: item.title || t('eventCard.doseChangeDefault'), sub: item.notes || '', href: '/meds' };
   if (item.type === 'INFUSION') return { icon: 'drip', kind: 'other', title: item.title || t('eventCard.infusionDefault'), sub: item.notes || '', href: '/infusions' };
   if (item.type === 'SYMPTOM') return { icon: 'symptoms', kind: 'other', title: item.symptom ? `${t('eventCard.symptomPrefix')}${item.symptom.summary}` : item.title || '', sub: item.notes || '', href: '/symptoms' };

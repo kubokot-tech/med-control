@@ -23,5 +23,6 @@
     "report": "Doctor report",
     "settings": "Settings",
     "logout": "Sign out"
-  }
+  },
+  "fileUnread": "The file could not be read. Choose it again."
 }

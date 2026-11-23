@@ -13,6 +13,7 @@ import history from '../../../locales/ru/history.json';
 import home from '../../../locales/ru/home.json';
 import imaging from '../../../locales/ru/imaging.json';
 import infusions from '../../../locales/ru/infusions.json';
+import ipad from '../../../locales/ru/ipad.json';
 import labs from '../../../locales/ru/labs.json';
 import meds from '../../../locales/ru/meds.json';
 import notes from '../../../locales/ru/notes.json';
@@ -37,6 +38,7 @@ import enHistory from '../../../locales/en/history.json';
 import enHome from '../../../locales/en/home.json';
 import enImaging from '../../../locales/en/imaging.json';
 import enInfusions from '../../../locales/en/infusions.json';
+import enIpad from '../../../locales/en/ipad.json';
 import enLabs from '../../../locales/en/labs.json';
 import enMeds from '../../../locales/en/meds.json';
 import enNotes from '../../../locales/en/notes.json';
@@ -48,8 +50,8 @@ import enSymptoms from '../../../locales/en/symptoms.json';
 import enUi from '../../../locales/en/ui.json';
 import enWelcome from '../../../locales/en/welcome.json';
 
-export const ru = { errors, common, ai, alerts, auth, biomarkers, consults, contacts, feed, history, home, imaging, infusions, labs, meds, notes, protocol, report, search, settings, symptoms, ui, welcome };
-export const en: typeof ru = { errors: enErrors, common: enCommon, ai: enAi, alerts: enAlerts, auth: enAuth, biomarkers: enBiomarkers, consults: enConsults, contacts: enContacts, feed: enFeed, history: enHistory, home: enHome, imaging: enImaging, infusions: enInfusions, labs: enLabs, meds: enMeds, notes: enNotes, protocol: enProtocol, report: enReport, search: enSearch, settings: enSettings, symptoms: enSymptoms, ui: enUi, welcome: enWelcome };
+export const ru = { errors, common, ai, alerts, auth, biomarkers, consults, contacts, feed, history, home, imaging, infusions, ipad, labs, meds, notes, protocol, report, search, settings, symptoms, ui, welcome };
+export const en: typeof ru = { errors: enErrors, common: enCommon, ai: enAi, alerts: enAlerts, auth: enAuth, biomarkers: enBiomarkers, consults: enConsults, contacts: enContacts, feed: enFeed, history: enHistory, home: enHome, imaging: enImaging, infusions: enInfusions, ipad: enIpad, labs: enLabs, meds: enMeds, notes: enNotes, protocol: enProtocol, report: enReport, search: enSearch, settings: enSettings, symptoms: enSymptoms, ui: enUi, welcome: enWelcome };
 
 export type Messages = typeof ru;
 export type Language = 'ru' | 'en';

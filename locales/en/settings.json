@@ -67,6 +67,7 @@
     "protocolIntro": "The protocol determines lab alerts, diary scales, marker notes and what the AI knows about the treatment.",
     "protocolAlerts": "Alert thresholds",
     "protocolAlertsIntro": "When a lab marker crosses a threshold, an alert appears on Today and in Telegram.",
+    "protocolAlertsIntroDevice": "When a lab marker crosses a threshold, an alert appears on Today and as an iPad notification.",
     "protocolNotes": "Marker notes",
     "protocolNotesIntro": "The text appears on the marker card in a block titled with the protocol name: for example, what the medication does to the liver.",
     "protocolScales": "Diary scales",
@@ -141,7 +142,8 @@
       "dicom": "The imaging archive needs a separate service, Orthanc, which runs only on the server. Imaging reports and lesion sizes are entered as usual.",
       "backups": "Nightly backups are done by a server service. In the desktop version, save the \"Full data archive\" to an iCloud or OneDrive folder or a flash drive.",
       "passkeys": "Passkeys (Face ID, Touch ID) are tied to the site address. The desktop app opens with a password.",
-      "egress": "The proxy for AI and Telegram is a server service. The desktop app connects to the internet directly."
+      "egress": "The proxy for AI and Telegram is a server service. The desktop app connects to the internet directly.",
+      "telegram": "The Telegram bot works only in the server version. Dose, visit and course reminders on iPad are set by the system."
     }
   },
   "aiCard": {
@@ -504,6 +506,8 @@
     "noRepeat": "no repeat",
     "staleDays": "Days without labs",
     "hint": "For the main medication: a reminder if the dose isn't checked off, and a repeat in the evening until all of the day's doses are checked off. Supportive medications have their own time, on the medication card. Times follow the time zone from \"Language and region\". The notice about old labs comes on Mondays.",
+    "hintDevice": "For the main medication: an iPad notification if the dose isn't checked off, and a repeat in the evening until all of the day's doses are checked off. Supportive medications have their own time, on the medication card. Times follow the iPad time zone. The notice about old labs comes on Mondays.",
+    "savedDevice": "Saved. The iPad will remind you at this time.",
     "envHint": "Gray fields are set in .env on the server and are changed there.",
     "saving": "Saving…",
     "save": "Save"

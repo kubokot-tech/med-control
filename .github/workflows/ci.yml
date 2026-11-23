@@ -13,23 +13,14 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+# Self-hosted runner on the Mac mini (private repository): self-hosted jobs do not consume Actions minutes.
+# Registered as a launchd service in ~/actions-runner-medcontrol (./svc.sh install/start), labels: self-hosted, macOS, ARM64.
+# Service containers do not work on macOS runners: Postgres for the integration tests runs as a plain docker step.
 jobs:
   gateway:
     name: gateway (unit + integration on Postgres and PGlite)
-    runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_USER: dtc
-          POSTGRES_PASSWORD: dtc
-          POSTGRES_DB: dtc
-        ports: ["5432:5432"]
-        options: >-
-          --health-cmd "pg_isready -U dtc -d dtc"
-          --health-interval 5s
-          --health-timeout 3s
-          --health-retries 20
+    runs-on: [self-hosted, macOS, ARM64]
+    timeout-minutes: 30
     defaults:
       run:
         working-directory: gateway
@@ -42,17 +33,26 @@ jobs:
           cache-dependency-path: gateway/package-lock.json
       - run: npm ci
       - run: npm test
+      - name: Postgres in docker (service containers are Linux-only)
+        run: |
+          docker rm -f mc-ci-pg >/dev/null 2>&1 || true
+          docker run -d --name mc-ci-pg -e POSTGRES_USER=dtc -e POSTGRES_PASSWORD=dtc -e POSTGRES_DB=dtc -p 5433:5432 postgres:16
+          for i in $(seq 1 30); do docker exec mc-ci-pg pg_isready -U dtc -d dtc >/dev/null 2>&1 && break; sleep 2; done
       - run: npm run test:integration
         env:
-          TEST_DATABASE_URL: postgres://dtc:dtc@localhost:5432/dtc
+          TEST_DATABASE_URL: postgres://dtc:dtc@localhost:5433/dtc
       - name: npm run test:integration (PGlite)
         run: npm run test:integration
         env:
           TEST_DB: pglite
+      - name: Stop Postgres
+        if: always()
+        run: docker rm -f mc-ci-pg
 
   frontend:
     name: frontend (typecheck + build)
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, macOS, ARM64]
+    timeout-minutes: 20
     defaults:
       run:
         working-directory: frontend
@@ -69,22 +69,53 @@ jobs:
         env:
           NEXT_TELEMETRY_DISABLED: 1
 
+  ipad:
+    name: ipad (page tests)
+    runs-on: [self-hosted, macOS, ARM64]
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            gateway/package-lock.json
+            ipad/package-lock.json
+      - run: npm ci
+        working-directory: gateway
+      - run: npm ci
+        working-directory: ipad
+      - run: npm test
+        working-directory: ipad
+
   ingestion:
     name: ingestion (import check + parser tests)
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, macOS, ARM64]
+    timeout-minutes: 15
     defaults:
       run:
         working-directory: ingestion
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
+        if: runner.os != 'macOS'
         with:
           python-version: "3.12"
           cache: pip
           cache-dependency-path: |
             ingestion/requirements.txt
             ingestion/requirements-dev.txt
+      # setup-python's tool cache assumes GitHub-hosted paths on macOS; the self-hosted Mac keeps
+      # Python 3.12 in Homebrew (brew install python@3.12) and runs the tests in a venv on PATH.
+      - name: Python 3.12 venv (Homebrew, self-hosted macOS)
+        if: runner.os == 'macOS'
+        run: |
+          /opt/homebrew/opt/python@3.12/bin/python3.12 -m venv .venv
+          .venv/bin/pip install -r requirements-dev.txt
+          echo "${{ github.workspace }}/ingestion/.venv/bin" >> "$GITHUB_PATH"
       - run: pip install -r requirements-dev.txt
+        if: runner.os != 'macOS'
       - run: python -m compileall -q app
       - run: python -c "import app.main"
       - run: python -m pytest -q

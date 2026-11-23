@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslations } from 'use-intl';
 import Icon from './icons';
 import { apiFetch } from './labUtils';
 import { apiJson, errorRu } from './api';
+import FileButton from './FileButton';
 
 type Result = { tables: Record<string, number>; files: number };
 /** Tables counted after the load, with their wording in `importCard.tables`. */
@@ -18,7 +19,6 @@ export default function ImportCard() {
   const t = useTranslations('settings');
   const [empty, setEmpty] = useState<boolean | null>(null);
   const [file, setFile] = useState<File | null>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -58,9 +58,8 @@ export default function ImportCard() {
           <div className="muted" style={{ fontSize: 14, lineHeight: 1.5 }}>
             {t('importCard.intro')}
           </div>
-          <input ref={fileRef} type="file" accept=".zip,application/zip" hidden onChange={(e) => setFile(e.target.files?.[0] || null)} />
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-            <button type="button" className="btn btn--secondary btn--sm" onClick={() => fileRef.current?.click()} disabled={busy}>{t('importCard.choose')}</button>
+            <FileButton className="btn btn--secondary btn--sm" accept=".zip,application/zip" disabled={busy} onFiles={(files) => setFile(files[0] || null)}>{t('importCard.choose')}</FileButton>
             {file && <span className="muted" style={{ fontSize: 14, wordBreak: 'break-all' }}>{t('importCard.file', { name: file.name, size: (file.size / 1024 / 1024).toFixed(1) })}</span>}
           </div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>

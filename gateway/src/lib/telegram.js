@@ -1,6 +1,7 @@
 /** Telegram Bot API: one chat, plain sendMessage. Token and chat id from .env or the first-run wizard (config.js). */
 import { telegramFetch, telegramProxy } from './egress.js';
 import { secret } from './config.js';
+import { available } from './edition.js';
 
 export function telegramConfig() {
   return {
@@ -10,6 +11,9 @@ export function telegramConfig() {
   };
 }
 export function telegramReady() {
+  // One gate for every caller (notifyUser, scheduler, bot, settings summary): an edition without Telegram
+  // stays silent even when a token arrives with a database copied from another edition.
+  if (!available('telegram')) return false;
   const c = telegramConfig();
   return Boolean(c.token && c.chatId);
 }

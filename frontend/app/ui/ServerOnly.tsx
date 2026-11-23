@@ -1,7 +1,7 @@
 import { useTranslations } from 'use-intl';
 
-/** Features with a reason why they are missing in the desktop app: `serverOnly.why` (gateway/src/lib/edition.js, docs/DESKTOP.md). */
-const WHY = ['appleHealth', 'dicom', 'backups', 'passkeys', 'egress'] as const;
+/** Features with a reason why they are missing in this edition: `serverOnly.why` (gateway/src/lib/edition.js, docs/DESKTOP.md). */
+const WHY = ['appleHealth', 'dicom', 'backups', 'passkeys', 'egress', 'telegram'] as const;
 type Why = typeof WHY[number];
 const isWhy = (feature: string): feature is Why => (WHY as readonly string[]).includes(feature);
 

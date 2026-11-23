@@ -8,6 +8,7 @@
  * egress: whether requests go through the VPN proxy (EGRESS_PROXY); Russian services and local addresses go direct.
  */
 import { parseIPv4, parseIPv6, embeddedIPv4 } from './ipAddr.js';
+import { edition } from './edition.js';
 
 export const PROVIDERS = {
   openrouter: {
@@ -112,7 +113,7 @@ export function allowedCustomHost(hostname, { desktop = false } = {}) {
 }
 
 /** http(s) URL without credentials, for «Свой адрес»; null when it is not one or points where it must not. */
-export function validBaseUrl(s, { desktop = String(process.env.DTC_EDITION || '').toLowerCase() === 'desktop' } = {}) {
+export function validBaseUrl(s, { desktop = edition() === 'desktop' } = {}) {
   try {
     const u = new URL(String(s || '').trim());
     if ((u.protocol !== 'http:' && u.protocol !== 'https:') || u.username || u.password) return null;

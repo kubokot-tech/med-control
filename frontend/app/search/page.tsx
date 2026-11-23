@@ -8,6 +8,7 @@ import Icon, { type IconName } from '../ui/icons';
 import { apiFetch } from '../ui/labUtils';
 import { errorRu } from '../ui/api';
 import { useFormat } from '../ui/format';
+import { staticDetailHref } from '../ui/recordLink';
 
 type Hit = { kind: string; id: string; title: string; snippet: string; date: string | null; rank: number; href: string };
 type Kind = 'marker' | 'note' | 'milestone' | 'document' | 'imaging' | 'appointment' | 'contact' | 'symptom' | 'infusion' | 'ai' | 'labdoc' | 'medication';
@@ -72,7 +73,7 @@ function SearchInner() {
           <div className="section-label">{t(`kinds.${k}`)} · {groups.get(k)!.length}</div>
           <div className="today-section">
             {groups.get(k)!.map((h) => (
-              <Link key={`${h.kind}-${h.id}`} href={h.href} className="event-card" style={{ textDecoration: 'none', color: 'inherit' }}>
+              <Link key={`${h.kind}-${h.id}`} href={staticDetailHref(h.href)} className="event-card" style={{ textDecoration: 'none', color: 'inherit' }}>
                 <div className="event-card__icon event-card__icon--other"><Icon name={KIND[k].icon} size={22} /></div>
                 <div className="event-card__body" style={{ minWidth: 0 }}>
                   <div className="event-card__title">{h.title}{h.date ? <span className="muted" style={{ fontWeight: 400 }}> · {fmtDate(h.date)}</span> : null}</div>

@@ -1,15 +1,16 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslations } from 'use-intl';
 import Icon, { type IconName } from '../ui/icons';
 import BottomSheet from '../ui/BottomSheet';
-import { apiFetch } from '../ui/labUtils';
+import { apiFetch, openAttachment } from '../ui/labUtils';
 import BatchUploadSheet from '../ui/BatchUploadSheet';
 import { todayKey } from '../ui/api';
 import { errorRu } from '../ui/api';
 import { useFormat } from '../ui/format';
 import EmptyState from '../ui/EmptyState';
+import FileButton from '../ui/FileButton';
 
 type Extract = { method: 'pdf_text' | 'llm' | 'ocr'; model: string | null; chars: number; hasSummary?: boolean };
 type Attachment = { sha256: string; filename: string | null; mimeType: string | null; extract?: Extract | null };
@@ -46,9 +47,6 @@ export default function HistoryPage() {
   const [editing, setEditing] = useState<Milestone | null | 'new'>(null);
   const [form, setForm] = useState<Form>(emptyForm(todayKey()));
   const [busy, setBusy] = useState(false);
-  const [uploadFor, setUploadFor] = useState<string | null>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
-  const batchRef = useRef<HTMLInputElement>(null);
   const [batchFiles, setBatchFiles] = useState<File[] | null>(null);
 
   const load = useCallback(async () => {
@@ -98,16 +96,8 @@ export default function HistoryPage() {
     if (r.ok) { setEditing(null); load(); } else setErr(await r.text());
   }
 
-  function pickFile(id: string) {
-    setUploadFor(id);
-    fileRef.current?.click();
-  }
-  async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
-    // FileList is live: copy it before clearing the input, otherwise nothing is uploaded.
-    const files = Array.from(e.target.files || []);
-    const id = uploadFor;
-    e.target.value = '';
-    if (!files.length || !id) return;
+  async function attach(id: string, files: File[]) {
+    if (!files.length) return;
     setBusy(true);
     setErr(null);
     try {
@@ -122,7 +112,6 @@ export default function HistoryPage() {
       setErr(String(e?.message || e));
     } finally {
       setBusy(false);
-      setUploadFor(null);
     }
   }
   const [shown, setShown] = useState<{ sha: string; text: string; summary?: string | null } | null>(null);
@@ -153,11 +142,8 @@ export default function HistoryPage() {
     if (r.ok) load();
   }
   async function openFile(a: Attachment) {
-    const r = await apiFetch(`/api/gateway/attachments/${a.sha256}?inline=1`);
-    if (!r.ok) { setErr(await r.text()); return; }
-    const url = URL.createObjectURL(await r.blob());
-    window.open(url, '_blank', 'noopener');
-    setTimeout(() => URL.revokeObjectURL(url), 60000);
+    const out = await openAttachment(a);
+    if (!out.ok) setErr(await out.response.text());
   }
 
   return (
@@ -170,10 +156,8 @@ export default function HistoryPage() {
 
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 20 }}>
         <button type="button" className="btn btn--primary" onClick={openNew}><Icon name="plus" />{t('add')}</button>
-        <button type="button" className="btn btn--secondary" onClick={() => batchRef.current?.click()}><Icon name="upload" />{t('upload')}</button>
+        <FileButton className="btn btn--secondary" accept="application/pdf,image/*" multiple onFiles={setBatchFiles}><Icon name="upload" />{t('upload')}</FileButton>
       </div>
-      <input ref={fileRef} type="file" accept="application/pdf,image/*" multiple hidden onChange={onFile} />
-      <input ref={batchRef} type="file" accept="application/pdf,image/*" multiple hidden onChange={(e) => { const fs = Array.from(e.target.files || []); e.target.value = ''; if (fs.length) setBatchFiles(fs); }} />
       <BatchUploadSheet files={batchFiles} onClose={() => setBatchFiles(null)} onDone={load} />
 
       {items === null && !err && <div className="skeleton" style={{ height: 120 }} />}
@@ -209,7 +193,7 @@ export default function HistoryPage() {
                       <button type="button" className="ms-file__x" aria-label={t('card.removeFile')} onClick={() => removeFile(m, a)}><Icon name="close" size={16} /></button>
                     </span>
                   ))}
-                  <button type="button" className="btn btn--ghost btn--sm" onClick={() => pickFile(m.id)} disabled={busy}><Icon name="upload" size={18} />{t('card.attach')}</button>
+                  <FileButton className="btn btn--ghost btn--sm" accept="application/pdf,image/*" multiple disabled={busy} onFiles={(files) => attach(m.id, files)}><Icon name="upload" size={18} />{t('card.attach')}</FileButton>
                   <button type="button" className="btn btn--ghost btn--sm" onClick={() => openEdit(m)}>{t('card.edit')}</button>
                 </div>
                 {m.attachments.length > 0 && (

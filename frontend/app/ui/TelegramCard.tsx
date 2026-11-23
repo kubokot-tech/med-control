@@ -6,6 +6,7 @@ import { apiFetch } from './labUtils';
 import { errorRu } from './api';
 import { useFormat } from './format';
 import { useEdition } from './edition';
+import ServerOnly from './ServerOnly';
 import ReminderTimes from './ReminderTimes';
 
 export type NotifyStatus = {
@@ -35,11 +36,25 @@ export default function TelegramCard() {
   const [askPassword, setAskPassword] = useState<{ body: { token?: string; chatId?: string }; done: string } | null>(null);
   const [password, setPassword] = useState('');
 
+  const telegramOn = ed.available('telegram');
   const load = useCallback(async () => {
     const s = await apiFetch('/api/gateway/notify/status');
     if (s.ok) setStatus(await s.json());
   }, []);
   useEffect(() => { load(); }, [load]);
+
+  if (!telegramOn) {
+    return (
+      <>
+        <ServerOnly title={t('telegramCard.title')} feature="telegram" />
+        {status?.schedule && (
+          <div className="card meds-card">
+            <ReminderTimes schedule={status.schedule} onSaved={load} />
+          </div>
+        )}
+      </>
+    );
+  }
 
   async function saveTelegram(body: { token?: string; chatId?: string }, done: string) {
     setBusy(true); setErr(null); setMsg(null);

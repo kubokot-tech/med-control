@@ -1,0 +1,12 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "allow-face-unlock",
+    "notification:default",
+    "fs:default",
+    "fs:allow-appdata-write-recursive"
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "MedControl",
+  "version": "0.0.1",
+  "identifier": "app.med-control.ipad-spike",
+  "build": {
+    "frontendDist": "../web/dist"
+  },
+  "app": {
+    "windows": [
+      { "title": "МедКонтроль", "url": "index.html" }
+    ],
+    "security": {
+      "csp": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; font-src 'self' data:; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; connect-src 'self' ipc: http://ipc.localhost https:; frame-src 'self' blob:"
+    },
+    "withGlobalTauri": true
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": ["../../desktop/src-tauri/icons/icon.png"],
+    "iOS": {
+      "minimumSystemVersion": "17.4",
+      "frameworks": ["LocalAuthentication"]
+    }
+  }
+}

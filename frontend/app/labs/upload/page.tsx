@@ -9,6 +9,7 @@ import { apiFetch } from '../../ui/labUtils';
 import { errorRu } from '../../ui/api';
 import { LabParserRows, useLabParsers } from '../../ui/LabsParsersCard';
 import LabSampleInvite from '../../ui/LabSampleInvite';
+import FileButton, { rememberFiles } from '../../ui/FileButton';
 
 type FileStatus = 'pending' | 'uploading' | 'done' | 'error' | 'duplicate' | 'review';
 
@@ -27,6 +28,7 @@ type FileEntry = {
   file: File | { name: string; size: number };
   draft?: Draft;
   status: FileStatus;
+  step?: string;
   error?: string;
   labName?: string;
   docDate?: string;
@@ -41,7 +43,6 @@ function UploadInner() {
   const parsers = useLabParsers();
   const [files, setFiles] = useState<FileEntry[]>([]);
   const [uploading, setUploading] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
   const dragCounter = useRef(0);
   const [dragOver, setDragOver] = useState(false);
 
@@ -79,6 +80,16 @@ function UploadInner() {
       setFiles((prev) => [...prev, ...entries]);
     }
   }, [t]);
+
+  useEffect(() => {
+    const onStep = (e: Event) => {
+      const step = (e as CustomEvent<string>).detail;
+      if (!step) return;
+      setFiles((prev) => prev.map((f) => (f.status === 'uploading' ? { ...f, step } : f)));
+    };
+    window.addEventListener('mc-step', onStep);
+    return () => window.removeEventListener('mc-step', onStep);
+  }, []);
 
   const removeFile = useCallback((id: string) => {
     setFiles((prev) => prev.filter((f) => f.id !== id));
@@ -130,10 +141,12 @@ function UploadInner() {
           )
         );
       } catch (e: any) {
+        const raw = String(e?.message || e);
+        const error = raw === 'file_unread' ? t('upload.readFailed') : raw;
         setFiles((prev) =>
           prev.map((f) =>
             f.id === entry.id
-              ? { ...f, status: 'error', error: String(e?.message || e) }
+              ? { ...f, status: 'error', error }
               : f
           )
         );
@@ -161,7 +174,10 @@ function UploadInner() {
     dragCounter.current = 0;
     setDragOver(false);
     if (e.dataTransfer.files.length) {
-      addFiles(e.dataTransfer.files);
+      void rememberFiles(Array.from(e.dataTransfer.files)).then(addFiles, () => {
+        setFileError(t('upload.readFailed'));
+        setTimeout(() => setFileError(null), 4000);
+      });
     }
   };
 
@@ -181,10 +197,16 @@ function UploadInner() {
     }
   };
 
-  const statusLabel = (s: FileStatus) => {
-    switch (s) {
+  const statusLabel = (entry: FileEntry) => {
+    switch (entry.status) {
       case 'pending': return t('upload.status.pending');
-      case 'uploading': return t('upload.status.uploading');
+      case 'uploading':
+        if (entry.step === 'reading') return t('upload.status.reading');
+        if (entry.step === 'parsing') return t('upload.status.parsing');
+        if (entry.step === 'multipart') return t('upload.status.multipart');
+        if (entry.step === 'pdf') return t('upload.status.pdf');
+        if (entry.step === 'save') return t('upload.status.save');
+        return t('upload.status.uploading');
       case 'done': return t('upload.status.done');
       case 'duplicate': return t('upload.status.duplicate');
       case 'error': return t('upload.status.error');
@@ -203,13 +225,17 @@ function UploadInner() {
       )}
 
       {/* Drop zone */}
-      <div
+      <FileButton
+        accept="application/pdf"
+        multiple
+        onFiles={addFiles}
         onDragEnter={onDragEnter}
         onDragLeave={onDragLeave}
         onDragOver={onDragOver}
         onDrop={onDrop}
-        onClick={() => inputRef.current?.click()}
         style={{
+          display: 'block',
+          fontWeight: 400,
           border: `2px dashed ${dragOver ? 'var(--accent)' : 'var(--border-2)'}`,
           borderRadius: 12,
           padding: '40px 24px',
@@ -227,18 +253,7 @@ function UploadInner() {
         <div style={{ fontSize: 13, color: 'var(--fg-3)', marginTop: 4 }}>
           {t('upload.parsers')}
         </div>
-        <input
-          ref={inputRef}
-          type="file"
-          accept="application/pdf"
-          multiple
-          onChange={(e) => {
-            if (e.target.files?.length) addFiles(e.target.files);
-            e.target.value = '';
-          }}
-          style={{ display: 'none' }}
-        />
-      </div>
+      </FileButton>
 
       {files.length === 0 && parsers?.available && parsers.parsers.length > 0 && (
         <details className="card parsers-details">
@@ -333,7 +348,7 @@ function UploadInner() {
                     )}
                     {entry.sha256 && <span> · {entry.sha256.slice(0, 10)}…</span>}
                     {entry.status !== 'done' && entry.status !== 'duplicate' && (
-                      <span> · {statusLabel(entry.status)}</span>
+                      <span> · {statusLabel(entry)}</span>
                     )}
                     {entry.status === 'duplicate' && (
                       <span style={{ color: 'var(--warn)' }}> · {t('upload.already')}</span>

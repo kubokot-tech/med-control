@@ -13,6 +13,10 @@ export const CATALOG_SEED = [
     aliases: ['aspartate aminotransferase (ast)', 'аст', 'ast'], pattern: 'аспартатаминотрансфераз|(^|[^а-я])аст([^а-я]|$)|(^|[^a-z])ast([^a-z]|$)' },
   { key: 'BIL', name: 'Билирубин общий', short: 'Билирубин', category: 'blood', unit: 'мкмоль/л', aliases: ['total bilirubin'], sortOrder: 12,
     pattern: 'билирубин', exclude: 'полуколич|прям|непрям|моч' },
+  { key: 'BIL-D', name: 'Билирубин прямой', short: 'Билирубин прямой', category: 'blood', unit: 'мкмоль/л', aliases: ['direct bilirubin'], sortOrder: 14,
+    pattern: 'прям.*билирубин|билирубин.*прям', exclude: 'непрям' },
+  { key: 'GGT', name: 'Гамма-глютамилтранспептидаза (гамма-ГТ)', short: 'ГГТ', category: 'blood', unit: 'Ед/л', sortOrder: 15,
+    aliases: ['gamma-glutamyl transferase (ggt)', 'ггт', 'ggt', 'гамма-гт'], pattern: 'глютамилтранспептидаз|гамма-?гт|(^|[^a-z])ggt([^a-z]|$)|(^|[^а-я])ггт([^а-я]|$)' },
   { key: 'G6PD', name: 'Глюкозо-6-фосфатдегидрогеназа (G6PD)', short: 'G6PD', category: 'blood', unit: 'Ед/г Hb', sortOrder: 95,
     aliases: ['g6pd', 'г6фд', 'г-6-фд', 'г-6-фдг'], pattern: 'глюкозо-?6-?фосфат|(^|[^a-z])g6pd([^a-z]|$)|(^|[^а-я])г-?6-?фд' },
   { key: 'LDH', name: 'Лактатдегидрогеназа (ЛДГ)', short: 'ЛДГ', category: 'blood', unit: 'Ед/л', sortOrder: 13,
@@ -121,6 +125,8 @@ export const CATALOG_SEED = [
   { key: 'TG', name: 'Триглицериды', short: 'Триглицериды', category: 'blood', unit: 'ммоль/л', sortOrder: 125, pattern: 'триглицерид' },
   { key: 'TSH', name: 'Тиреотропный гормон (ТТГ)', short: 'ТТГ', category: 'blood', unit: 'мМЕ/л', sortOrder: 130, isKey: true,
     aliases: ['thyroid-stimulating hormone (tsh)', 'tsh', 'ттг', 'tsh'], pattern: '(^|[^а-я])ттг([^а-я]|$)|тиреотропн|(^|[^a-z])tsh([^a-z]|$)' },
+  { key: 'FT4', name: 'Тироксин (Т4) свободный', short: 'Т4 свободный', category: 'blood', unit: 'пмоль/л', sortOrder: 131,
+    aliases: ['free thyroxine (ft4)', 'ft4', 'т4 свободный'], pattern: 'тироксин.*свободн|свободн.*тироксин|(^|[^a-z])ft4([^a-z]|$)|(^|[^а-я])т4([^а-я]|$)' },
 
   // --- drug levels ---
   { key: 'TAC', name: 'Такролимус (концентрация)', short: 'Такролимус', category: 'blood', unit: 'нг/мл', sortOrder: 140,

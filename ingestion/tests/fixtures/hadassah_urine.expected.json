@@ -4,6 +4,11 @@
   "mknc_pdf_v1"
  ],
  "parses": {
+  "helix_pdf_v2": {
+   "lab_name": "Хеликс",
+   "doc_date": null,
+   "observations": []
+  },
   "helix_pdf_v1": {
    "lab_name": "Хеликс",
    "doc_date": null,

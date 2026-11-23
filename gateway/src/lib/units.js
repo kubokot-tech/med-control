@@ -33,7 +33,7 @@ export function unitFamily(unit) {
 const GENERIC = { 'g/dl->g/l': 10, 'g/l->g/dl': 0.1, '/ul->10^9/l': 0.001, '10^9/l->/ul': 1000, 'mg/l->ug/l': 1000, 'ug/l->mg/l': 0.001, 'ng/ml->ug/l': 1, 'ug/l->ng/ml': 1, 'miu/l->miu/l': 1 };
 const MOLAR = { // mg/dL -> mmol/L (or µmol/L where the catalog says so)
   GLU: 0.0555, eAG: 0.0555, 'U-GLU': 0.0555, UREA: 0.1665, CHOL: 0.02586, HDL: 0.02586, LDL: 0.02586, VLDL: 0.02586, NONHDL: 0.02586, TG: 0.01129,
-  CA: 0.2495, MG: 0.4114, CREA: 88.4, BIL: 17.1, FE: 0.179, ZN: 0.153, TIBC: 0.179, UIBC: 0.179,
+  CA: 0.2495, MG: 0.4114, CREA: 88.4, BIL: 17.1, 'BIL-D': 17.1, FE: 0.179, ZN: 0.153, TIBC: 0.179, UIBC: 0.179,
 };
 const MASS_FROM = { FE: 'ug/dl', ZN: 'ug/dl', TIBC: 'ug/dl', UIBC: 'ug/dl' };
 

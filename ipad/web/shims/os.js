@@ -1,0 +1,12 @@
+export const homedir = () => '/home';
+export const tmpdir = () => '/tmp';
+export const platform = () => 'ios';
+export const hostname = () => 'ipad';
+export const EOL = '\n';
+export const cpus = () => [{}];
+export const type = () => 'iPadOS';
+export const release = () => '0';
+export const arch = () => 'arm64';
+export const totalmem = () => 4 * 2 ** 30;
+export const freemem = () => 2 ** 30;
+export default { homedir, tmpdir, platform, hostname, EOL, cpus, type, release, arch, totalmem, freemem };

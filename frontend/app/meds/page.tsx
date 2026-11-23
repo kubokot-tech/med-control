@@ -9,6 +9,7 @@ import MedsCalendar from '../ui/MedsCalendar';
 import { apiFetch } from '../ui/labUtils';
 import { errorRu } from '../ui/api';
 import { useFormat } from '../ui/format';
+import { useEdition } from '../ui/edition';
 import EmptyState from '../ui/EmptyState';
 
 type MedItem = {
@@ -66,6 +67,7 @@ const pillOf = (s: string) => (isStatus(s) ? STATUS_PILL[s] : '');
 export default function MedsPage() {
   const t = useTranslations('meds');
   const f = useFormat();
+  const ed = useEdition();
   const unitRu = (u: string | null | undefined) => (f.unit(u) || '').replace(/^mg$/i, t('units.mg')).replace(/^ml$/i, t('units.ml'));
   const statusLabel = (s: string) => (isStatus(s) ? t(`status.${s}`) : s);
   const fmtTime = (iso: string) => f.time(iso);
@@ -387,7 +389,7 @@ export default function MedsPage() {
           )}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
             <label className="field"><span>{t('medForm.timesPerDay')}</span><input inputMode="numeric" value={medForm.timesPerDay} onChange={(e) => setMedForm({ ...medForm, timesPerDay: e.target.value })} /></label>
-            <label className="field"><span>{t('medForm.remindAt')}</span><input type="time" value={medForm.remindAt} onChange={(e) => setMedForm({ ...medForm, remindAt: e.target.value })} /></label>
+            <label className="field"><span>{t(ed.available('telegram') ? 'medForm.remindAt' : 'medForm.remindAtDevice')}</span><input type="time" value={medForm.remindAt} onChange={(e) => setMedForm({ ...medForm, remindAt: e.target.value })} /></label>
           </div>
           <div className="field">
             <span>{t('medForm.howOften')}</span>

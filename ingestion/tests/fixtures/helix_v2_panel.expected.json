@@ -1,0 +1,146 @@
+{
+ "candidates": [
+  "helix_pdf_v2",
+  "helix_pdf_v1",
+  "mknc_pdf_v1"
+ ],
+ "parses": {
+  "helix_pdf_v2": {
+   "lab_name": "Хеликс",
+   "doc_date": "2026-03-05",
+   "observations": [
+    {
+     "test_name": "Тиреотропный гормон (ТТГ)",
+     "result_text": "47.300",
+     "result_num": 47.3,
+     "units": "мкМЕ/мл",
+     "ref_text": "0.35 - 4.9",
+     "ref_low": 0.35,
+     "ref_high": 4.9,
+     "deviation_text": null,
+     "criticality_text": null
+    },
+    {
+     "test_name": "Аланинаминотрансфераза (АЛТ)",
+     "result_text": "88.4",
+     "result_num": 88.4,
+     "units": "Ед/л",
+     "ref_text": "<38",
+     "ref_low": null,
+     "ref_high": 38.0,
+     "deviation_text": null,
+     "criticality_text": null
+    },
+    {
+     "test_name": "Аспартатаминотрансфераза (АСТ)",
+     "result_text": "44.7",
+     "result_num": 44.7,
+     "units": "Ед/л",
+     "ref_text": "<36",
+     "ref_low": null,
+     "ref_high": 36.0,
+     "deviation_text": null,
+     "criticality_text": null
+    },
+    {
+     "test_name": "Билирубин общий",
+     "result_text": "12.30",
+     "result_num": 12.3,
+     "units": "мкмоль/л",
+     "ref_text": "<19",
+     "ref_low": null,
+     "ref_high": 19.0,
+     "deviation_text": null,
+     "criticality_text": null
+    },
+    {
+     "test_name": "Билирубин прямой",
+     "result_text": "6.20",
+     "result_num": 6.2,
+     "units": "мкмоль/л",
+     "ref_text": "<4.8",
+     "ref_low": null,
+     "ref_high": 4.8,
+     "deviation_text": null,
+     "criticality_text": null
+    },
+    {
+     "test_name": "Гамма-глютамилтранспептидаза (гамма-ГТ)",
+     "result_text": "92",
+     "result_num": 92.0,
+     "units": "Ед/л",
+     "ref_text": "9 - 64",
+     "ref_low": 9.0,
+     "ref_high": 64.0,
+     "deviation_text": null,
+     "criticality_text": null
+    },
+    {
+     "test_name": "Тироксин (Т4) свободный",
+     "result_text": "9.40",
+     "result_num": 9.4,
+     "units": "пмоль/л",
+     "ref_text": "11.2 - 23.5",
+     "ref_low": 11.2,
+     "ref_high": 23.5,
+     "deviation_text": null,
+     "criticality_text": null
+    }
+   ]
+  },
+  "helix_pdf_v1": {
+   "lab_name": "Хеликс",
+   "doc_date": "2026-03-05",
+   "observations": [
+    {
+     "test_name": "Билирубин общий",
+     "result_text": "12.30",
+     "result_num": 12.3,
+     "units": "мкмоль/л",
+     "ref_text": null,
+     "ref_low": null,
+     "ref_high": null,
+     "deviation_text": null,
+     "criticality_text": null
+    },
+    {
+     "test_name": "Концентрация ▲6.20 мкмоль/л",
+     "result_text": "3.90",
+     "result_num": 3.9,
+     "units": "мкмоль/л",
+     "ref_text": null,
+     "ref_low": null,
+     "ref_high": null,
+     "deviation_text": null,
+     "criticality_text": null
+    },
+    {
+     "test_name": "Активность ▲92 Ед/л",
+     "result_text": "47",
+     "result_num": 47.0,
+     "units": "Ед/л",
+     "ref_text": null,
+     "ref_low": null,
+     "ref_high": null,
+     "deviation_text": null,
+     "criticality_text": null
+    }
+   ]
+  },
+  "hadassah_pdf_v1": {
+   "lab_name": "Хадасса",
+   "doc_date": null,
+   "observations": []
+  },
+  "dnkom_pdf_v1": {
+   "lab_name": "ДНКОМ",
+   "doc_date": null,
+   "observations": []
+  },
+  "mknc_pdf_v1": {
+   "lab_name": null,
+   "doc_date": null,
+   "observations": []
+  }
+ }
+}

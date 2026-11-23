@@ -6,6 +6,7 @@ import { useTranslations } from 'use-intl';
 import Icon from './icons';
 import { apiJson, errorRu, todayKey } from './api';
 import type { RefSettings } from './RefSheet';
+import { labDocumentHref } from './recordLink';
 
 type Row = { key: string; name: string; value: string; unit: string; refLow: string; refHigh: string };
 const OTHER = '__other';
@@ -105,7 +106,7 @@ export default function ManualLabEntry() {
       {done && <div className="msg msg--ok">{t.rich(done.flagged ? 'manual.savedFlagged' : 'manual.saved', {
         n: done.n,
         flagged: done.flagged,
-        open: (c) => <Link href={`/labs/documents/${done.id}`}>{c}</Link>,
+        open: (c) => <Link href={labDocumentHref(done.id)}>{c}</Link>,
         summary: (c) => <Link href="/labs/summary?cat=blood">{c}</Link>,
       })}</div>}
     </div>

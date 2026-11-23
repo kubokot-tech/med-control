@@ -32,7 +32,9 @@ export function rowStatus(id: string, s: SettingsSummary, f: Format, t: Settings
     case 'protocol': return { text: [s.protocol.name, t(`status.protocol.${s.protocol.status}`)].filter(Boolean).join(' · '), tone: 'muted' };
     case 'anamnesis': return s.anamnesis.filled ? { text: s.anamnesis.updatedAt ? t('status.anamnesisUpdated', { date: day(s.anamnesis.updatedAt) }) : t('status.anamnesisFilled'), tone: 'muted' } : { text: t('status.anamnesisEmpty'), tone: 'muted' };
     case 'refs': return { text: t('status.refs', { sex: s.refs.sex || 'none', own: s.refs.own }), tone: 'muted' };
-    case 'telegram': return s.telegram.state === 'ready' ? { text: t('status.telegramReady'), tone: 'ok' } : s.telegram.state === 'partial' ? { text: t('status.telegramPartial'), tone: 'warn' } : { text: t('status.telegramOff'), tone: 'muted' };
+    case 'telegram':
+      if (off('telegram')) return { text: t('status.serverOnly'), tone: 'muted' };
+      return s.telegram.state === 'ready' ? { text: t('status.telegramReady'), tone: 'ok' } : s.telegram.state === 'partial' ? { text: t('status.telegramPartial'), tone: 'warn' } : { text: t('status.telegramOff'), tone: 'muted' };
     case 'health': if (off('appleHealth')) return { text: t('status.serverOnly'), tone: 'muted' };
       return s.health.state === 'ok' ? { text: t('status.healthOk', { date: day(s.health.lastAt) }), tone: 'ok' } : s.health.state === 'waiting' ? { text: t('status.healthWaiting'), tone: 'muted' } : { text: t('status.healthOff'), tone: 'muted' };
     case 'ai': return s.ai.state === 'ready' ? { text: t('status.aiReady', { provider: String(PROVIDER_RU[s.ai.provider || ''] || s.ai.provider) }), tone: 'ok' } : { text: t('status.aiOff'), tone: 'muted' };
@@ -57,17 +59,18 @@ export function attention(s: SettingsSummary, t: SettingsT): { text: string; hre
   if (s.backup.state === 'problem') out.push({ text: t('attention.backup'), href: '/settings/server' });
   if (s.pdf.state === 'down') out.push({ text: t('attention.pdf'), href: '/settings/server' });
   if (s.security.recovery?.applicable && !s.security.recovery.exists) out.push({ text: t('attention.recovery'), href: '/settings/security' });
-  if (s.telegram.state === 'partial') out.push({ text: t('attention.telegram'), href: '/settings/telegram' });
+  if (s.telegram.state === 'partial' && !s.edition?.unavailable?.includes('telegram')) out.push({ text: t('attention.telegram'), href: '/settings/telegram' });
   return out;
 }
 
 
 /** The «getting started» checklist: the four things worth setting up first. Apple Health and passkeys are optional and not here. */
 export function setupSteps(s: SettingsSummary, t: SettingsT): { id: string; title: string; why: string; href: string; done: boolean }[] {
-  return [
+  const steps = [
     { id: 'protocol', title: t('setup.protocol.title'), why: t('setup.protocol.why'), href: '/settings/protocol', done: s.protocol.chosen },
     { id: 'anamnesis', title: t('setup.anamnesis.title'), why: t('setup.anamnesis.why'), href: '/settings/anamnesis', done: s.anamnesis.filled },
     { id: 'ai', title: t('setup.ai.title'), why: t('setup.ai.why'), href: '/settings/ai', done: s.ai.state === 'ready' },
     { id: 'telegram', title: t('setup.telegram.title'), why: t('setup.telegram.why'), href: '/settings/telegram', done: s.telegram.state === 'ready' },
   ];
+  return s.edition?.unavailable?.includes('telegram') ? steps.filter((step) => step.id !== 'telegram') : steps;
 }

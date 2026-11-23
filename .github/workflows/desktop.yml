@@ -1,6 +1,7 @@
 # Desktop app installers (docs/DESKTOP.md).
 # - A tag vX.Y.Z builds them and attaches them to the GitHub Release of that tag under fixed names, so the
-#   README links (releases/latest/download/<name>) always point at the latest version.
+#   README links (releases/latest/download/<name>) always point at the latest version. The release becomes
+#   «latest» only after that, so the links never lead to a release without installers.
 # - Run by hand (Actions → desktop → Run workflow) it only keeps them as artifacts of the run, to test a branch.
 # - With the update key in the secrets (TAURI_SIGNING_PRIVATE_KEY, …_PASSWORD) it also builds signed update packages and
 #   attaches latest.json, which installed apps read to offer the update (docs/DESKTOP.md, «Обновления»).
@@ -96,7 +97,7 @@ jobs:
         run: |
           ls -l dist
           gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 \
-            || gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --title "MedControl $TAG" \
+            || gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --title "MedControl $TAG" --latest=false \
                  --notes "История версий: CHANGELOG.md. Changelog: CHANGELOG.md."
           gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json body -q .body > release-body.md
           if ls dist/*.sig >/dev/null 2>&1; then
@@ -107,3 +108,18 @@ jobs:
           fi
           rm -f dist/*.sig
           gh release upload "$TAG" dist/* --repo "$GITHUB_REPOSITORY" --clobber
+      - name: Make it the latest release
+        # Only now: README links and installed apps use releases/latest, which must not point at a release
+        # without installers. A rebuild of an older tag leaves the newest release as latest.
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          newest=$(gh release list --repo "$GITHUB_REPOSITORY" --limit 100 --exclude-drafts --exclude-pre-releases \
+            --json tagName -q '.[].tagName' | sort -V | tail -1)
+          if [ "$newest" = "$TAG" ]; then
+            gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --latest
+            echo "$TAG is the latest release"
+          else
+            echo "$TAG is older than $newest: latest stays as it is"
+          fi

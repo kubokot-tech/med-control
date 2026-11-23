@@ -2,25 +2,27 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'use-intl';
 import Icon from '../../ui/icons';
-import { apiFetch } from '../../ui/labUtils';
+import { apiFetch, openAttachment } from '../../ui/labUtils';
 import { errorRu } from '../../ui/api';
 import Markdown from '../../ui/Markdown';
 import AiComment from '../../ui/AiComment';
 import { useFormat } from '../../ui/format';
+import { useRecordId } from '../../ui/recordLink';
+import FileButton from '../../ui/FileButton';
 
 type Extract = { sha256: string; method: 'pdf_text' | 'llm' | 'ocr'; model: string | null; chars: number; createdAt: string; hasSummary?: boolean; summaryModel?: string | null };
-type File = { sha256: string; filename: string | null; mimeType: string; createdAt: string; extract?: Extract | null };
-type Note = { id: string; title: string; body: string; tags: string[]; url: string | null; source: string; sourceName: string | null; pinned: boolean; createdAt: string; updatedAt: string; files: File[] };
+type NoteFile = { sha256: string; filename: string | null; mimeType: string; createdAt: string; extract?: Extract | null };
+type Note = { id: string; title: string; body: string; tags: string[]; url: string | null; source: string; sourceName: string | null; pinned: boolean; createdAt: string; updatedAt: string; files: NoteFile[] };
 
 
 export default function NotePage() {
   const t = useTranslations('notes.note');
   const f = useFormat();
   const fmtWhen = (iso: string) => f.date(iso, { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-  const { id } = useParams<{ id: string }>();
+  const id = useRecordId();
   const sp = useSearchParams();
   const router = useRouter();
   const [note, setNote] = useState<Note | null>(null);
@@ -28,12 +30,11 @@ export default function NotePage() {
   const [form, setForm] = useState({ title: '', body: '', tags: '', url: '' });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
   const bodyRef = useRef<HTMLTextAreaElement>(null);
   const [shown, setShown] = useState<{ sha: string; text: string; summary?: string | null } | null>(null);
   const [extracting, setExtracting] = useState<string | null>(null);
 
-  async function extract(f: File, mode: 'auto' | 'text' | 'ocr' | 'llm' | 'summary') {
+  async function extract(f: NoteFile, mode: 'auto' | 'text' | 'ocr' | 'llm' | 'summary') {
     setExtracting(f.sha256); setErr(null);
     try {
       const r = await apiFetch(`/api/gateway/notes/${id}/files/${f.sha256}/extract?mode=${mode}`, { method: 'POST' });
@@ -43,13 +44,13 @@ export default function NotePage() {
       await load();
     } catch (e: any) { setErr(String(e?.message || e)); } finally { setExtracting(null); }
   }
-  async function showExtract(f: File) {
+  async function showExtract(f: NoteFile) {
     if (shown?.sha === f.sha256) { setShown(null); return; }
     const r = await apiFetch(`/api/gateway/notes/${id}/files/${f.sha256}/extract`);
     if (!r.ok) { setErr(errorRu(await r.json().catch(() => ({})))); return; }
     const x = (await r.json()).extract; setShown({ sha: f.sha256, text: x.text, summary: x.summary });
   }
-  async function insertExtract(f: File, variant: 'full' | 'summary' = 'full') {
+  async function insertExtract(f: NoteFile, variant: 'full' | 'summary' = 'full') {
     setBusy(true); setErr(null);
     try {
       const r = await apiFetch(`/api/gateway/notes/${id}/files/${f.sha256}/extract/insert?variant=${variant}`, { method: 'POST' });
@@ -60,6 +61,7 @@ export default function NotePage() {
   }
 
   const load = useCallback(async () => {
+    if (!id) return;
     const r = await apiFetch(`/api/gateway/notes/${id}`);
     if (!r.ok) { setErr(errorRu(await r.json().catch(() => ({})))); return; }
     const n: Note = await r.json();
@@ -87,8 +89,8 @@ export default function NotePage() {
     const r = await apiFetch(`/api/gateway/notes/${id}`, { method: 'DELETE' });
     if (r.ok) router.push('/notes'); else setErr(errorRu(await r.json().catch(() => ({}))));
   }
-  async function upload(files: FileList | null) {
-    if (!files?.length) return;
+  async function upload(files: File[]) {
+    if (!files.length) return;
     setBusy(true); setErr(null);
     try {
       const fd = new FormData();
@@ -97,20 +99,16 @@ export default function NotePage() {
       const j = await r.json();
       if (!r.ok) throw new Error(errorRu(j));
       await load();
-    } catch (e: any) { setErr(String(e?.message || e)); } finally { setBusy(false); if (fileRef.current) fileRef.current.value = ''; }
+    } catch (e: any) { setErr(String(e?.message || e)); } finally { setBusy(false); }
   }
-  async function removeFile(f: File) {
+  async function removeFile(f: NoteFile) {
     const r = await apiFetch(`/api/gateway/notes/${id}/files/${f.sha256}`, { method: 'DELETE' });
     if (r.ok) load();
   }
-  async function openFile(f: File) {
-    const r = await apiFetch(`/api/gateway/attachments/${f.sha256}?inline=1`);
-    if (!r.ok) return;
-    const url = URL.createObjectURL(await r.blob());
-    window.open(url, '_blank', 'noopener');
-    setTimeout(() => URL.revokeObjectURL(url), 60000);
+  async function openFile(f: NoteFile) {
+    await openAttachment(f);
   }
-  function insertImage(f: File) {
+  function insertImage(f: NoteFile) {
     const snippet = `\n![${f.filename || t('imageAlt')}](dtc://${f.sha256})\n`;
     const ta = bodyRef.current;
     if (ta) {
@@ -166,8 +164,7 @@ export default function NotePage() {
       <div className="card meds-card" style={{ marginBottom: 16 }}>
         <div className="meds-card__row">
           <div className="card__title">{t('files')}</div>
-          <button type="button" className="btn btn--secondary btn--sm" onClick={() => fileRef.current?.click()} disabled={busy}><Icon name="upload" />{t('addFile')}</button>
-          <input ref={fileRef} type="file" accept="image/*,application/pdf" multiple hidden onChange={(e) => upload(e.target.files)} />
+          <FileButton className="btn btn--secondary btn--sm" accept="image/*,application/pdf" multiple disabled={busy} onFiles={upload}><Icon name="upload" />{t('addFile')}</FileButton>
         </div>
         {note.files.length === 0 && <div className="muted" style={{ fontSize: 14 }}>{t('filesHint')}</div>}
         {note.files.length > 0 && (

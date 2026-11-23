@@ -100,6 +100,7 @@
     "startDate": "Start date",
     "timesPerDay": "Times a day",
     "remindAt": "Telegram reminder",
+    "remindAtDevice": "Reminder",
     "howOften": "How often",
     "freqOptions": {
       "daily": "every day",

@@ -8,10 +8,13 @@ import pathlib
 
 from tools.golden import expected_for, pypdf_text
 from app.connectors import registry
-from app.connectors import dnkom_pdf_v1, hadassah_pdf_v1, helix_pdf_v1, mknc_pdf_v1
+from app.connectors import dnkom_pdf_v1, hadassah_pdf_v1, helix_pdf_v1, helix_pdf_v2, mknc_pdf_v1
 
 FIXTURES = pathlib.Path(__file__).parent / "fixtures"
 HELIX = (FIXTURES / "helix_basic.txt").read_text(encoding="utf-8")
+HELIX_V2_PANEL = (FIXTURES / "helix_v2_panel.txt").read_text(encoding="utf-8")
+HELIX_V2_DDIMER = (FIXTURES / "helix_v2_ddimer.txt").read_text(encoding="utf-8")
+HELIX_V2_PLAIN = (FIXTURES / "helix_v2_plain.txt").read_text(encoding="utf-8")
 MKNC = (FIXTURES / "mknc_basic.txt").read_text(encoding="utf-8")
 UNKNOWN = (FIXTURES / "unknown.txt").read_text(encoding="utf-8")
 HADASSAH = (FIXTURES / "hadassah_blood.txt").read_text(encoding="utf-8")
@@ -70,12 +73,22 @@ def test_detection_and_candidates():
     assert helix_pdf_v1.detect(HELIX) and not mknc_pdf_v1.detect(HELIX)
     assert mknc_pdf_v1.detect(MKNC) and not helix_pdf_v1.detect(MKNC)
     assert registry.candidates(HELIX)[0] is helix_pdf_v1
+    assert not helix_pdf_v2.detect(HELIX), "the old layout keeps its parser"
     assert registry.candidates(MKNC) == [mknc_pdf_v1]
     assert registry.candidates(UNKNOWN) == [mknc_pdf_v1], "unknown layouts only get the fallback parser"
     assert hadassah_pdf_v1.detect(HADASSAH) and not helix_pdf_v1.detect(HADASSAH) and not mknc_pdf_v1.detect(HADASSAH)
     assert not any(hadassah_pdf_v1.detect(t) for t in (HELIX, MKNC, UNKNOWN))
     assert registry.candidates(HADASSAH) == [hadassah_pdf_v1, mknc_pdf_v1]
     assert hadassah_pdf_v1.detect(HADASSAH_COAG) and hadassah_pdf_v1.detect(HADASSAH_URINE), "both layouts"
+
+
+def test_helix_v2_detect_and_routing():
+    for t in (HELIX_V2_PANEL, HELIX_V2_DDIMER, HELIX_V2_PLAIN):
+        assert helix_pdf_v2.detect(t)
+        assert registry.candidates(t)[0] is helix_pdf_v2, "the new layout is tried before v1"
+    assert not any(helix_pdf_v2.detect(t) for t in (HELIX, MKNC, UNKNOWN, HADASSAH, DNKOM_BLOOD))
+    old_header = HELIX_V2_PLAIN.replace("Название/показатель Результат Референсные значения **", "Название/показатель Результат Ед. изм. Референсные значения")
+    assert not helix_pdf_v2.detect(old_header), "the «Ед. изм.» column is the old layout"
 
 
 def test_helix_rows_dates_refs_and_section_names():
@@ -88,6 +101,52 @@ def test_helix_rows_dates_refs_and_section_names():
     alt = obs(doc, "Аланинаминотрансфераза (АЛТ)")  # generic «Активность» row takes the section title
     assert (alt["result_num"], alt["ref_high"]) == (96, 40)
     assert all("Иванова" not in o["test_name"] for o in doc["observations"]), "the patient line is noise"
+
+
+def test_helix_v2_panel_markers_previous_result_and_refs_under_the_row():
+    doc = helix_pdf_v2.parse_text(HELIX_V2_PANEL)
+    assert (doc["lab_name"], doc["doc_date"]) == ("Хеликс", "2026-03-05")
+    assert len(doc["observations"]) == 7, "every analyte table, nothing else"
+    tsh = obs(doc, "Тиреотропный гормон (ТТГ)")
+    assert (tsh["result_text"], tsh["result_num"], tsh["units"]) == ("47.300", 47.3, "мкМЕ/мл"), "the ▲ marker is dropped"
+    assert (tsh["ref_low"], tsh["ref_high"]) == (0.35, 4.9), "the reference stays on the row"
+    alt = obs(doc, "Аланинаминотрансфераза (АЛТ)")
+    assert (alt["result_num"], alt["units"], alt["ref_high"]) == (88.4, "Ед/л", 38.0), "the current value, not the previous 72.1; the ref under the row"
+    assert obs(doc, "Аспартатаминотрансфераза (АСТ)")["result_num"] == 44.7
+    bil = obs(doc, "Билирубин общий")
+    assert (bil["result_num"], bil["ref_high"]) == (12.3, 19.0), "a row without markers, the previous 16.80 is not the result"
+    assert obs(doc, "Билирубин прямой")["result_num"] == 6.2, "the previous 3.90 is not the result"
+    ggt = obs(doc, "Гамма-глютамилтранспептидаза (гамма-ГТ)")
+    assert (ggt["result_num"], ggt["ref_low"], ggt["ref_high"]) == (92.0, 9.0, 64.0), "the previous 47 is not the result"
+    t4 = obs(doc, "Тироксин (Т4) свободный")
+    assert (t4["result_text"], t4["result_num"], t4["units"]) == ("9.40", 9.4, "пмоль/л"), "the ▼ marker is dropped; a title with a digit is still a section"
+    assert (t4["ref_low"], t4["ref_high"]) == (11.2, 23.5)
+    names = " ".join(o["test_name"] for o in doc["observations"])
+    for noise in ("СОКОЛОВ", "Заказ", "Венозная", "Метод", "подлинности", "▲", "▼", "от 12.01.26"):
+        assert noise not in names
+    assert all(o["result_num"] not in (72.1, 52.3, 16.8, 3.9, 47.0) for o in doc["observations"]), "no previous result is stored as current"
+
+
+def test_helix_v2_ddimer_ref_on_the_row_and_comment():
+    doc = helix_pdf_v2.parse_text(HELIX_V2_DDIMER)
+    assert len(doc["observations"]) == 1, "the unit-conversion comment is not a row"
+    dd = obs(doc, "D-димер")
+    assert (dd["result_num"], dd["units"], dd["ref_text"], dd["ref_high"]) == (312.5, "нг/мл", "<220", 220.0)
+
+
+def test_helix_v2_plain_layout_without_markers():
+    doc = helix_pdf_v2.parse_text(HELIX_V2_PLAIN)
+    assert len(doc["observations"]) == 2
+    assert obs(doc, "Глюкоза")["result_num"] == 4.1
+    crea = obs(doc, "Креатинин")
+    assert (crea["result_num"], crea["ref_low"], crea["ref_high"]) == (88.0, 62.0, 106.0)
+
+
+def test_helix_v2_marker_as_a_separate_token():
+    text = HELIX_V2_PLAIN.replace("Концентрация 4.10 ммоль/л 3.9 - 6.1", "Концентрация ▲ 4.10 ммоль/л 3.9 - 6.1")
+    doc = helix_pdf_v2.parse_text(text)
+    glucose = obs(doc, "Глюкоза")
+    assert (glucose["result_text"], glucose["result_num"]) == ("4.10", 4.1), "a marker set apart from the number is still dropped"
 
 
 def test_mknc_rows_and_meta():

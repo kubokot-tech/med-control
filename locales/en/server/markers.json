@@ -11,6 +11,10 @@
     "name": "Total bilirubin",
     "short": "Bilirubin"
   },
+  "BIL-D": {
+    "name": "Direct bilirubin",
+    "short": "Direct bilirubin"
+  },
   "G6PD": {
     "name": "Glucose-6-phosphate dehydrogenase (G6PD)",
     "short": "G6PD"
@@ -18,6 +22,10 @@
   "LDH": {
     "name": "Lactate dehydrogenase (LDH)",
     "short": "LDH"
+  },
+  "GGT": {
+    "name": "Gamma-glutamyl transferase (GGT)",
+    "short": "GGT"
   },
   "CREA": {
     "name": "Creatinine",
@@ -242,6 +250,10 @@
   "TSH": {
     "name": "Thyroid-stimulating hormone (TSH)",
     "short": "TSH"
+  },
+  "FT4": {
+    "name": "Free thyroxine (FT4)",
+    "short": "FT4"
   },
   "TAC": {
     "name": "Tacrolimus (blood level)",

@@ -5,6 +5,7 @@ import { useTranslations } from 'use-intl';
 import BottomSheet from './BottomSheet';
 import { apiFetch } from './labUtils';
 import { errorRu } from './api';
+import FileButton from './FileButton';
 
 /** navigator.clipboard exists only on https and localhost; a home server on plain http needs the old way. */
 async function copyText(text: string, area: HTMLTextAreaElement | null) {
@@ -20,7 +21,6 @@ async function copyText(text: string, area: HTMLTextAreaElement | null) {
  */
 export default function LabSampleInvite({ send, file }: { send: boolean; file?: File }) {
   const t = useTranslations('labs');
-  const input = useRef<HTMLInputElement>(null);
   const area = useRef<HTMLTextAreaElement>(null);
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -63,11 +63,7 @@ export default function LabSampleInvite({ send, file }: { send: boolean; file?: 
       ) : (
         <div className="lab-sample-invite">
           <div className="muted">{t('sample.invite')}</div>
-          <button type="button" className="btn btn--ghost btn--sm" onClick={() => input.current?.click()}>{t('sample.pick')}</button>
-          <input
-            ref={input} type="file" accept="application/pdf" style={{ display: 'none' }}
-            onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) prepare(f); }}
-          />
+          <FileButton className="btn btn--ghost btn--sm" accept="application/pdf" onFiles={(files) => { const f = files[0]; if (f) prepare(f); }}>{t('sample.pick')}</FileButton>
         </div>
       )}
 
@@ -75,7 +71,8 @@ export default function LabSampleInvite({ send, file }: { send: boolean; file?: 
         {busy && !text && <div className="muted">{t('sample.preparing')}</div>}
         {err && <div className="msg msg--error">{err}</div>}
         {sent && <div className="msg msg--ok">{t('sample.thanks')}</div>}
-        {sent && !file && <button type="button" className="btn btn--ghost" onClick={() => input.current?.click()}>{t('sample.another')}</button>}
+        {/* A bare label would click the input programmatically, which the iPad web view ignores: use the same control. */}
+        {sent && !file && <FileButton className="btn btn--ghost" accept="application/pdf" onFiles={(files) => { const f = files[0]; if (f) prepare(f); }}>{t('sample.another')}</FileButton>}
         {text && !sent && (
           <div className="lab-sample">
             <div className="muted">{t('sample.intro')}</div>

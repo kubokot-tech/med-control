@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'use-intl';
 import { apiJson, errorRu } from './api';
+import { useEdition } from './edition';
 
 export type Schedule = { doseAt: string; doseAgainAt: string; labStaleDays: number; fromEnv?: string[] };
 
@@ -12,6 +13,7 @@ export type Schedule = { doseAt: string; doseAgainAt: string; labStaleDays: numb
  */
 export default function ReminderTimes({ schedule, onSaved }: { schedule: Schedule; onSaved: () => void }) {
   const t = useTranslations('settings');
+  const ed = useEdition();
   const [v, setV] = useState({ doseAt: schedule.doseAt, again: schedule.doseAgainAt, stale: String(schedule.labStaleDays) });
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
@@ -28,7 +30,7 @@ export default function ReminderTimes({ schedule, onSaved }: { schedule: Schedul
       if (!env.has('doseAgainAt')) body.doseAgainAt = v.again;
       if (!env.has('labStaleDays')) body.labStaleDays = Number(v.stale);
       await apiJson('/api/gateway/notify/schedule', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-      setMsg(t('reminderTimes.saved'));
+      setMsg(t(ed.available('telegram') ? 'reminderTimes.saved' : 'reminderTimes.savedDevice'));
       onSaved();
     } catch (e) { setErr(errorRu(e)); } finally { setBusy(false); }
   }
@@ -43,7 +45,7 @@ export default function ReminderTimes({ schedule, onSaved }: { schedule: Schedul
         <label className="field" style={{ flex: '0 1 190px' }}><span>{t('reminderTimes.staleDays')}</span><input inputMode="numeric" value={v.stale} disabled={env.has('labStaleDays')} onChange={(e) => setV({ ...v, stale: e.target.value.replace(/\D/g, '') })} /></label>
       </div>
       <div className="muted" style={{ fontSize: 13, lineHeight: 1.5 }}>
-        {t('reminderTimes.hint')}
+        {t(ed.available('telegram') ? 'reminderTimes.hint' : 'reminderTimes.hintDevice')}
         {env.size > 0 && <>{' '}{t('reminderTimes.envHint')}</>}
       </div>
       <div><button type="button" className="btn btn--primary btn--sm" onClick={save} disabled={busy || !dirty || !v.doseAt}>{busy ? t('reminderTimes.saving') : t('reminderTimes.save')}</button></div>

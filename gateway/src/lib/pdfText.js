@@ -14,6 +14,7 @@
  */
 import { createRequire } from 'node:module';
 import path from 'node:path';
+import { traceStep } from './traceStep.js';
 
 const require = createRequire(import.meta.url);
 let pdfjs;
@@ -254,6 +255,7 @@ export function operatorListText(ops, OPS) {
 
 /** { pages: [text per page], text: pages joined by a new line as ingestion's _pdf_text() does }. */
 export async function pdfTextPages(buf) {
+  traceStep('pdf');
   const { getDocument, OPS, AnnotationMode } = await lib();
   const task = getDocument({
     data: new Uint8Array(buf), isEvalSupported: false, useSystemFonts: false, disableFontFace: true,

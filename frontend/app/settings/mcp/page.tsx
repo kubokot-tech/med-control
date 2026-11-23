@@ -1,11 +1,9 @@
 import SettingsSubpage from '../../ui/SettingsSubpage';
 import McpCard from '../../ui/McpCard';
-import { serverT } from '../../i18n/server';
 
-export default async function McpSettingsPage() {
-  const t = await serverT('settings');
+export default function McpSettingsPage() {
   return (
-    <SettingsSubpage title={t('rows.mcp.title')} intro={t('pages.mcpIntro')}>
+    <SettingsSubpage titleKey="rows.mcp.title" introKey="pages.mcpIntro">
       <McpCard />
     </SettingsSubpage>
   );

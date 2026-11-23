@@ -121,6 +121,7 @@
     "noneFlagged": "No values out of range in the latest results. This does not replace a doctor's assessment.",
     "openLabs": "Open the lab table",
     "later": "What you skipped stays in the Getting started list on the home screen. Telegram dose reminders are set up in Settings.",
+    "laterDevice": "What you skipped stays in the Getting started list on the home screen. Dose reminders arrive on this iPad.",
     "open": "Open MedControl"
   }
 }

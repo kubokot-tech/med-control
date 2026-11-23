@@ -29,7 +29,7 @@ test('PDF_ENGINE=js: a lab PDF is parsed and committed without the ingestion ser
     const { labParserList } = await import('../../src/lib/pdfEngine.js');
     const list = await labParserList();
     assert.equal(list.engine, 'js');
-    assert.deepEqual(list.parsers.map((p) => p.id), ['helix_pdf_v1', 'hadassah_pdf_v1', 'dnkom_pdf_v1', 'mknc_pdf_v1']);
+    assert.deepEqual(list.parsers.map((p) => p.id), ['helix_pdf_v2', 'helix_pdf_v1', 'hadassah_pdf_v1', 'dnkom_pdf_v1', 'mknc_pdf_v1']);
   } finally { globalThis.fetch = realFetch; }
 });
 

@@ -13,6 +13,7 @@ MedControl / МедКонтроль: личная система для исто
   даёт команду, которую пользователь выполняет.
 - Тесты: `cd gateway && npm test` (юнит); интеграционные на PGlite, без Postgres: `cd gateway && TEST_DB=pglite npm run test:integration`;
   на отдельной базе Postgres: `TEST_DATABASE_URL=postgres://… npm run test:integration`. Фронтенд: `cd frontend && npm run typecheck`.
+  Страничная часть iPad: `cd ipad && npm test` (нужен `npm ci` в gateway).
   Парсеры лабораторий: `cd ingestion && python -m pytest -q`.
 - Мержить PR только после зелёного CI (`gh pr checks <n> --watch --fail-fast`, проверять код возврата).
 - Изменения небольшими PR, каждый со своим смыслом; документацию обновлять в том же PR.
@@ -31,6 +32,8 @@ MedControl / МедКонтроль: личная система для исто
 
 ## Архитектура (кратко)
 Настольная версия (Tauri, PGlite, `DTC_EDITION=desktop`): `docs/DESKTOP.md`.
+Редакция iPad (Tauri, gateway и PGlite внутри страницы WKWebView, `DTC_EDITION=ipad`, папка `ipad/`): `docs/IPAD.md`.
+Сборка iPad: `cd ipad && npm ci && node build.mjs && node build-frontend.mjs` (сначала `npm ci` в gateway и frontend); релизная — с `MC_RELEASE=1`.
 Postgres 16 · gateway (Node 22, Fastify, `gateway/src`) · frontend (Next 15 app-router, React 19, `frontend/app`) · ingestion (FastAPI, парсеры PDF; в запасе, профиль `python`: по умолчанию PDF читает gateway) ·
 edge (Caddy) · orthanc (DICOM) · backup · watchdog · egress (прокси через VPN). Отдельно от стека: samples/ (приём образцов бланков, `LAB_SAMPLES_URL`).
 Подробно: `docs/ARCHITECTURE.md`, экраны: `docs/OVERVIEW.md`, эксплуатация: `docs/OPERATIONS.md`, планы: `docs/ROADMAP.md`.

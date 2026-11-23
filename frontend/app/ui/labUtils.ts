@@ -76,3 +76,44 @@ export async function apiFetch(path: string, opts?: RequestInit): Promise<Respon
   }
   return res;
 }
+
+/** Trigger a file download from a blob (used for ZIP exports and PDF attachments). */
+export function saveBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 60_000);
+}
+
+/**
+ * Open a stored attachment. Auth is a Bearer token, so a plain <a href> cannot reach the file:
+ * we fetch it, then either show an image in a new tab or download anything else (PDF included).
+ * Do not window.open a PDF blob: CSP object-src 'none' (edge/Caddyfile) makes Chrome/Arc dump the
+ * bytes as text instead of opening the viewer.
+ */
+export async function openAttachment(a: {
+  sha256: string;
+  filename?: string | null;
+  mimeType?: string | null;
+}): Promise<{ ok: true } | { ok: false; response: Response }> {
+  const image = !!a.mimeType?.startsWith('image/');
+  const r = await apiFetch(`/api/gateway/attachments/${a.sha256}${image ? '?inline=1' : ''}`);
+  if (!r.ok) return { ok: false, response: r };
+  const raw = await r.blob();
+  const type = (a.mimeType && a.mimeType !== 'application/octet-stream' ? a.mimeType : null) || raw.type || 'application/octet-stream';
+  const blob = raw.type === type ? raw : new Blob([raw], { type });
+  const ext = type === 'application/pdf' ? 'pdf' : type.startsWith('image/') ? type.split('/')[1]!.replace('jpeg', 'jpg') : 'bin';
+  const name = a.filename || `${a.sha256.slice(0, 12)}.${ext}`;
+  if (image) {
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank', 'noopener');
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  } else {
+    saveBlob(blob, name);
+  }
+  return { ok: true };
+}

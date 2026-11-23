@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>МедКонтроль: проба iPad</title>
+<style>
+  :root { color-scheme: light dark; font: 15px/1.45 -apple-system, system-ui, sans-serif; }
+  body { margin: 0; padding: 16px; max-width: 900px; }
+  button { font: inherit; padding: 8px 14px; margin: 4px 6px 4px 0; border-radius: 8px; border: 1px solid #888; background: transparent; }
+  pre { white-space: pre-wrap; background: rgba(127,127,127,.12); padding: 10px; border-radius: 8px; font-size: 13px; }
+  table { border-collapse: collapse; width: 100%; } td, th { border-bottom: 1px solid rgba(127,127,127,.3); padding: 4px 8px; text-align: left; }
+  .ok { color: #2a8a3e; } .bad { color: #c0392b; }
+</style>
+</head>
+<body>
+<h1>МедКонтроль без сервера</h1>
+<p id="status">Запуск gateway и PGlite…</p>
+<div>
+  <button id="setup">1. Первый запуск</button>
+  <button id="login">2. Вход</button>
+  <button id="upload">3. Загрузить бланк</button>
+  <button id="labs">4. Анализы</button>
+  <button id="bench">Нагрузка</button>
+</div>
+<input type="file" id="file" accept="application/pdf" hidden>
+<div id="table"></div>
+<pre id="log"></pre>
+<script type="module">
+  const $ = (id) => document.getElementById(id);
+  const log = (...a) => { $('log').textContent = `${a.map((x) => (typeof x === 'string' ? x : JSON.stringify(x, null, 1))).join(' ')}\n${$('log').textContent}`; };
+  const PW = 'spike-Password-2026';
+  let token = sessionStorage.getItem('mc-token');
+  // inside the app (tauri://) the results go to the spike server on the Mac: the simulator reaches it as 127.0.0.1
+  const REPORT = location.protocol.startsWith('http') ? '/__report' : 'http://127.0.0.1:3801/__report';
+  const report = (text) => fetch(REPORT, { method: 'POST', body: text }).catch(() => {});
+  const AUTO = new URLSearchParams(location.search).has('auto');
+  window.addEventListener('error', (e) => { log('ERROR', String(e.error?.stack || e.message)); if (AUTO) report(`ERROR ${e.error?.stack || e.message}`); });
+  window.addEventListener('unhandledrejection', (e) => { log('REJECTION', String(e.reason?.stack || e.reason)); if (AUTO) report(`REJECTION ${e.reason?.stack || e.reason}`); });
+  const origErr = console.error; console.error = (...a) => { origErr(...a); if (AUTO) report(`console.error ${a.map((x) => x?.stack || String(x)).join(' ')}`); };
+  const t0 = performance.now();
+  await import('./gateway.js');
+  const gw = window.mcGateway;
+  const call = async (method, url, body, headers = {}) => {
+    const h = { ...headers };
+    if (token) h.authorization = `Bearer ${token}`;
+    if (body && !(body instanceof Uint8Array) && typeof body !== 'string') { body = JSON.stringify(body); h['content-type'] = 'application/json'; }
+    const s = performance.now();
+    const r = await gw.request({ method, url, headers: h, body });
+    let data = r.body; try { data = JSON.parse(r.body); } catch {}
+    log(`${method} ${url} → ${r.status} (${Math.round(performance.now() - s)} мс)`, typeof data === 'string' ? data.slice(0, 300) : data);
+    return { status: r.status, data };
+  };
+  try {
+    const marks = await gw.ready;
+    $('status').innerHTML = `<span class="ok">Готово за ${Math.round(performance.now() - t0)} мс</span>: ${marks.map(([n, ms]) => `${n} ${ms}`).join(' · ')}`;
+    await call('GET', '/health');
+    await call('GET', '/setup/status?language=ru');
+  } catch (e) {
+    $('status').innerHTML = `<span class="bad">Ошибка: ${e.message}</span>`; log(String(e.stack || e));
+    report(`BOOT FAILED ${e.stack || e}\n${navigator.userAgent}`);
+  }
+
+  $('setup').onclick = async () => {
+    const r = await call('POST', '/setup', { password: PW, language: 'ru', tz: 'Europe/Moscow' });
+    if (r.data?.token) { token = r.data.token; sessionStorage.setItem('mc-token', token); }
+  };
+  $('login').onclick = async () => {
+    const r = await call('POST', '/auth/login', { password: PW });
+    if (r.data?.token) { token = r.data.token; sessionStorage.setItem('mc-token', token); }
+  };
+  async function uploadPdf(name, bytes) {
+    const boundary = `----mc${Math.random().toString(16).slice(2)}`;
+    const enc = new TextEncoder();
+    const head = enc.encode(`--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="${name}"\r\nContent-Type: application/pdf\r\n\r\n`);
+    const tail = enc.encode(`\r\n--${boundary}--\r\n`);
+    const body = new Uint8Array(head.length + bytes.length + tail.length);
+    body.set(head); body.set(bytes, head.length); body.set(tail, head.length + bytes.length);
+    return call('POST', '/labs/commit-pdf', body, { 'content-type': `multipart/form-data; boundary=${boundary}` });
+  }
+  $('upload').onclick = async () => {
+    // the synthetic report from the tests unless a file is picked (long press → choose)
+    const bytes = new Uint8Array(await (await fetch('./rows.pdf')).arrayBuffer());
+    await uploadPdf('rows.pdf', bytes);
+  };
+  $('upload').oncontextmenu = (e) => { e.preventDefault(); $('file').click(); };
+  $('file').onchange = async () => { const f = $('file').files[0]; if (f) await uploadPdf(f.name, new Uint8Array(await f.arrayBuffer())); };
+  $('labs').onclick = async () => {
+    const r = await call('GET', '/labs/summary');
+    const rows = (r.data?.rows || r.data?.items || r.data?.tests || []);
+    const list = Array.isArray(r.data) ? r.data : rows;
+    $('table').innerHTML = list.length
+      ? `<table><tr><th>Показатель</th><th>Значение</th><th>Дата</th></tr>${list.slice(0, 40).map((x) => `<tr><td>${x.name || x.test_name || x.canonical || x.code || ''}</td><td>${x.last?.value ?? x.value ?? x.result_num ?? x.result_text ?? ''} ${x.unit || x.last?.unit || ''}</td><td>${x.last?.date || x.date || x.taken_at || ''}</td></tr>`).join('')}</table>`
+      : '<p>Пусто</p>';
+  };
+  // ?auto: the whole scenario without clicks (Safari and the simulator), results in the status line and the log
+  if (new URLSearchParams(location.search).has('auto')) {
+    const steps = [];
+    const step = async (name, fn) => { report(`start: ${name}`); const s = performance.now(); try { const ok = await fn(); steps.push(`${ok === false ? '✗' : '✓'} ${name} ${Math.round(performance.now() - s)} мс`); } catch (e) { steps.push(`✗ ${name}: ${e.message}`); } $('table').innerHTML = `<pre>${steps.join('\n')}</pre>`; };
+    const st = await call('GET', '/setup/status?language=ru');
+    if (st.data?.needed) await step('первый запуск', async () => { const r = await call('POST', '/setup', { password: PW, language: 'ru', tz: 'Europe/Moscow' }); token = r.data?.token; return !!token; });
+    else await step('вход', async () => { const r = await call('POST', '/auth/login', { password: PW }); token = r.data?.token; return !!token; });
+    await step('разбор бланка PDF', async () => { const r = await uploadPdf('rows.pdf', new Uint8Array(await (await fetch('./rows.pdf')).arrayBuffer())); return r.status === 200; });
+    await step('сводка анализов', async () => (await call('GET', '/labs/summary')).data?.rows?.length > 0);
+    for (const u of ['/report/doctor.pdf', '/labs/export/summary.xlsx', '/export/all.zip']) await step(u, async () => (await gw.request({ method: 'GET', url: u, headers: { authorization: `Bearer ${token}` } })).status === 200);
+    await step('20 × сводка', async () => { for (let i = 0; i < 20; i++) await gw.request({ method: 'GET', url: '/labs/summary', headers: { authorization: `Bearer ${token}` } }); });
+    steps.unshift($('status').textContent);
+    steps.push(navigator.userAgent);
+    $('table').innerHTML = `<pre>${steps.join('\n')}</pre>`;
+    report(steps.join('\n'));
+    // ?then=/path: sign the real interface in with this session and open it (the simulator cannot type a password)
+    const then = new URLSearchParams(location.search).get('then');
+    if (then && token) { localStorage.setItem('dtc_token', token); setTimeout(() => { location.href = then; }, 1500); }
+  }
+  $('bench').onclick = async () => {
+    const s = performance.now();
+    for (let i = 0; i < 20; i++) await gw.request({ method: 'GET', url: '/labs/summary', headers: { authorization: `Bearer ${token}` } });
+    log(`20 × /labs/summary: ${Math.round((performance.now() - s) / 20)} мс в среднем`);
+  };
+</script>
+</body>
+</html>

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useTranslations } from 'use-intl';
 import Icon from './icons';
-import { apiFetch } from './labUtils';
+import { apiFetch, saveBlob } from './labUtils';
 import { errorRu, todayKey } from './api';
 
 /** Everything in one ZIP: for your own archive or moving to another system. */
@@ -18,11 +18,7 @@ export default function ExportCard() {
     try {
       const r = await apiFetch('/api/gateway/export/all.zip');
       if (!r.ok) throw new Error(errorRu(await r.json().catch(() => ({}))));
-      const url = URL.createObjectURL(await r.blob());
-      const a = document.createElement('a');
-      a.href = url; a.download = `medcontrol-export-${todayKey()}.zip`;
-      document.body.appendChild(a); a.click(); a.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 5000);
+      saveBlob(await r.blob(), `medcontrol-export-${todayKey()}.zip`);
       setMsg(t('exportCard.done'));
     } catch (e: any) { setErr(String(e?.message || e)); } finally { setBusy(false); }
   }

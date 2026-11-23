@@ -12,6 +12,8 @@ export const REFERENCE_RANGES = {
   ALT: { any: [null, 40], m: [null, 41], f: [null, 33] },
   AST: { any: [null, 40], m: [null, 40], f: [null, 32] },
   BIL: { any: [3.4, 20.5] },
+  'BIL-D': { any: [null, 5.1] },
+  GGT: { any: [null, 40], m: [null, 55], f: [null, 38] },
   LDH: { any: [135, 225], m: [135, 225], f: [135, 214] },
   CREA: { m: [62, 106], f: [44, 80] },
   UREA: { any: [2.8, 7.2] },
@@ -68,6 +70,7 @@ export const REFERENCE_RANGES = {
   TG: { any: [null, 1.7] },
   // thyroid
   TSH: { any: [0.4, 4.0] },
+  FT4: { any: [9.0, 22.0] },
   // urine
   'U-PRO': { any: [null, 0.14] },
   'U-GLU': { any: [null, 0.8] },

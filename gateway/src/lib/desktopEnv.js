@@ -20,7 +20,8 @@ export function defaultDataDir(platform = process.platform, env = process.env, h
 
 /** Fills the desktop defaults into `env` (process.env by default); returns the names it set. */
 export function applyDesktopDefaults(env = process.env, platform = process.platform) {
-  if (String(env.DTC_EDITION || '').trim().toLowerCase() !== 'desktop') return [];
+  const kind = String(env.DTC_EDITION || '').trim().toLowerCase();
+  if (kind !== 'desktop' && kind !== 'ipad') return [];
   const defaults = {
     DB_DRIVER: 'pglite',
     PDF_ENGINE: 'js',

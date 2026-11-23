@@ -1,11 +1,13 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'use-intl';
 import Icon from './icons';
+import FileButton from './FileButton';
 import { apiFetch, getToken } from './labUtils';
 import { errorRu } from './api';
+import { useEdition } from './edition';
 
 type Preset = { id: string; name: string; status: 'ready' | 'example'; summary: string };
 type ProviderId = 'openrouter' | 'anthropic' | 'openai' | 'gigachat';
@@ -42,6 +44,7 @@ function outOfRange(rows: SummaryRow[], months: string[]) {
  */
 export default function WelcomeFlow() {
   const t = useTranslations('welcome');
+  const ed = useEdition();
   const [ready, setReady] = useState(false);
   const [step, setStep] = useState(0);
   const [busy, setBusy] = useState(false);
@@ -63,8 +66,6 @@ export default function WelcomeFlow() {
   const [aiPassword, setAiPassword] = useState('');
   const [uploads, setUploads] = useState<Upload[]>([]);
   const [overview, setOverview] = useState<{ values: number; flagged: { name: string; value: number; unit: string }[] } | null>(null);
-  const docInput = useRef<HTMLInputElement>(null);
-  const labInput = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!getToken()) { window.location.replace('/login'); return; }
@@ -114,7 +115,7 @@ export default function WelcomeFlow() {
       if (!r.ok) throw new Error(errorRu(j, `HTTP ${r.status}`));
       setAnamnesis((cur) => (cur.trim() ? `${cur.trim()}\n\n${j.text}` : j.text));
       setExtractNote([j.method === 'ocr' ? t('anamnesis.readOcr') : t('anamnesis.readText'), j.truncated ? t('anamnesis.truncated') : ''].filter(Boolean).join(' '));
-    } catch (e: any) { setErr(String(e?.message || e)); } finally { setBusy(false); if (docInput.current) docInput.current.value = ''; }
+    } catch (e: any) { setErr(String(e?.message || e)); } finally { setBusy(false); }
   }
 
   async function connectAi() {
@@ -139,8 +140,8 @@ export default function WelcomeFlow() {
     } finally { setBusy(false); }
   }
 
-  async function uploadLabs(files: FileList) {
-    const list = [...files];
+  async function uploadLabs(files: File[]) {
+    const list = files;
     const offset = uploads.length;
     setUploads((u) => [...u, ...list.map((f) => ({ name: f.name, state: 'busy' as const }))]);
     const patch = (i: number, p: Partial<Upload>) => setUploads((u) => u.map((x, k) => (k === offset + i ? { ...x, ...p } : x)));
@@ -154,7 +155,6 @@ export default function WelcomeFlow() {
         patch(i, j.needsReview ? { state: 'review' } : j.already ? { state: 'duplicate' } : { state: 'done', inserted: j.inserted });
       } catch (e: any) { patch(i, { state: 'error', error: String(e?.message || e) }); }
     }
-    if (labInput.current) labInput.current.value = '';
   }
 
   useEffect(() => {
@@ -233,8 +233,7 @@ export default function WelcomeFlow() {
           <>
             <div><h1 className="welcome__title">{t('anamnesis.title')}</h1><p className="muted welcome__lead">{t('anamnesis.lead')}</p></div>
             <div>
-              <input ref={docInput} type="file" hidden accept=".pdf,.txt,.md,image/jpeg,image/png" onChange={(e) => { const f = e.target.files?.[0]; if (f) readDocument(f); }} />
-              <button type="button" className="btn btn--secondary" onClick={() => docInput.current?.click()} disabled={busy}><Icon name="upload" />{busy ? t('anamnesis.reading') : t('anamnesis.upload')}</button>
+              <FileButton className="btn btn--secondary" accept=".pdf,.txt,.md,image/jpeg,image/png" disabled={busy} onFiles={(files) => { const f = files[0]; if (f) readDocument(f); }}><Icon name="upload" />{busy ? t('anamnesis.reading') : t('anamnesis.upload')}</FileButton>
               <p className="muted welcome__note">{t('anamnesis.uploadHint')}</p>
             </div>
             <div className="field">
@@ -283,8 +282,7 @@ export default function WelcomeFlow() {
         {name === 'labs' && (
           <>
             <div><h1 className="welcome__title">{t('labs.title')}</h1><p className="muted welcome__lead">{t('labs.lead')}</p></div>
-            <input ref={labInput} type="file" hidden multiple accept="application/pdf,.pdf" onChange={(e) => { if (e.target.files?.length) uploadLabs(e.target.files); }} />
-            <button type="button" className="btn btn--secondary" onClick={() => labInput.current?.click()}><Icon name="upload" />{t('labs.choose')}</button>
+            <FileButton className="btn btn--secondary" multiple accept="application/pdf,.pdf" onFiles={uploadLabs}><Icon name="upload" />{t('labs.choose')}</FileButton>
             {uploads.length > 0 && (
               <div className="sheet__list">
                 {uploads.map((u, i) => (
@@ -316,7 +314,7 @@ export default function WelcomeFlow() {
                 <Link href="/labs/summary" className="btn btn--secondary">{t('done.openLabs')}</Link>
               </div>
             )}
-            <div className="muted welcome__note">{t('done.later')}</div>
+            <div className="muted welcome__note">{t(ed.available('telegram') ? 'done.later' : 'done.laterDevice')}</div>
             <Link href="/" className="btn btn--primary btn--lg btn--block">{t('done.open')}</Link>
           </>
         )}

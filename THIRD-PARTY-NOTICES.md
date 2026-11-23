@@ -523,11 +523,156 @@
 | vfile-message | 4.0.3 | MIT |
 | zwitch | 2.0.4 | MIT |
 
+## Приложение iPad (ipad)
+
+Пакетов: 133. По лицензиям: MIT — 122, ISC — 4, MIT OR Apache-2.0 — 2, BSD-3-Clause — 2, Apache-2.0 OR MIT — 1, (MIT AND Zlib) — 1, (MIT AND BSD-3-Clause) — 1.
+
+| Пакет | Версия | Лицензия |
+|---|---|---|
+| @noble/hashes | 1.8.0 | MIT |
+| @tauri-apps/api | 2.12.5 | Apache-2.0 OR MIT |
+| @tauri-apps/plugin-fs | 2.7.1 | MIT OR Apache-2.0 |
+| @tauri-apps/plugin-notification | 2.8.1 | MIT OR Apache-2.0 |
+| asn1.js | 4.10.1 | MIT |
+| assert | 2.1.0 | MIT |
+| available-typed-arrays | 1.0.7 | MIT |
+| base64-js | 1.5.1 | MIT |
+| bn.js | 4.12.5 | MIT |
+| bn.js | 5.2.5 | MIT |
+| brorand | 1.1.0 | MIT |
+| browser-resolve | 2.0.0 | MIT |
+| browserify-aes | 1.2.0 | MIT |
+| browserify-cipher | 1.0.1 | MIT |
+| browserify-des | 1.0.2 | MIT |
+| browserify-rsa | 4.1.1 | MIT |
+| browserify-sign | 4.2.6 | ISC |
+| browserify-zlib | 0.2.0 | MIT |
+| buffer | 5.7.1 | MIT |
+| buffer-xor | 1.0.3 | MIT |
+| builtin-status-codes | 3.0.0 | MIT |
+| call-bind | 1.0.9 | MIT |
+| call-bind-apply-helpers | 1.0.2 | MIT |
+| call-bound | 1.0.4 | MIT |
+| cipher-base | 1.0.7 | MIT |
+| console-browserify | 1.2.0 | MIT |
+| constants-browserify | 1.0.0 | MIT |
+| core-util-is | 1.0.3 | MIT |
+| create-ecdh | 4.0.5 | MIT |
+| create-hash | 1.2.0 | MIT |
+| create-hmac | 1.1.7 | MIT |
+| create-require | 1.1.1 | MIT |
+| crypto-browserify | 3.12.1 | MIT |
+| define-data-property | 1.1.4 | MIT |
+| define-properties | 1.2.1 | MIT |
+| des.js | 1.1.0 | MIT |
+| diffie-hellman | 5.0.3 | MIT |
+| domain-browser | 4.22.0 | MIT |
+| dunder-proto | 1.0.1 | MIT |
+| elliptic | 6.6.1 | MIT |
+| es-define-property | 1.0.1 | MIT |
+| es-errors | 1.3.0 | MIT |
+| es-object-atoms | 1.1.2 | MIT |
+| events | 3.3.0 | MIT |
+| evp_bytestokey | 1.0.3 | MIT |
+| find-up | 5.0.0 | MIT |
+| for-each | 0.3.5 | MIT |
+| function-bind | 1.1.2 | MIT |
+| generator-function | 2.0.1 | MIT |
+| get-intrinsic | 1.3.0 | MIT |
+| get-proto | 1.0.1 | MIT |
+| gopd | 1.2.0 | MIT |
+| has-property-descriptors | 1.0.2 | MIT |
+| has-symbols | 1.1.0 | MIT |
+| has-tostringtag | 1.0.2 | MIT |
+| hash-base | 3.0.5 | MIT |
+| hash-base | 3.1.2 | MIT |
+| hash.js | 1.1.7 | MIT |
+| hasown | 2.0.4 | MIT |
+| hmac-drbg | 1.0.1 | MIT |
+| https-browserify | 1.0.0 | MIT |
+| ieee754 | 1.2.1 | BSD-3-Clause |
+| inherits | 2.0.4 | ISC |
+| is-arguments | 1.2.0 | MIT |
+| is-callable | 1.2.7 | MIT |
+| is-core-module | 2.18.0 | MIT |
+| is-generator-function | 1.1.2 | MIT |
+| is-nan | 1.3.2 | MIT |
+| is-regex | 1.2.1 | MIT |
+| is-typed-array | 1.1.15 | MIT |
+| isarray | 1.0.0 | MIT |
+| isarray | 2.0.5 | MIT |
+| isomorphic-timers-promises | 1.0.1 | MIT |
+| locate-path | 6.0.0 | MIT |
+| math-intrinsics | 1.1.0 | MIT |
+| md5.js | 1.3.5 | MIT |
+| miller-rabin | 4.0.1 | MIT |
+| minimalistic-assert | 1.0.1 | ISC |
+| minimalistic-crypto-utils | 1.0.1 | MIT |
+| node-stdlib-browser | 1.3.1 | MIT |
+| object-inspect | 1.13.4 | MIT |
+| object-is | 1.1.6 | MIT |
+| object-keys | 1.1.1 | MIT |
+| object.assign | 4.1.7 | MIT |
+| os-browserify | 0.3.0 | MIT |
+| p-limit | 3.1.0 | MIT |
+| p-locate | 5.0.0 | MIT |
+| pako | 1.0.11 | (MIT AND Zlib) |
+| parse-asn1 | 5.1.10 | ISC |
+| path-browserify | 1.0.1 | MIT |
+| path-exists | 4.0.0 | MIT |
+| path-parse | 1.0.7 | MIT |
+| pbkdf2 | 3.1.7 | MIT |
+| pkg-dir | 5.0.0 | MIT |
+| possible-typed-array-names | 1.1.0 | MIT |
+| process | 0.11.10 | MIT |
+| process-nextick-args | 2.0.1 | MIT |
+| public-encrypt | 4.0.3 | MIT |
+| punycode | 1.4.1 | MIT |
+| qs | 6.17.1 | BSD-3-Clause |
+| querystring-es3 | 0.2.1 | MIT |
+| randombytes | 2.1.0 | MIT |
+| randomfill | 1.0.4 | MIT |
+| readable-stream | 2.3.8 | MIT |
+| readable-stream | 3.6.2 | MIT |
+| resolve | 1.22.14 | MIT |
+| ripemd160 | 2.0.3 | MIT |
+| safe-buffer | 5.1.2 | MIT |
+| safe-buffer | 5.2.1 | MIT |
+| safe-regex-test | 1.1.0 | MIT |
+| set-function-length | 1.2.2 | MIT |
+| setimmediate | 1.0.5 | MIT |
+| sha.js | 2.4.12 | (MIT AND BSD-3-Clause) |
+| side-channel | 1.1.1 | MIT |
+| side-channel-list | 1.0.1 | MIT |
+| side-channel-map | 1.0.1 | MIT |
+| side-channel-weakmap | 1.0.2 | MIT |
+| stream-browserify | 3.0.0 | MIT |
+| stream-http | 3.2.0 | MIT |
+| string_decoder | 1.1.1 | MIT |
+| string_decoder | 1.3.0 | MIT |
+| supports-preserve-symlinks-flag | 1.0.0 | MIT |
+| timers-browserify | 2.0.12 | MIT |
+| to-buffer | 1.2.2 | MIT |
+| tty-browserify | 0.0.1 | MIT |
+| typed-array-buffer | 1.0.3 | MIT |
+| url | 0.11.4 | MIT |
+| util | 0.12.5 | MIT |
+| util-deprecate | 1.0.2 | MIT |
+| vm-browserify | 1.1.2 | MIT |
+| which-typed-array | 1.1.24 | MIT |
+| xtend | 4.0.2 | MIT |
+| yocto-queue | 0.1.0 | MIT |
+
 ## Настольное приложение (desktop)
 
 - Tauri 2 и крейты Rust (`desktop/src-tauri/Cargo.lock`): в основном MIT и Apache-2.0; полный список для релиза собирать `cargo about generate` в папке `desktop/src-tauri`.
 - Встроенный Node.js: MIT; лицензии его собственных сторонних компонентов — файл `LICENSE` дистрибутива Node, кладётся рядом с бинарником.
 - PGlite (`@electric-sql/pglite`, необязательная зависимость gateway, входит только в настольную сборку): Apache-2.0 и PostgreSQL License.
+
+## Приложение iPad (ipad)
+
+- Tauri 2 и крейты Rust (`ipad/src-tauri/Cargo.lock`, включая objc2 и objc2-local-authentication для Face ID): в основном MIT и Apache-2.0; полный список для релиза собирать `cargo about generate` в папке `ipad/src-tauri`.
+- PGlite и pdf.js входят из зависимостей gateway (см. выше); модели распознавания tesseract.js (`rus`, `eng`) — Apache-2.0 (данные tessdata).
 
 
 ## Сервис разбора PDF на Python (ingestion, необязательный)

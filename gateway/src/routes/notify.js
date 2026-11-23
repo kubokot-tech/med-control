@@ -7,16 +7,20 @@ import { reminderTimes, saveReminderTimes } from '../lib/reminderTimes.js';
 import { userFormat, userLanguage } from '../lib/userLocale.js';
 import { t } from '../lib/i18n.js';
 import { sensitiveConfirmed } from '../lib/auth.js';
+import { requireFeature, available } from '../lib/edition.js';
 
 export default async function notifyRoutes(app) {
   app.get('/notify/status', { preHandler: app.authenticate }, async (req) => {
     const c = telegramConfig();
     let bot = null;
-    if (c.token) { try { const b = await botInfo(); bot = { username: b.username, name: b.first_name }; } catch { bot = null; } }
+    if (c.token && available('telegram')) { try { const b = await botInfo(); bot = { username: b.username, name: b.first_name }; } catch { bot = null; } }
     const last = await pool.query('select kind, ref, sent_at, text from notifications where user_id = $1 order by sent_at desc limit 10', [req.user.sub]);
+    const labs = await pool.query('select max(collected_at) as last from lab_results where user_id = $1', [req.user.sub]);
+    const lastLab = labs.rows[0]?.last ? new Date(labs.rows[0].last) : null;
     return {
       telegram: { tokenSet: Boolean(c.token), chatSet: Boolean(c.chatId), ready: telegramReady(), bot, tokenSource: secretSource('telegramBotToken'), chatSource: secretSource('telegramChatId') },
       schedule: reminderTimes(),
+      lastLabAt: lastLab && !Number.isNaN(lastLab.getTime()) ? lastLab.toISOString() : null,
       appUrl: c.appUrl,
       recent: last.rows,
       backup: await userFormat(req.user.sub).then(async (f) => { const b = await backupStatus(f.language); return b ? { ...b, line: backupLine(b, f) } : null; }),
@@ -32,6 +36,7 @@ export default async function notifyRoutes(app) {
   // The bot and the chat receive reminders and security notices and can write into the diary, so changing them needs
   // the password (or a session that typed it minutes ago): a stolen session token must not move them to another chat.
   app.put('/notify/telegram', { preHandler: app.authenticate }, async (req, reply) => {
+    requireFeature('telegram');
     const b = req.body || {};
     const next = {};
     if ('token' in b) {
@@ -64,6 +69,7 @@ export default async function notifyRoutes(app) {
   });
 
   app.get('/notify/telegram/discover', { preHandler: app.authenticate }, async (req, reply) => {
+    requireFeature('telegram');
     try {
       return { chats: await discoverChats() };
     } catch (e) {
@@ -72,6 +78,7 @@ export default async function notifyRoutes(app) {
   });
 
   app.post('/notify/test', { preHandler: app.authenticate }, async (req, reply) => {
+    requireFeature('telegram');
     const c = telegramConfig();
     const chatId = req.body?.chatId ? String(req.body.chatId) : undefined;
     if (chatId && c.chatId && chatId !== c.chatId) return reply.code(403).send({ error: 'chat_not_allowed' });

@@ -41,14 +41,31 @@ function shape(r) {
   return { rows, rowCount: r.affectedRows || rows.length, fields: r.fields || [], command: r.command };
 }
 
-export async function createPglitePool({ dataDir } = {}) {
+export async function createPglitePool({ dataDir, loadDataDir } = {}) {
+  // The iPad page prepares a database copy from the app container before the first open (ipad/web/env.js).
+  // The contract lives here, in one place: wait for the preparation, then take the copy it found.
+  if (globalThis.__MC_BEFORE_DB) await globalThis.__MC_BEFORE_DB;
+  const load = loadDataDir ?? globalThis.__MC_PGLITE_LOAD;
   const { PGlite } = await import('@electric-sql/pglite');
   const { pgcrypto } = await import('@electric-sql/pglite/contrib/pgcrypto');
-  const db = await PGlite.create({
+  const opts = {
     dataDir,
     extensions: { pgcrypto },
     parsers: { [DATE]: (v) => v, [INT8]: (v) => v },
-  });
+  };
+  if (load) opts.loadDataDir = load;
+  let db;
+  try {
+    db = await PGlite.create(opts);
+  } catch (e) {
+    if (!loadDataDir) throw e;
+    // The browser edition must not overwrite the stored copy with what may be an empty database:
+    // the iPad page reads this flag and holds its snapshots until the owner resolves the situation.
+    globalThis.__MC_RESTORE_FAILED = true;
+    console.warn('[medcontrol] stored database could not be opened, starting from the browser copy', e);
+    delete opts.loadDataDir;
+    db = await PGlite.create(opts);
+  }
   await db.exec(`set time zone 'UTC'`);
 
   const acquire = makeLock();

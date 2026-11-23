@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'use-intl';
@@ -9,6 +9,8 @@ import { apiFetch } from '../ui/labUtils';
 import { errorRu } from '../ui/api';
 import { useFormat } from '../ui/format';
 import EmptyState from '../ui/EmptyState';
+import { noteHref } from '../ui/recordLink';
+import FileButton from '../ui/FileButton';
 
 type Note = { id: string; title: string; tags: string[]; url: string | null; source: string; sourceName: string | null; pinned: boolean; updatedAt: string; excerpt: string; filesCount?: number };
 type Tag = { tag: string; n: number };
@@ -26,8 +28,6 @@ export default function NotesPage() {
   const [err, setErr] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const fileRef = useRef<HTMLInputElement>(null);
-
   const load = useCallback(async () => {
     setErr(null);
     const r = await apiFetch(`/api/gateway/notes?q=${encodeURIComponent(q)}&tag=${encodeURIComponent(tag)}`);
@@ -43,11 +43,11 @@ export default function NotesPage() {
       const r = await apiFetch('/api/gateway/notes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title: t('newNoteTitle'), body: '', tags: tag ? [tag] : [] }) });
       const j = await r.json();
       if (!r.ok) throw new Error(errorRu(j));
-      router.push(`/notes/${j.note.id}?edit=1`);
+      router.push(noteHref(j.note.id, { edit: '1' }));
     } catch (e: any) { setErr(String(e?.message || e)); } finally { setBusy(false); }
   }
-  async function importFiles(files: FileList | null) {
-    if (!files?.length) return;
+  async function importFiles(files: File[]) {
+    if (!files.length) return;
     setBusy(true); setErr(null); setMsg(null);
     try {
       const fd = new FormData();
@@ -59,7 +59,7 @@ export default function NotesPage() {
         ? t('importedSkipped', { n: j.created.length, names: j.skipped.map((s: any) => s.name).join(', ') })
         : t('imported', { n: j.created.length }));
       await load();
-    } catch (e: any) { setErr(String(e?.message || e)); } finally { setBusy(false); if (fileRef.current) fileRef.current.value = ''; }
+    } catch (e: any) { setErr(String(e?.message || e)); } finally { setBusy(false); }
   }
 
   return (
@@ -73,8 +73,7 @@ export default function NotesPage() {
 
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
         <button type="button" className="btn btn--primary" onClick={createNew} disabled={busy}><Icon name="plus" size={18} />{t('newNote')}</button>
-        <button type="button" className="btn btn--secondary" onClick={() => fileRef.current?.click()} disabled={busy}><Icon name="upload" />{t('import')}</button>
-        <input ref={fileRef} type="file" accept=".md,.markdown,.txt,text/markdown,text/plain" multiple hidden onChange={(e) => importFiles(e.target.files)} />
+        <FileButton className="btn btn--secondary" accept=".md,.markdown,.txt,text/markdown,text/plain" multiple disabled={busy} onFiles={importFiles}><Icon name="upload" />{t('import')}</FileButton>
         <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('searchPlaceholder')} style={{ flex: 1, minWidth: 180 }} />
       </div>
       {tags.length > 0 && (
@@ -89,7 +88,7 @@ export default function NotesPage() {
       )}
       <div className="today-section">
         {notes?.map((n) => (
-          <Link key={n.id} href={`/notes/${n.id}`} className="card meds-card" style={{ gap: 6, textDecoration: 'none', color: 'inherit' }}>
+          <Link key={n.id} href={noteHref(n.id)} className="card meds-card" style={{ gap: 6, textDecoration: 'none', color: 'inherit' }}>
             <div className="ms-card__head">
               <div className="event-card__icon event-card__icon--other"><Icon name="doc" size={22} /></div>
               <div className="event-card__body">

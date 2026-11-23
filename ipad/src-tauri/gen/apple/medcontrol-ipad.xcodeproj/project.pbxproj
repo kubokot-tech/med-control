@@ -1,0 +1,480 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		00834CD4834EB36B1AFB1822 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 340EA6BF84137B82166E4D17 /* LaunchScreen.storyboard */; };
+		0D20A42CAED0861CA4A8EB3A /* libapp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 4DAEF065C1E9796A75CAA05B /* libapp.a */; };
+		0F96286651189D02B085F448 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E7EF8F836DA3D3A9650BD757 /* QuartzCore.framework */; };
+		18B9E9514E86A3994394AAB5 /* WebKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 158930BB598FE80919B1974A /* WebKit.framework */; };
+		3C46E260D2CED0CC967DA4DE /* MetalKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CEBF77F689A165A9F3DBD3AD /* MetalKit.framework */; };
+		7F80864BC90DC6AC65DBB694 /* main.mm in Sources */ = {isa = PBXBuildFile; fileRef = 2C29C1F9B90A149F8F86DE55 /* main.mm */; };
+		98EDD2C364652F20F9B6B6F2 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D259810637FEFC3AE80D73F4 /* Security.framework */; };
+		9A55B418E0E1F32A1852588E /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F25AB4A554EDDF17FCC5AE48 /* CoreGraphics.framework */; };
+		ADC0D2F08C8EBF5C5A1BDEA6 /* assets in Resources */ = {isa = PBXBuildFile; fileRef = E534F5DE5C7E7480CCA655DF /* assets */; };
+		AF09BAC4BE6B1EFDE1D30A1A /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C85CC20C98E2D039EF589B63 /* Metal.framework */; };
+		B3C8D9DF370DD5E9C721DDD8 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F236918C1F36B2AE5552E79C /* UIKit.framework */; };
+		E05E37D5C58830E62C4802AD /* LocalAuthentication.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8C2575C956FEB7CE2F39E65E /* LocalAuthentication.framework */; };
+		EB900F075F10139AFFFA7C80 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 23C0C5CEA4ADD849B221D602 /* Assets.xcassets */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		0214104E43ADADB5A1DE2008 /* main.rs */ = {isa = PBXFileReference; path = main.rs; sourceTree = "<group>"; };
+		02E7751F4A683BCA1DBA26BD /* medcontrol-ipad_iOS.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = "medcontrol-ipad_iOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		158930BB598FE80919B1974A /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = System/Library/Frameworks/WebKit.framework; sourceTree = SDKROOT; };
+		18E7AC1B5F864FA2D57D135E /* lib.rs */ = {isa = PBXFileReference; path = lib.rs; sourceTree = "<group>"; };
+		23C0C5CEA4ADD849B221D602 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		2C29C1F9B90A149F8F86DE55 /* main.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
+		34040BD4FFAFE1B303250DC5 /* bindings.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = bindings.h; sourceTree = "<group>"; };
+		340EA6BF84137B82166E4D17 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
+		49A15699A8AFA9C4632D4B15 /* medcontrol-ipad_iOS.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "medcontrol-ipad_iOS.entitlements"; sourceTree = "<group>"; };
+		49F8FB8A7AA80E2ACC658996 /* face.rs */ = {isa = PBXFileReference; path = face.rs; sourceTree = "<group>"; };
+		4DAEF065C1E9796A75CAA05B /* libapp.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libapp.a; sourceTree = "<group>"; };
+		8C2575C956FEB7CE2F39E65E /* LocalAuthentication.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = LocalAuthentication.framework; path = System/Library/Frameworks/LocalAuthentication.framework; sourceTree = SDKROOT; };
+		8D2A9474A2B6539D0990070D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		C85CC20C98E2D039EF589B63 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
+		CEBF77F689A165A9F3DBD3AD /* MetalKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalKit.framework; path = System/Library/Frameworks/MetalKit.framework; sourceTree = SDKROOT; };
+		D259810637FEFC3AE80D73F4 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
+		E534F5DE5C7E7480CCA655DF /* assets */ = {isa = PBXFileReference; lastKnownFileType = folder; path = assets; sourceTree = SOURCE_ROOT; };
+		E7EF8F836DA3D3A9650BD757 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
+		F236918C1F36B2AE5552E79C /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
+		F25AB4A554EDDF17FCC5AE48 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		1DF6D54DABCB13D668F5EDE1 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0D20A42CAED0861CA4A8EB3A /* libapp.a in Frameworks */,
+				9A55B418E0E1F32A1852588E /* CoreGraphics.framework in Frameworks */,
+				AF09BAC4BE6B1EFDE1D30A1A /* Metal.framework in Frameworks */,
+				3C46E260D2CED0CC967DA4DE /* MetalKit.framework in Frameworks */,
+				0F96286651189D02B085F448 /* QuartzCore.framework in Frameworks */,
+				98EDD2C364652F20F9B6B6F2 /* Security.framework in Frameworks */,
+				B3C8D9DF370DD5E9C721DDD8 /* UIKit.framework in Frameworks */,
+				18B9E9514E86A3994394AAB5 /* WebKit.framework in Frameworks */,
+				E05E37D5C58830E62C4802AD /* LocalAuthentication.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		18C2C598BE11DF254922707E /* bindings */ = {
+			isa = PBXGroup;
+			children = (
+				34040BD4FFAFE1B303250DC5 /* bindings.h */,
+			);
+			path = bindings;
+			sourceTree = "<group>";
+		};
+		23E239253810C7DAE5B7EFDA /* Externals */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Externals;
+			sourceTree = "<group>";
+		};
+		29A179371D4363B3E5A6A4E5 /* medcontrol-ipad_iOS */ = {
+			isa = PBXGroup;
+			children = (
+				8D2A9474A2B6539D0990070D /* Info.plist */,
+				49A15699A8AFA9C4632D4B15 /* medcontrol-ipad_iOS.entitlements */,
+			);
+			path = "medcontrol-ipad_iOS";
+			sourceTree = "<group>";
+		};
+		3E29D0F0D5EE25AFDF5E74D9 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				F25AB4A554EDDF17FCC5AE48 /* CoreGraphics.framework */,
+				4DAEF065C1E9796A75CAA05B /* libapp.a */,
+				8C2575C956FEB7CE2F39E65E /* LocalAuthentication.framework */,
+				C85CC20C98E2D039EF589B63 /* Metal.framework */,
+				CEBF77F689A165A9F3DBD3AD /* MetalKit.framework */,
+				E7EF8F836DA3D3A9650BD757 /* QuartzCore.framework */,
+				D259810637FEFC3AE80D73F4 /* Security.framework */,
+				F236918C1F36B2AE5552E79C /* UIKit.framework */,
+				158930BB598FE80919B1974A /* WebKit.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		465CD6D4E0D334A7ECE9AA3E /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				68BD92B6EB9707A5C4368713 /* medcontrol-ipad */,
+			);
+			path = Sources;
+			sourceTree = "<group>";
+		};
+		68BD92B6EB9707A5C4368713 /* medcontrol-ipad */ = {
+			isa = PBXGroup;
+			children = (
+				2C29C1F9B90A149F8F86DE55 /* main.mm */,
+				18C2C598BE11DF254922707E /* bindings */,
+			);
+			path = "medcontrol-ipad";
+			sourceTree = "<group>";
+		};
+		86335C4AC83816CD7C226B70 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				02E7751F4A683BCA1DBA26BD /* medcontrol-ipad_iOS.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		8FAD059C9AA7E81F8037D361 = {
+			isa = PBXGroup;
+			children = (
+				E534F5DE5C7E7480CCA655DF /* assets */,
+				23C0C5CEA4ADD849B221D602 /* Assets.xcassets */,
+				340EA6BF84137B82166E4D17 /* LaunchScreen.storyboard */,
+				23E239253810C7DAE5B7EFDA /* Externals */,
+				29A179371D4363B3E5A6A4E5 /* medcontrol-ipad_iOS */,
+				465CD6D4E0D334A7ECE9AA3E /* Sources */,
+				9E8BC21A7C1D92EB300FF3CB /* src */,
+				3E29D0F0D5EE25AFDF5E74D9 /* Frameworks */,
+				86335C4AC83816CD7C226B70 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		9E8BC21A7C1D92EB300FF3CB /* src */ = {
+			isa = PBXGroup;
+			children = (
+				49F8FB8A7AA80E2ACC658996 /* face.rs */,
+				18E7AC1B5F864FA2D57D135E /* lib.rs */,
+				0214104E43ADADB5A1DE2008 /* main.rs */,
+			);
+			name = src;
+			path = ../../src;
+			sourceTree = "<group>";
+		};
+		"TEMP_317BA266-F9E4-484E-A793-C73A6064E7A1" /* arm64 */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = arm64;
+			sourceTree = "<group>";
+		};
+		"TEMP_ADEAE419-A6D9-44B6-B62C-FB807252752F" /* x86_64 */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = x86_64;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		C6203A40EDEEB2CADD415241 /* medcontrol-ipad_iOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 1F6F9E8511D23F6200E5238D /* Build configuration list for PBXNativeTarget "medcontrol-ipad_iOS" */;
+			buildPhases = (
+				057C5F8DDA5B8F5F4EEAC222 /* Build Rust Code */,
+				4594E5F39F9DC904E815E1CF /* Sources */,
+				9929A3AC865101A8292A78BF /* Resources */,
+				1DF6D54DABCB13D668F5EDE1 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "medcontrol-ipad_iOS";
+			packageProductDependencies = (
+			);
+			productName = "medcontrol-ipad_iOS";
+			productReference = 02E7751F4A683BCA1DBA26BD /* medcontrol-ipad_iOS.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		659AE97CE371466AD6DDB8B0 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1600;
+				TargetAttributes = {
+				};
+			};
+			buildConfigurationList = CEC55F67CA8746988E9295BD /* Build configuration list for PBXProject "medcontrol-ipad" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 8FAD059C9AA7E81F8037D361;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 86335C4AC83816CD7C226B70 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				C6203A40EDEEB2CADD415241 /* medcontrol-ipad_iOS */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		9929A3AC865101A8292A78BF /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				EB900F075F10139AFFFA7C80 /* Assets.xcassets in Resources */,
+				00834CD4834EB36B1AFB1822 /* LaunchScreen.storyboard in Resources */,
+				ADC0D2F08C8EBF5C5A1BDEA6 /* assets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		057C5F8DDA5B8F5F4EEAC222 /* Build Rust Code */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Build Rust Code";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(SRCROOT)/Externals/x86_64/${CONFIGURATION}/libapp.a",
+				"$(SRCROOT)/Externals/arm64/${CONFIGURATION}/libapp.a",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "npm run -- tauri ios xcode-script -v --platform \"${PLATFORM_DISPLAY_NAME:?}\" --sdk-root \"${SDKROOT:?}\" --framework-search-paths \"${FRAMEWORK_SEARCH_PATHS:?}\" --header-search-paths \"${HEADER_SEARCH_PATHS:?}\" --gcc-preprocessor-definitions \"${GCC_PREPROCESSOR_DEFINITIONS:-}\" --configuration \"${CONFIGURATION:?}\" ${FORCE_COLOR} ${ARCHS:?}\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		4594E5F39F9DC904E815E1CF /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7F80864BC90DC6AC65DBB694 /* main.mm in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		2C47C87D366F0E8961586CDB /* debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				ARCHS = (
+					arm64,
+				);
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = "medcontrol-ipad_iOS/medcontrol-ipad_iOS.entitlements";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				ENABLE_BITCODE = NO;
+				"EXCLUDED_ARCHS[sdk=iphoneos*]" = x86_64;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\".\"",
+				);
+				INFOPLIST_FILE = "medcontrol-ipad_iOS/Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				"LIBRARY_SEARCH_PATHS[arch=arm64]" = "$(inherited) $(PROJECT_DIR)/Externals/arm64/$(CONFIGURATION) $(SDKROOT)/usr/lib/swift $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/$(PLATFORM_NAME) $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-5.0/$(PLATFORM_NAME)";
+				"LIBRARY_SEARCH_PATHS[arch=x86_64]" = "$(inherited) $(PROJECT_DIR)/Externals/x86_64/$(CONFIGURATION) $(SDKROOT)/usr/lib/swift $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/$(PLATFORM_NAME) $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-5.0/$(PLATFORM_NAME)";
+				PRODUCT_BUNDLE_IDENTIFIER = app.med-control.ipad-spike;
+				PRODUCT_NAME = "MedControl";
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALID_ARCHS = arm64;
+			};
+			name = debug;
+		};
+		CCE0B47D7E3245AEBCE8EAEF /* release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				ARCHS = (
+					arm64,
+				);
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = "medcontrol-ipad_iOS/medcontrol-ipad_iOS.entitlements";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				ENABLE_BITCODE = NO;
+				"EXCLUDED_ARCHS[sdk=iphoneos*]" = x86_64;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\".\"",
+				);
+				INFOPLIST_FILE = "medcontrol-ipad_iOS/Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				"LIBRARY_SEARCH_PATHS[arch=arm64]" = "$(inherited) $(PROJECT_DIR)/Externals/arm64/$(CONFIGURATION) $(SDKROOT)/usr/lib/swift $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/$(PLATFORM_NAME) $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-5.0/$(PLATFORM_NAME)";
+				"LIBRARY_SEARCH_PATHS[arch=x86_64]" = "$(inherited) $(PROJECT_DIR)/Externals/x86_64/$(CONFIGURATION) $(SDKROOT)/usr/lib/swift $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/$(PLATFORM_NAME) $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-5.0/$(PLATFORM_NAME)";
+				PRODUCT_BUNDLE_IDENTIFIER = app.med-control.ipad-spike;
+				PRODUCT_NAME = "MedControl";
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALID_ARCHS = arm64;
+			};
+			name = release;
+		};
+		D1254866DFE227B1E564C648 /* debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.4;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = debug;
+		};
+		E4CE0F97A5AED9EBDB002D2B /* release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.4;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		1F6F9E8511D23F6200E5238D /* Build configuration list for PBXNativeTarget "medcontrol-ipad_iOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2C47C87D366F0E8961586CDB /* debug */,
+				CCE0B47D7E3245AEBCE8EAEF /* release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = debug;
+		};
+		CEC55F67CA8746988E9295BD /* Build configuration list for PBXProject "medcontrol-ipad" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D1254866DFE227B1E564C648 /* debug */,
+				E4CE0F97A5AED9EBDB002D2B /* release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 659AE97CE371466AD6DDB8B0 /* Project object */;
+}

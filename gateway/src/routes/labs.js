@@ -6,39 +6,31 @@ import {
 } from '../lib/labsQuery.js';
 import { monthPickOrder } from '../lib/labsQuery.js';
 import { classify, entry as catalogEntry, catalog, keyKeys, markerName, markerShort } from '../lib/canonical.js';
-import { commitLabsPdf, commitParsed, commitManual, loadPending, dropPending } from '../lib/labsCommit.js';
+import { commitLabsPdf, commitParsed, commitManual, loadPending, dropPending, commitPdfFailure } from '../lib/labsCommit.js';
+import { firstFilePart } from '../lib/multipart.js';
 import { z } from 'zod';
 import { displayUnit } from '../../../shared/units.js';
 import { labParserList } from '../lib/pdfEngine.js';
 import { labSamplesUrl } from './labSample.js';
 import { userLabUnits, displayPoint } from '../lib/labDisplay.js';
 import { userLanguage } from '../lib/userLocale.js';
+import { traceStep } from '../lib/traceStep.js';
 
 export default async function labsRoutes(app) {
   // Commit labs PDF: gateway receives PDF, calls ingestion to parse, then writes to Postgres.
   app.post('/labs/commit-pdf', { preHandler: app.authenticate }, async (req, reply) => {
     const userId = req.user.sub;
-    let filePart = null;
-    for await (const p of req.parts()) {
-      if (p.type === 'file' && p.fieldname === 'file') {
-        filePart = p;
-        break;
-      }
-    }
-    if (!filePart) return reply.code(400).send({ error: 'file_required' });
-
-    const buf = await filePart.toBuffer();
-    if (!buf?.length) return reply.code(400).send({ error: 'empty_file' });
+    traceStep('multipart');
+    const { buf, filename } = await firstFilePart(req);
+    if (!buf?.length) return reply.code(400).send({ error: buf ? 'empty_file' : 'file_required' });
 
     try {
-      const r = await commitLabsPdf({ userId, buf, filename: filePart.filename });
+      const r = await commitLabsPdf({ userId, buf, filename });
       if (r.needsReview) return { ok: false, needsReview: true, sha256: r.sha256, draft: r.draft };
       return { ok: true, sha256: r.sha256, inserted: r.inserted, already: r.already, eventId: r.eventId, alertsRaised: r.alertsRaised, labName: r.labName, docDate: r.docDate };
     } catch (e) {
-      if (e.code === 'not_pdf') return reply.code(415).send({ error: 'not_pdf', message: 'Файл не похож на PDF' });
-      if (e.code === 'ingestion_failed') return reply.code(502).send({ error: 'ingestion_failed', message: 'Формат лаборатории не распознан встроенными парсерами, а ключ ИИ не задан: добавьте его в Настройках → «Помощник ИИ»' });
-      if (e.code === 'ai_empty') return reply.code(422).send({ error: 'ai_empty', message: 'Модель не нашла в документе результатов анализов', warnings: e.warnings });
-      if (e.code === 'provider' || e.code === 'bad_output' || e.code === 'refusal') return reply.code(502).send({ error: e.code, message: 'Модель не смогла разобрать документ' });
+      const f = commitPdfFailure(e);
+      if (f) return reply.code(f.status).send(f.body);
       throw e;
     }
   });

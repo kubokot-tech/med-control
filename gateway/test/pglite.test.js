@@ -75,3 +75,23 @@ test('connect() holds the connection until release', async () => {
 test('errors carry the SQLSTATE code', async () => {
   await assert.rejects(pool.query('insert into t (v) values ($1)', [null]), (e) => e.code === '23502');
 });
+
+test('an unreadable stored copy falls back to the browser database and raises the restore flag', async () => {
+  // The iPad page reads this flag and holds its snapshots: overwriting the only copy with an empty
+  // database would destroy the history (ipad/web/gateway-entry.js, env.js).
+  delete globalThis.__MC_RESTORE_FAILED;
+  const broken = new Blob([Uint8Array.of(1, 2, 3, 4)]); // not a tarball
+  const p = await createPglitePool({ dataDir: 'memory://', loadDataDir: broken });
+  try {
+    assert.equal(globalThis.__MC_RESTORE_FAILED, true);
+    assert.deepEqual((await p.query('select 1 as one')).rows, [{ one: 1 }]);
+  } finally { await p.end(); delete globalThis.__MC_RESTORE_FAILED; }
+});
+
+test('without a stored copy nothing raises the flag', async () => {
+  delete globalThis.__MC_RESTORE_FAILED;
+  const p = await createPglitePool({ dataDir: 'memory://' });
+  try {
+    assert.equal(globalThis.__MC_RESTORE_FAILED, undefined);
+  } finally { await p.end(); }
+});

@@ -1,10 +1,18 @@
 /**
  * Server or desktop edition (docs/DESKTOP.md). One code base: DTC_EDITION=desktop switches off what a desktop app
  * cannot do, and the interface keeps those features in place with «доступно только в серверной версии».
+ * DTC_EDITION=ipad is the desktop edition plus what the iPad does not do (Telegram): reminders there are
+ * iOS notifications, not the bot.
  */
 import { conflict } from './errors.js';
 
-export const edition = () => (String(process.env.DTC_EDITION || '').trim().toLowerCase() === 'desktop' ? 'desktop' : 'server');
+const rawEdition = () => String(process.env.DTC_EDITION || '').trim().toLowerCase();
+
+/** `desktop` for both the desktop app and the iPad. Server features stay off in both. */
+export const edition = () => (rawEdition() === 'desktop' || rawEdition() === 'ipad' ? 'desktop' : 'server');
+
+/** `ipad` only when DTC_EDITION=ipad; otherwise the same as edition(). */
+export const platform = () => (rawEdition() === 'ipad' ? 'ipad' : edition());
 
 /**
  * Server-only features and why, as codes (the interface words them):
@@ -16,7 +24,13 @@ export const edition = () => (String(process.env.DTC_EDITION || '').trim().toLow
  */
 export const SERVER_ONLY = ['appleHealth', 'dicom', 'backups', 'passkeys', 'egress'];
 
-export const available = (feature) => edition() === 'server' || !SERVER_ONLY.includes(feature);
+/** Also off on iPad. The desktop app still has them. */
+export const IPAD_ONLY = ['telegram'];
+
+export const available = (feature) => {
+  if (platform() === 'ipad' && IPAD_ONLY.includes(feature)) return false;
+  return edition() === 'server' || !SERVER_ONLY.includes(feature);
+};
 
 /** Throws CoreError conflict `server_only` (409) when the feature is off in this edition. */
 export function requireFeature(feature) {
@@ -24,4 +38,10 @@ export function requireFeature(feature) {
 }
 
 /** For the interface (GET /edition, no sign-in needed: the login page hides the passkey button with it). */
-export const editionInfo = () => ({ edition: edition(), unavailable: edition() === 'desktop' ? [...SERVER_ONLY] : [] });
+export const editionInfo = () => ({
+  edition: edition(),
+  unavailable: [
+    ...(edition() === 'desktop' ? SERVER_ONLY : []),
+    ...(platform() === 'ipad' ? IPAD_ONLY : []),
+  ],
+});

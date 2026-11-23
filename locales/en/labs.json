@@ -107,9 +107,15 @@
   "upload": {
     "fromTelegram": "from Telegram",
     "rejected": "{n, plural, one {# file skipped} other {# files skipped}}: only PDF is supported",
+    "readFailed": "The file could not be read. Choose it again.",
     "status": {
       "pending": "Waiting",
       "uploading": "Uploading…",
+      "reading": "Reading the file…",
+      "parsing": "Reading the report…",
+      "multipart": "Receiving the file…",
+      "pdf": "Reading the pages…",
+      "save": "Saving…",
       "done": "Uploaded",
       "duplicate": "Duplicate",
       "error": "Error",

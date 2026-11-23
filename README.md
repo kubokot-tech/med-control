@@ -96,6 +96,10 @@
 
 Первый запуск занимает до минуты. Дальше всё как в серверной версии: пароль, язык и пять шагов настройки. Данные лежат в папке пользователя (`~/Library/Application Support/MedControl` на Mac, `%APPDATA%\MedControl` на Windows) и остаются на месте при обновлении. С версии 0.4.1 программа сама предлагает новую версию: показывает, что изменилось, сохраняет копию базы и ставит обновление после вашего согласия. Более ранние версии обновляются установкой поверх. Чего в настольной версии нет: доступа с телефона, ночных бэкапов (сохраняйте «Архив всех данных» сами), снимков DICOM и Apple Health; Telegram работает, пока программа открыта. Подробнее: [docs/DESKTOP.md](docs/DESKTOP.md).
 
+## Версия для iPad
+
+Полноценный МедКонтроль на самом планшете, без сервера и без компьютера: история, файлы и системные напоминания работают в приложении, историю закрывает Face ID. Telegram на iPad нет. Пока редакция в разработке: собирается из исходников с подписью Apple, готовых сборок в релизах нет. Как устроено и как собрать: [docs/IPAD.md](docs/IPAD.md).
+
 ## Как попробовать на сервере
 
 Серверная версия нужна, чтобы открывать МедКонтроль с телефона и получать ночные бэкапы. Понадобятся Docker, терминал, 2 ГБ свободной памяти, 5 ГБ на диске и около получаса. Если Docker и терминал для вас в новинку, откройте [пошаговую инструкцию](docs/INSTALL.md) для Windows, macOS, Linux и Synology. Первый раз её проще пройти вместе с тем, кто уже работал с терминалом.
@@ -145,13 +149,13 @@ docker compose up -d --build
 
 Установка и доступ с телефона: [docs/INSTALL.md](docs/INSTALL.md). Обновление и откат: [docs/UPDATE.md](docs/UPDATE.md). Каждый экран, Telegram, ИИ, бэкапы и что отложено: [docs/OVERVIEW.md](docs/OVERVIEW.md). Восстановление из бэкапов: [docs/RESTORE.md](docs/RESTORE.md).
 
-Отдельные темы: [лаборатории](docs/LAB-PARSERS.md), [нормы анализов](docs/REFERENCE-RANGES.md), [языки и регион](docs/I18N.md), [настольная версия](docs/DESKTOP.md), [ИИ-агенты (MCP)](docs/MCP.md), [эксплуатация](docs/OPERATIONS.md), [архитектура](docs/ARCHITECTURE.md), [планы](docs/ROADMAP.md), [голос продукта](docs/BRAND-VOICE.md).
+Отдельные темы: [лаборатории](docs/LAB-PARSERS.md), [нормы анализов](docs/REFERENCE-RANGES.md), [языки и регион](docs/I18N.md), [настольная версия](docs/DESKTOP.md), [версия для iPad](docs/IPAD.md), [ИИ-агенты (MCP)](docs/MCP.md), [эксплуатация](docs/OPERATIONS.md), [архитектура](docs/ARCHITECTURE.md), [планы](docs/ROADMAP.md), [голос продукта](docs/BRAND-VOICE.md).
 
 ## Для разработчиков
 
-**Стек.** Postgres 16 · Fastify (Node 22) · Next.js 15 · Caddy · Orthanc · rclone · Docker Compose; настольная версия на Tauri и PGlite. PDF читает gateway, FastAPI-парсеры в запасе (профиль `python`).
+**Стек.** Postgres 16 · Fastify (Node 22) · Next.js 15 · Caddy · Orthanc · rclone · Docker Compose; настольная версия на Tauri и PGlite; версия для iPad — Tauri, gateway и PGlite внутри страницы WKWebView. PDF читает gateway, FastAPI-парсеры в запасе (профиль `python`).
 
-**Тесты.** `cd gateway && npm test`, `npm run test:integration` с `TEST_DATABASE_URL` на отдельной базе, `cd frontend && npm run typecheck`.
+**Тесты.** `cd gateway && npm test`, `npm run test:integration` с `TEST_DATABASE_URL` на отдельной базе (или `TEST_DB=pglite` без Postgres), `cd frontend && npm run typecheck`, `cd ipad && npm test`.
 
 **Безопасность.** Наружу публикуется один порт, по умолчанию только на этом компьютере; база и API снаружи недоступны. HTTPS даёт Tailscale, Cloudflare Tunnel или ваш прокси. Подробности: [docs/OPERATIONS.md](docs/OPERATIONS.md).
 

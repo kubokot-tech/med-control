@@ -8,6 +8,7 @@ import { apiFetch } from '../ui/labUtils';
 import AiAsk from '../ui/AiAsk';
 import { todayKey, errorRu } from '../ui/api';
 import { useFormat } from '../ui/format';
+import { useEdition } from '../ui/edition';
 import EmptyState from '../ui/EmptyState';
 import { useMedLabels } from '../ui/medLabels';
 import { ROUTES, ROUTE_IV_DRIP, ROUTE_OTHER, DEFAULT_DOSE_UNIT, isShotRoute } from '../../../shared/medCodes.js';
@@ -25,6 +26,7 @@ const num = (s: string) => { const v = parseFloat(s.replace(',', '.')); return N
 export default function InfusionsPage() {
   const t = useTranslations('infusions');
   const f = useFormat();
+  const ed = useEdition();
   const label = useMedLabels();
   const fmtDate = (d: string) => f.date(d, { day: 'numeric', month: 'long', year: 'numeric' });
   const fmtNum = (n: number) => f.number(n, { maximumFractionDigits: 2 });
@@ -169,7 +171,7 @@ export default function InfusionsPage() {
                   <b>{courseLabel(c)}</b> · {progress(c)}{c.cadenceDays ? ` · ${t('course.cadence', { days: c.cadenceDays })}` : ''}
                   <br /><span className="muted" style={{ fontSize: 13 }}>
                     {c.status === 'done' ? (c.lastDate ? t('course.doneOn', { date: fmtDate(c.lastDate) }) : t('course.done')) : c.nextDue ? (c.nextDue <= today() ? (c.nextDue === today() ? t('course.dueToday') : t('course.overdue', { date: fmtDate(c.nextDue) })) : t('course.next', { date: fmtDate(c.nextDue) })) : t('course.since', { date: fmtDate(c.startDate) })}
-                    {c.status === 'active' && c.remind && c.cadenceDays ? ` · ${t('course.remind')}` : ''}
+                    {c.status === 'active' && c.remind && c.cadenceDays ? ` · ${t(ed.available('telegram') ? 'course.remind' : 'course.remindDevice')}` : ''}
                   </span>
                 </span>
                 <span style={{ display: 'flex', gap: 6 }}>
@@ -280,7 +282,7 @@ export default function InfusionsPage() {
       </BottomSheet>
 
       <BottomSheet open={courseEdit !== null} onClose={() => setCourseEdit(null)} title={courseEdit === 'new' ? t('course.titleNew') : t('course.title')}>
-        <div className="muted" style={{ fontSize: 14, lineHeight: 1.5 }}>{t('course.intro')}</div>
+        <div className="muted" style={{ fontSize: 14, lineHeight: 1.5 }}>{t(ed.available('telegram') ? 'course.intro' : 'course.introDevice')}</div>
         <label className="field"><span>{t('course.agent')}</span>
           <select value={cform.agentId} onChange={(e) => setCform({ ...cform, agentId: e.target.value })}>{agents.filter((a) => a.active || a.id === cform.agentId).map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}</select>
         </label>
@@ -290,7 +292,7 @@ export default function InfusionsPage() {
           <label className="field"><span>{t('course.cadenceDays')}</span><input inputMode="numeric" value={cform.cadenceDays} onChange={(e) => setCform({ ...cform, cadenceDays: e.target.value })} /></label>
           <label className="field"><span>{t('course.start')}</span><input type="date" value={cform.startDate} onChange={(e) => setCform({ ...cform, startDate: e.target.value })} /></label>
         </div>
-        <label className="list-row" style={{ cursor: 'pointer' }}><span>{t('course.remindToggle')}</span><input type="checkbox" checked={cform.remind} onChange={(e) => setCform({ ...cform, remind: e.target.checked })} /></label>
+        <label className="list-row" style={{ cursor: 'pointer' }}><span>{t(ed.available('telegram') ? 'course.remindToggle' : 'course.remindToggleDevice')}</span><input type="checkbox" checked={cform.remind} onChange={(e) => setCform({ ...cform, remind: e.target.checked })} /></label>
         <label className="field"><span>{t('course.notes')}</span><input value={cform.notes} onChange={(e) => setCform({ ...cform, notes: e.target.value })} placeholder={t('course.notesPlaceholder')} /></label>
         <button type="button" className="btn btn--primary btn--lg btn--block" onClick={() => saveCourse()} disabled={busy || !cform.agentId || !cform.startDate}><Icon name="check" strokeWidth={2.2} />{t('save')}</button>
         {courseEdit !== 'new' && courseEdit && (

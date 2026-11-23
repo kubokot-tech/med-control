@@ -1,11 +1,11 @@
 'use client';
 
 import { useEffect, useState, Suspense } from 'react';
-import { useParams } from 'next/navigation';
+import { useRecordId } from '../../../ui/recordLink';
 import { useTranslations } from 'use-intl';
 import Icon from '../../../ui/icons';
 import AiComment from '../../../ui/AiComment';
-import { apiFetch } from '../../../ui/labUtils';
+import { openAttachment } from '../../../ui/labUtils';
 import { apiJson, errorRu } from '../../../ui/api';
 import { useFormat } from '../../../ui/format';
 
@@ -36,35 +36,18 @@ type Resp = { document: Document; observations: Obs[] };
 function Inner() {
   const f = useFormat();
   const t = useTranslations('labs');
-  const params = useParams();
-  const id = params?.id?.toString();
+  const id = useRecordId();
   const [data, setData] = useState<Resp | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
   async function load() {
+    if (!id) return;
     setErr(null);
     try {
       setData(await apiJson<Resp>(`/api/gateway/labs/documents/${id}`));
     } catch (e: any) {
       setErr(errorRu(e));
     }
-  }
-
-  async function download(sha256: string) {
-    const r = await apiFetch(`/api/gateway/attachments/${sha256}`);
-    if (!r.ok) {
-      alert(t('doc.downloadFailed', { error: errorRu(await r.json().catch(() => ({})), `HTTP ${r.status}`) }));
-      return;
-    }
-    const blob = await r.blob();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${sha256}.pdf`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 2000);
   }
 
   useEffect(() => {
@@ -74,6 +57,14 @@ function Inner() {
 
   const d = data?.document;
 
+  async function download() {
+    if (!d) return;
+    const out = await openAttachment({ sha256: d.sha256, filename: d.filename, mimeType: d.mime_type });
+    if (!out.ok) {
+      alert(t('doc.downloadFailed', { error: errorRu(await out.response.json().catch(() => ({})), `HTTP ${out.response.status}`) }));
+    }
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
       <div className="series-head">
@@ -82,7 +73,7 @@ function Inner() {
           <div className="series-head__title" style={{ fontSize: 22 }}>{d?.lab_name || t('doc.untitled')}</div>
           <div className="muted" style={{ fontSize: 'var(--text-sm)' }}>{d?.doc_date || d?.created_at ? f.date(d.doc_date || d.created_at) : ''}{d?.filename ? ` · ${d.filename}` : ''}</div>
         </div>
-        {d && d.mime_type && <button className="btn btn--secondary btn--sm" style={{ marginLeft: 'auto' }} onClick={() => download(d.sha256)}><Icon name="download" />PDF</button>}
+        {d && d.mime_type && <button className="btn btn--secondary btn--sm" style={{ marginLeft: 'auto' }} onClick={() => download()}><Icon name="download" />PDF</button>}
         {d && d.source === 'manual' && <span className="pill" style={{ marginLeft: 'auto' }}>{t('doc.manual')}</span>}
       </div>
       {err && <div style={{ color: 'var(--hi-fg)', background: 'var(--hi-bg)', padding: '10px 14px', borderRadius: 8, fontSize: 13, marginBottom: 14 }}>{t('doc.error', { error: err })}</div>}

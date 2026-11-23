@@ -21,3 +21,9 @@ test('the desktop edition fills what the launcher did not set and keeps the rest
   assert.deepEqual(applyDesktopDefaults(env, 'darwin').sort(), ['DB_DRIVER', 'GATEWAY_HOST']);
   assert.deepEqual(env, { DTC_EDITION: 'desktop', PDF_ENGINE: 'python', DTC_DATA_DIR: '/data/mc', DB_DRIVER: 'pglite', GATEWAY_HOST: '127.0.0.1' });
 });
+
+test('the ipad edition gets the same defaults as desktop', () => {
+  const env = { DTC_EDITION: 'ipad' };
+  assert.deepEqual(applyDesktopDefaults(env, 'darwin').sort(), ['DB_DRIVER', 'DTC_DATA_DIR', 'GATEWAY_HOST', 'PDF_ENGINE']);
+  assert.equal(env.DB_DRIVER, 'pglite');
+});

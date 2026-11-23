@@ -7,10 +7,12 @@
 import * as dnkomPdfV1 from './dnkomPdfV1.js';
 import * as hadassahPdfV1 from './hadassahPdfV1.js';
 import * as helixPdfV1 from './helixPdfV1.js';
+import * as helixPdfV2 from './helixPdfV2.js';
 import * as mkncPdfV1 from './mkncPdfV1.js';
 
 // Order matters: specific detectors first; fallback parsers are tried last on documents nobody claims.
-export const PARSERS = [helixPdfV1, hadassahPdfV1, dnkomPdfV1, mkncPdfV1];
+// helixPdfV2 (the new layout) before helixPdfV1: on old documents only v1 detects.
+export const PARSERS = [helixPdfV2, helixPdfV1, hadassahPdfV1, dnkomPdfV1, mkncPdfV1];
 
 export const byId = (id) => PARSERS.find((p) => p.META.id === id) || null;
 

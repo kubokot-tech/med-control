@@ -7,6 +7,7 @@ import Icon from '../../ui/icons';
 import { apiFetch } from '../../ui/labUtils';
 import { useFormat } from '../../ui/format';
 import EmptyState from '../../ui/EmptyState';
+import { labDocumentHref } from '../../ui/recordLink';
 
 type Doc = {
   id: string;
@@ -42,7 +43,7 @@ export default function DocumentsPage() {
         <EmptyState icon="labs" title={t('documents.emptyTitle')} description={t('documents.emptyDesc')} action={<Link href="/labs/upload" className="btn btn--primary"><Icon name="upload" />{t('documents.upload')}</Link>} />
       )}
       {docs?.map((d) => (
-        <Link key={d.id} href={`/labs/documents/${d.id}`} className="event-card">
+        <Link key={d.id} href={labDocumentHref(d.id)} className="event-card">
           <div className="event-card__icon event-card__icon--labs"><Icon name="doc" size={22} /></div>
           <div className="event-card__body">
             <div className="event-card__title">{d.lab_name || t('documents.untitled')}</div>

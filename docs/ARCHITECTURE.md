@@ -22,6 +22,8 @@
 
 Настольная версия (`desktop/`, Tauri 2) запускает те же gateway и frontend встроенным Node на `127.0.0.1`, с базой PGlite вместо контейнера Postgres и без остальных сервисов: [DESKTOP.md](DESKTOP.md).
 
+Редакция iPad (`ipad/`, Tauri 2, `DTC_EDITION=ipad`) работает целиком внутри страницы WKWebView: gateway отвечает через `app.inject()`, PGlite хранит базу в IndexedDB, копия данных лежит в контейнере приложения, напоминания ставит система. Настольная редакция минус Telegram: [IPAD.md](IPAD.md).
+
 Данные на дисках (не в базе): `DATA_DIR` (`/data` в gateway, внутри контейнера путь задаёт `DTC_DATA_DIR`: `uploads/<sha256>.pdf`, `uploads/pending/`, `uploads/milestones/`; читает и пишет только `lib/files.js`), `DICOM_DIR` (папки дисков, только чтение), `ORTHANC_DIR` (хранилище Orthanc), `BACKUP_DIR`, `MIRROR_DIR`, `RCLONE_DIR`.
 
 ## Потоки данных
@@ -92,7 +94,7 @@ Frontend прокси прокладывает заголовок `Authorization
 
 **Анализы.**
 - `ingest_documents` — один PDF (`sha256`, `lab_name`, `doc_date`, `source`: `mknc_pdf_v1` / `helix_pdf_v1` / `hadassah_pdf_v1` / `dnkom_pdf_v1` / `ai_pdf_v1` / `manual`, `event_id`); `ingest_observations_raw` — строки как в документе, до нормализации.
-- `lab_tests` — тесты, встреченные в документах (`code`, `name`, `category`, `canonical_key`); `lab_catalog` — справочник маркеров, заливается из `lib/catalogSeed.js` при старте (ключ, имя, категория, каноническая единица, порядок, `is_key`).
+- `lab_tests` — тесты, встреченные в документах (`code`, `name`, `category`, `canonical_key`); `lab_catalog` — справочник маркеров, при старте сверяется с `lib/catalogSeed.js`, записываются только новые и изменённые строки (ключ, имя, категория, каноническая единица, порядок, `is_key`).
 - `lab_results` — числовые результаты (`test_id`, `document_id`, `collected_at`, `value_numeric`, `unit_original`, `unit_canonical`, `ref_low/high` как в бланке, `lab_name`, `source_event_id`).
 - Нормы (миграция 032, [REFERENCE-RANGES.md](REFERENCE-RANGES.md)): справочные в `lab_catalog` (`ref_low_default/ref_high_default`, `_m`, `_f`), свои в `lab_ref_overrides`, пол в `users.sex`. Представление `lab_results_eff` отдаёт результаты с действующей нормой (`ref_low`, `ref_high`, `ref_source`) и нормой бланка (`lab_ref_low/high`); всё чтение результатов идёт через него, запись в `lab_results`.
 
@@ -159,7 +161,7 @@ Frontend прокси прокладывает заголовок `Authorization
 | `catalogSeed.js` | справочник маркеров: ключ, имя, категория, единица, алиасы и регулярки |
 | `claude.js` | прямой клиент Anthropic (SDK: таймаут 240 с, одна повторная попытка), схема разбора заключения, structured output |
 | `dates.js` | дни в часовом поясе пользователя (`DEFAULT_TZ`) |
-| `db.js` | пул Postgres; `date` читается как строка `YYYY-MM-DD`. При `DB_DRIVER=pglite` (настольная версия) вместо него `pglite.js`: PGlite в том же процессе, база в `PGLITE_DIR` (по умолчанию `DTC_DATA_DIR/pgdata`), фасад с тем же `query`/`connect`/`end`, результаты как у `pg` (`rowCount`, `bigint` и `numeric` строкой, сессия в UTC); у PGlite одно соединение, поэтому транзакция держит замок, а `pool.query` из кода внутри транзакции выполняется в ней, вложенная транзакция — точка сохранения. Транзакции только через `transaction(async (client) => …)`: `BEGIN`/`COMMIT`/`ROLLBACK` внутри, `abort(value)` откатывает и возвращает `value` (так выходят с «не найдено»). Работа после фиксации (разбор текста, удаление файлов) идёт после `await transaction(…)` |
+| `db.js` | пул Postgres; `date` читается как строка `YYYY-MM-DD`. При `DB_DRIVER=pglite` (настольная версия) вместо него `pglite.js`: PGlite в том же процессе, база в `PGLITE_DIR` (по умолчанию `DTC_DATA_DIR/pgdata`), фасад с тем же `query`/`connect`/`end`, результаты как у `pg` (`rowCount`, `bigint` и `numeric` строкой, сессия в UTC); iPad передаёт копию базы из контейнера через `loadDataDir` (дождавшись `__MC_BEFORE_DB`), при неудачном открытии стартует с браузерной базы и поднимает `__MC_RESTORE_FAILED` — снимки поверх копии тогда не пишутся; у PGlite одно соединение, поэтому транзакция держит замок, а `pool.query` из кода внутри транзакции выполняется в ней, вложенная транзакция — точка сохранения. Транзакции только через `transaction(async (client) => …)`: `BEGIN`/`COMMIT`/`ROLLBACK` внутри, `abort(value)` откатывает и возвращает `value` (так выходят с «не найдено»). Работа после фиксации (разбор текста, удаление файлов) идёт после `await transaction(…)` |
 | `patientCard.js` | карточка пациента для шапки отчёта врачу и главного экрана: `patient_name`, `patient_birth`, `patient_diagnosis`, `patient_call_name` (как обращаться), `patient_kept_by` (`self` или `relative`), `patient_photo` (JPEG 160×160 как data URL, уменьшается в браузере, `ui/Avatar.tsx`), `patient_moments` (вехи и серия дней) в `app_settings` (`GET/PUT /settings/patient`, `routes/patient.js`); ИИ получает только возраст и диагноз |
 | `goodNews.js` | хорошие новости для главного экрана за 60 дней: последняя веха с тоном `positive` и ключевой показатель, вернувшийся в норму; чистая часть `goodNewsFrom()` |
 | `homeHuman.js` | человечная часть главного экрана: `GET /home/human` (`routes/home.js`) отдаёт хорошие новости, тихие вехи (`momentsFrom()`: дни терапии, годовщины, серия приёмов) и тихий режим (`quietFrom()`: 14 дней после вехи с тоном `negative` или выключено в карточке, `patient_moments`); `POST /home/quiet/resume` возвращает их (`home_quiet_resumed`) |
@@ -170,7 +172,7 @@ Frontend прокси прокладывает заголовок `Authorization
 | `sberTls.js` | `sberFetch`: доверие корневому сертификату Минцифры (`src/certs/russian_trusted_root_ca.pem`, отпечаток закреплён в тесте) только для `ngw.devices.sberbank.ru` и `gigachat.devices.sberbank.ru` |
 | `egress.js` | `egressFetch` через `EGRESS_PROXY` (ИИ), `telegramFetch` через `TELEGRAM_PROXY` или напрямую при `direct`, внешний IP |
 | `errors.js` | `CoreError` — ожидаемые ошибки ядра (`invalid`, `notFound`, `conflict`) без привязки к HTTP; сервер превращает их в ответ, локальная сборка покажет текст из словаря |
-| `ocr.js` | распознавание сканов и фото на месте: tesseract.js (WebAssembly) с моделями `rus` и `eng` из npm, картинки страниц PDF достаёт pdf.js без canvas; одна задача за раз, до 20 страниц |
+| `ocr.js` | распознавание сканов и фото на месте: tesseract.js (WebAssembly) с моделями `rus` и `eng` из npm, картинки страниц PDF достаёт pdf.js без canvas; одна задача за раз, до 20 страниц. На iPad (`globalThis.__MC_OCR`) воркер и модели лежат в приложении, таймауты 45 с на воркер и 60 с на страницу, опоздавший воркер завершается |
 | `extractMethod.js` | подпись способа получения текста вложения (`pdf_text`, `ocr`, `llm`) для промптов и выгрузок |
 | `aiPrompts.js` | системные подсказки по языкам из `locales/<язык>/server/aiPrompts.json`: `prompt`, `patientPrompt` (общая вводная и задача) |
 | `aiFormat.js` | даты и числа в текстах для ИИ: формат языка подсказки, без настроек пользователя, `aiNumber`, `aiDate` |
@@ -205,6 +207,8 @@ Frontend прокси прокладывает заголовок `Authorization
 | `orthanc.js` | REST-клиент Orthanc, импорт папок из `DICOM_DIR` в фоне, привязка исследований, серии, порядок срезов, рендер PNG с окнами |
 | `pdfEngine.js` | кто читает PDF: gateway (`PDF_ENGINE=js`, по умолчанию) или сервис ingestion (`python`; если он не отвечает, gateway читает сам); разбор анализов, текст вложений, список парсеров, проверка здоровья |
 | `pdfText.js` | текстовый слой PDF: алгоритм pypdf `extract_text()` (класс `PypdfText`) на списке операторов pdf.js, так что JS-движок даёт тот же текст, что сервис ingestion |
+| `traceStep.js` | шаг разбора бланка событием `mc-step` для страницы iPad; в остальных редакциях слушателей нет |
+| `multipart.js` | `firstFilePart`: первый файл из multipart, итератор дочитывается до конца (ранний выход оставлял парсер ждать), лишние файловые части сливаются без буферизации |
 | `pdfBrand.js` | знак в шапке и строка со ссылкой на сайт в PDF: отчёт для врача и сводная анализов; картинка в `src/assets/` |
 | `passkeys.js` | WebAuthn: rpID и origin из `APP_URL`, регистрация и вход; challenge в памяти, не больше 1000, просроченные чистятся |
 | `patientProfile.js` | профиль пациента для промптов и полное досье на языке пользователя (кэш по языку), первая строка профиля — вводная протокола |
@@ -221,8 +225,8 @@ Frontend прокси прокладывает заголовок `Authorization
 | `setupCode.js` | одноразовый код мастера первого запуска: 8 знаков base32 на запуск gateway, в журнал и `<DATA_DIR>/setup-code.txt`, сравнение за постоянное время, удаляется после мастера |
 | `setup.js` | мастер первого запуска: нужен ли он, проверка пароля (`.env` или хэш в настройках), сохранение ответов (в том числе региона) |
 | `referenceRanges.js` | справочник норм для взрослых (по полу и общий), в каноническую единицу показателя; при старте попадает в `lab_catalog` |
-| `edition.js` | серверная или настольная редакция (`DTC_EDITION`): какие функции только на сервере, `requireFeature` (409 `server_only`) |
-| `desktopEnv.js` | значения по умолчанию настольной редакции до чтения окружения другими модулями: PGlite, JS-движок PDF, `127.0.0.1`, папка данных ОС (macOS `~/Library/Application Support/MedControl`, Windows `%APPDATA%\MedControl`, Linux `~/.local/share/medcontrol`) |
+| `edition.js` | редакция (`DTC_EDITION`): `server`, `desktop`, `ipad` (= desktop + запрет Telegram, `IPAD_ONLY`); `platform()` различает desktop и ipad; какие функции только на сервере, `requireFeature` (409 `server_only`) |
+| `desktopEnv.js` | значения по умолчанию настольной редакции и iPad до чтения окружения другими модулями: PGlite, JS-движок PDF, `127.0.0.1`, папка данных ОС (macOS `~/Library/Application Support/MedControl`, Windows `%APPDATA%\MedControl`, Linux `~/.local/share/medcontrol`) |
 | `mcpAccess.js`, `mcpTools.js`, `mcpServer.js` | доступ для ИИ-агентов по MCP: включение, токены агентов (хэши), журнал, ограничение частоты; инструменты; JSON-RPC ([MCP.md](MCP.md)) |
 | `search.js` | сквозной поиск (общий для `/search` и MCP) |
 | `contacts.js` | врачи и контакты (`contacts`, миграция 033): список, создание, правка части полей, удаление |
@@ -271,7 +275,7 @@ Frontend прокси прокладывает заголовок `Authorization
 | `labRefs.js` | `GET /labs/refs`, `PUT /labs/refs` (пол), `PUT`/`DELETE /labs/refs/:key` (своя норма, «как в бланке», вернуть справочник) |
 | `locale.js` | `GET /settings/summary` (состояние разделов Настроек), `GET /settings/locale` (язык, форматы, часовой пояс и что можно выбрать), `PUT /settings/locale` (частичное изменение) |
 | `setup.js` | `GET /edition` (без входа: редакция и недоступные функции), `GET /setup/status`, `POST /setup` (без входа, только пока пароль не задан; когда нужен — с кодом первого запуска `setupCode`, одновременный второй запрос получает 409); смена пароля — `POST /auth/password` в `lib/auth.js` |
-| `notify.js` | `/notify/status`, `PUT /notify/schedule` (время напоминаний), `PUT /notify/telegram` (токен и chat id из Настроек), `/notify/telegram/discover`, `/notify/test` |
+| `notify.js` | `/notify/status` (включая `lastLabAt` для напоминания «давно не было анализов»), `PUT /notify/schedule` (время напоминаний), `PUT /notify/telegram` (токен и chat id из Настроек), `/notify/telegram/discover`, `/notify/test`; маршруты Telegram закрыты `requireFeature('telegram')` |
 | `report.js` | `/report/doctor.pdf` |
 | `search.js` | `/search?q=…` — поиск по всем источникам, фрагменты с подсветкой |
 | `symptoms.js` | `/symptoms`, `/symptoms/:date` (`PUT` меняет только присланные поля, `DELETE`) |
@@ -373,7 +377,7 @@ DEPLOY_HOST=user@server scripts/release.sh   # git archive origin/main → се�
 | `PDF_ENGINE` | `js` | кто читает PDF: `js` (pdf.js в gateway) или `python` (ingestion, нужен ещё профиль `python`); см. [LAB-PARSERS.md](LAB-PARSERS.md), «Два движка» |
 | `LAB_SAMPLES_URL` | | куда отправлять обезличенный образец бланка; пусто: отправки нет, только копирование ([LAB-PARSERS.md](LAB-PARSERS.md), «Образец бланка») |
 | `LAB_SAMPLES_TOKEN` | | ключ чтения образцов для `scripts/lab-samples.mjs` у мейнтейнера; gateway его не читает |
-| `DTC_EDITION` | `server` | `desktop` — настольная версия: выключает Apple Health, DICOM, бэкапы, passkey и прокси, интерфейс показывает их «только в серверной версии» ([DESKTOP.md](DESKTOP.md)) |
+| `DTC_EDITION` | `server` | `desktop` — настольная версия: выключает Apple Health, DICOM, бэкапы, passkey и прокси, интерфейс показывает их «только в серверной версии» ([DESKTOP.md](DESKTOP.md)); `ipad` — то же плюс запрет Telegram, напоминания ставит система ([IPAD.md](IPAD.md)) |
 | `DTC_MCP` | | `off` — запретить доступ для ИИ-агентов на этом сервере ([MCP.md](MCP.md)) |
 | `DTC_PASSWORD` | | пароль единственного пользователя; пусто — мастер первого запуска (`lib/setup.js`), хэш в `app_settings.auth_password_hash` |
 | `JWT_SECRET` | | секрет подписи сессий; пусто — создаётся в `DATA_DIR/jwt.secret` (`lib/config.js`) |

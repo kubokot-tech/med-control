@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * THIRD-PARTY-NOTICES.md: production dependencies of the gateway, the frontend and the desktop shell with their licenses,
- * read from the installed node_modules (run `npm ci` in each first). Re-run before a release:
+ * THIRD-PARTY-NOTICES.md: production dependencies of the gateway, the frontend, the desktop shell and the iPad app
+ * with their licenses, read from the installed node_modules (run `npm ci` in each first). Re-run before a release:
  *   node scripts/third-party.mjs > THIRD-PARTY-NOTICES.md
  */
 import { readFileSync, existsSync } from 'node:fs';
@@ -38,7 +38,7 @@ const lines = ['# Сторонние компоненты', '',
   '## Шрифты', '',
   '- Source Sans 3 (Adobe), Literata (The Literata Project Authors) — интерфейс, `frontend/public/fonts`; Inter (The Inter Project Authors) — PDF-отчёты, `gateway/fonts`. SIL Open Font License 1.1, текст и авторские права: `frontend/public/fonts/OFL.txt`, `gateway/fonts/OFL.txt`.',
   '- Стандартные шрифты pdf.js (`pdfjs-dist/standard_fonts`): лицензии FoxIt и Liberation приложены в самом пакете.', ''];
-for (const [dir, title] of [['gateway', 'Сервер (gateway)'], ['frontend', 'Интерфейс (frontend)'], ['desktop', 'Настольное приложение (desktop)']]) {
+for (const [dir, title] of [['gateway', 'Сервер (gateway)'], ['frontend', 'Интерфейс (frontend)'], ['desktop', 'Настольное приложение (desktop)'], ['ipad', 'Приложение iPad (ipad)']]) {
   const pkgs = prodPackages(dir);
   if (!pkgs.length) continue;
   const byLicense = new Map();
@@ -49,7 +49,10 @@ for (const [dir, title] of [['gateway', 'Сервер (gateway)'], ['frontend', 
 lines.push('## Настольное приложение (desktop)', '',
   '- Tauri 2 и крейты Rust (`desktop/src-tauri/Cargo.lock`): в основном MIT и Apache-2.0; полный список для релиза собирать `cargo about generate` в папке `desktop/src-tauri`.',
   '- Встроенный Node.js: MIT; лицензии его собственных сторонних компонентов — файл `LICENSE` дистрибутива Node, кладётся рядом с бинарником.',
-  '- PGlite (`@electric-sql/pglite`, необязательная зависимость gateway, входит только в настольную сборку): Apache-2.0 и PostgreSQL License.', '');
+  '- PGlite (`@electric-sql/pglite`, необязательная зависимость gateway, входит только в настольную сборку): Apache-2.0 и PostgreSQL License.', '',
+  '## Приложение iPad (ipad)', '',
+  '- Tauri 2 и крейты Rust (`ipad/src-tauri/Cargo.lock`, включая objc2 и objc2-local-authentication для Face ID): в основном MIT и Apache-2.0; полный список для релиза собирать `cargo about generate` в папке `ipad/src-tauri`.',
+  '- PGlite и pdf.js входят из зависимостей gateway (см. выше); модели распознавания tesseract.js (`rus`, `eng`) — Apache-2.0 (данные tessdata).', '');
 const py = existsSync(path.join(ROOT, 'ingestion', 'requirements.txt')) ? readFileSync(path.join(ROOT, 'ingestion', 'requirements.txt'), 'utf8').split('\n').map((l) => l.trim()).filter((l) => l && !l.startsWith('#') && !l.startsWith('-')) : [];
 const PY_LICENSES = { fastapi: 'MIT', uvicorn: 'BSD-3-Clause', pydantic: 'MIT', 'python-multipart': 'Apache-2.0', pypdf: 'BSD-3-Clause' };
 lines.push('', '## Сервис разбора PDF на Python (ingestion, необязательный)', '', '| Пакет | Версия | Лицензия |', '|---|---|---|',

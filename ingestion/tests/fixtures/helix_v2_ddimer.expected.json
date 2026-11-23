@@ -1,0 +1,46 @@
+{
+ "candidates": [
+  "helix_pdf_v2",
+  "helix_pdf_v1",
+  "mknc_pdf_v1"
+ ],
+ "parses": {
+  "helix_pdf_v2": {
+   "lab_name": "Хеликс",
+   "doc_date": "2026-03-05",
+   "observations": [
+    {
+     "test_name": "D-димер",
+     "result_text": "312.5",
+     "result_num": 312.5,
+     "units": "нг/мл",
+     "ref_text": "<220",
+     "ref_low": null,
+     "ref_high": 220.0,
+     "deviation_text": null,
+     "criticality_text": null
+    }
+   ]
+  },
+  "helix_pdf_v1": {
+   "lab_name": "Хеликс",
+   "doc_date": "2026-03-05",
+   "observations": []
+  },
+  "hadassah_pdf_v1": {
+   "lab_name": "Хадасса",
+   "doc_date": null,
+   "observations": []
+  },
+  "dnkom_pdf_v1": {
+   "lab_name": "ДНКОМ",
+   "doc_date": null,
+   "observations": []
+  },
+  "mknc_pdf_v1": {
+   "lab_name": null,
+   "doc_date": null,
+   "observations": []
+  }
+ }
+}

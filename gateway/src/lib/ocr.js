@@ -85,17 +85,43 @@ function serial(fn) {
   return run;
 }
 
+const limit = (p, ms, on, onTimeout) => {
+  if (!on) return p;
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => { onTimeout?.(); reject(Object.assign(new Error('recognition timed out'), { code: 'ocr_failed' })); }, ms);
+  });
+  return Promise.race([p, timeout]).finally(() => clearTimeout(timer));
+};
+
 /** Recognise a list of images (Buffers of PNG/JPEG/WebP/PNM; null for a page without a picture): text per image. */
 export function recognize(images) {
   return serial(async () => {
     const { createWorker, OEM } = await import('tesseract.js');
-    const worker = await createWorker(LANGS, OEM.LSTM_ONLY, { langPath: languageFolder(), cacheMethod: 'none', gzip: true });
+    // The iPad build sets this: the worker and the language files are in the app, not on a CDN, and a blob
+    // worker cannot load them. Absent here, the desktop and the server keep the temp folder of the npm models.
+    const local = globalThis.__MC_OCR;
+    const opts = local
+      ? { langPath: local.langPath, workerPath: local.workerPath, corePath: local.corePath, cacheMethod: 'none', gzip: true, workerBlobURL: false }
+      : { langPath: languageFolder(), cacheMethod: 'none', gzip: true };
+    let worker;
+    let creationTimedOut = false;
     try {
+      const creating = createWorker(LANGS, OEM.LSTM_ONLY, opts);
+      // A worker that arrives after the timeout must not stay alive (~100 MB of models): the next call
+      // would create another one, and repeated timeouts would exhaust the WebView's memory.
+      creating.then((w) => { if (creationTimedOut) w.terminate().catch(() => {}); }, () => {});
+      worker = await limit(creating, 45000, local, () => { creationTimedOut = true; });
       const texts = [];
-      for (const img of images) texts.push(img ? (await worker.recognize(img)).data.text.trim() : '');
+      for (const img of images) texts.push(img ? (await limit(worker.recognize(img), 60000, local)).data.text.trim() : '');
       return texts;
     } finally {
-      await worker.terminate();
+      if (worker) {
+        // Node awaits terminate as before (a stray timer would hold the test process); the iPad gives it
+        // a ceiling so a stuck worker cannot hang the recognition queue forever.
+        if (local) await Promise.race([worker.terminate(), new Promise((resolve) => setTimeout(resolve, 5000))]).catch(() => {});
+        else await worker.terminate().catch(() => {});
+      }
     }
   });
 }

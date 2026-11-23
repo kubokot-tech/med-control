@@ -11,6 +11,7 @@ import { flagFor, apiFetch, refText, labValueText } from '../../ui/labUtils';
 import { todayKey } from '../../ui/api';
 import { useFormat } from '../../ui/format';
 import { activeLanguage } from '../../i18n/messages';
+import { labDocumentHref } from '../../ui/recordLink';
 
 type SummaryCell = { valueNum?: number | null; valueText?: string | null; collectedAt?: string | null; documentId?: string | null; n?: number };
 type SummaryRow = {
@@ -192,7 +193,7 @@ function Inner() {
                       return (
                         <td key={m}>
                           {c.documentId
-                            ? <Link href={`/labs/documents/${encodeURIComponent(String(c.documentId))}`} className={cls} title={tip}>{text}{many && <sup className="pivot__count">{c.n}</sup>}</Link>
+                            ? <Link href={labDocumentHref(String(c.documentId))} className={cls} title={tip}>{text}{many && <sup className="pivot__count">{c.n}</sup>}</Link>
                             : <span className={cls} title={tip}>{text}{many && <sup className="pivot__count">{c.n}</sup>}</span>}
                         </td>
                       );

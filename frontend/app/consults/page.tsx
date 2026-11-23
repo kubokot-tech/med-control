@@ -12,6 +12,7 @@ import { errorRu } from '../ui/api';
 import { useFormat } from '../ui/format';
 import type { Contact } from '../ui/contacts';
 import EmptyState from '../ui/EmptyState';
+import { takeFiles } from '../ui/FileButton';
 
 type Appt = {
   id: string; date: string; time: string | null; doctor: string | null; place: string | null; notes: string | null;
@@ -184,7 +185,7 @@ export default function ConsultsPage() {
       <BottomSheet open={reportFor !== null} onClose={() => setReportFor(null)} title={t('report.title')}>
         <div className="muted" style={{ fontSize: 14, lineHeight: 1.5 }}>{t('report.hint', { date: reportFor ? fmtDate(reportFor.date) : '' })}</div>
         <label className="field"><span>{t('report.files')}</span>
-          <input ref={fileRef} type="file" accept="application/pdf,image/*" multiple onChange={(e) => setFiles(Array.from(e.target.files || []))} />
+          <input ref={fileRef} type="file" accept="application/pdf,image/*" multiple onChange={(e) => { takeFiles(e.target, setFiles); }} />
           {files.length > 0 && <span className="muted" style={{ fontSize: 13 }}>{files.map((f) => f.name).join(', ')}</span>}
         </label>
         <label className="field"><span>{t('report.summary')}</span><textarea rows={4} value={summary} onChange={(e) => setSummary(e.target.value)} placeholder={t('report.summaryPlaceholder')} /></label>

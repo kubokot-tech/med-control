@@ -1,6 +1,6 @@
 /**
  * Lab marker canonicalization: raw test names from any lab → catalog keys (ALT, HGB, NEUT#…).
- * The catalog seed lives in catalogSeed.js; loadCatalog() upserts it into lab_catalog and
+ * The catalog seed lives in catalogSeed.js; loadCatalog() writes new and changed entries into lab_catalog and
  * compiles the in-memory index used by canonicalKeyFor()/categoryFor().
  */
 import { CATALOG_SEED } from './catalogSeed.js';
@@ -112,10 +112,42 @@ export function displayName(keyOrCode) {
 }
 
 /** Upsert the seed and the built-in reference ranges into lab_catalog so SQL (lab_results_eff) and the frontend read the same catalog. */
+const CATALOG_COLUMNS = ['key', 'name_ru', 'short_ru', 'category', 'unit_canonical', 'aliases', 'pattern', 'sort_order', 'is_key',
+  'ref_low_default', 'ref_high_default', 'ref_low_m', 'ref_high_m', 'ref_low_f', 'ref_high_f'];
+const NUMERIC_COLUMNS = new Set(['sort_order', 'ref_low_default', 'ref_high_default', 'ref_low_m', 'ref_high_m', 'ref_low_f', 'ref_high_f']);
+
+/** The lab_catalog row of a seed entry, as an array in CATALOG_COLUMNS order. */
+function catalogRow(e) {
+  const r = referenceRange(e.key);
+  const lo = (x) => x?.low ?? null; const hi = (x) => x?.high ?? null;
+  return [e.key, e.name, e.short ?? null, e.category, e.unit ?? null, e.aliases, e.pattern ?? null, e.sortOrder, e.isKey,
+    lo(r?.any), hi(r?.any), lo(r?.m), hi(r?.m), lo(r?.f), hi(r?.f)];
+}
+
+/** Whether a stored row already holds these values (NUMERIC comes back as a string, arrays compare by items). */
+function sameRow(stored, values) {
+  return CATALOG_COLUMNS.every((col, i) => {
+    const a = stored[col]; const b = values[i];
+    if (a == null || b == null) return a == null && b == null;
+    if (NUMERIC_COLUMNS.has(col)) return Number(a) === Number(b);
+    if (Array.isArray(b)) return Array.isArray(a) && a.length === b.length && a.every((x, j) => x === b[j]);
+    return a === b;
+  });
+}
+
+/**
+ * Brings lab_catalog in line with the seed: one read, then writes only for entries that are new or changed.
+ * Writing every entry on each start took seconds on PGlite (the desktop edition), most of the start-up time.
+ * Returns the number of entries written.
+ */
 export async function loadCatalog(pool) {
+  const { rows } = await pool.query(`select ${CATALOG_COLUMNS.join(', ')} from lab_catalog`);
+  const stored = new Map(rows.map((r) => [r.key, r]));
+  let written = 0;
   for (const e of entries) {
-    const r = referenceRange(e.key);
-    const lo = (x) => x?.low ?? null; const hi = (x) => x?.high ?? null;
+    const values = catalogRow(e);
+    const current = stored.get(e.key);
+    if (current && sameRow(current, values)) continue;
     await pool.query(
       `insert into lab_catalog (key, name_ru, short_ru, category, unit_canonical, aliases, pattern, sort_order, is_key,
                                 ref_low_default, ref_high_default, ref_low_m, ref_high_m, ref_low_f, ref_high_f, updated_at)
@@ -127,11 +159,11 @@ export async function loadCatalog(pool) {
          ref_low_default = excluded.ref_low_default, ref_high_default = excluded.ref_high_default,
          ref_low_m = excluded.ref_low_m, ref_high_m = excluded.ref_high_m, ref_low_f = excluded.ref_low_f, ref_high_f = excluded.ref_high_f,
          updated_at = now()`,
-      [e.key, e.name, e.short ?? null, e.category, e.unit ?? null, e.aliases, e.pattern ?? null, e.sortOrder, e.isKey,
-        lo(r?.any), hi(r?.any), lo(r?.m), hi(r?.m), lo(r?.f), hi(r?.f)]
+      values,
     );
+    written++;
   }
-  return entries.length;
+  return written;
 }
 
 /** Recompute canonical_key/category for every lab_tests row; update only rows that differ. */

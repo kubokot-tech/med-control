@@ -29,7 +29,7 @@ test('JS parsers give the same JSON as the Python parsers on every shared fixtur
 });
 
 test('registry: same ids and public list as the Python registry', () => {
-  assert.deepEqual(PARSERS.map((p) => p.META.id), ['helix_pdf_v1', 'hadassah_pdf_v1', 'dnkom_pdf_v1', 'mknc_pdf_v1']);
+  assert.deepEqual(PARSERS.map((p) => p.META.id), ['helix_pdf_v2', 'helix_pdf_v1', 'hadassah_pdf_v1', 'dnkom_pdf_v1', 'mknc_pdf_v1']);
   for (const p of publicList()) assert.deepEqual(Object.keys(p), ['id', 'name', 'country', 'description']);
   assert.equal(byId('nope'), null);
 });
@@ -46,6 +46,21 @@ test('parseLabText: the ingestion response shape, first parser with observations
   const hadassah = parseLabText(readFileSync(path.join(FIXTURES, 'hadassah_blood.txt'), 'utf8'));
   assert.equal(hadassah.source, 'hadassah_pdf_v1');
   assert.deepEqual(hadassah.observations[0], { test_name_raw: 'Лейкоциты (WBC)', result_text: '6,12', result_num: 6.12, unit_raw: '10^9/л', ref_text_raw: '3,70 - 9,50', ref_low: 3.7, ref_high: 9.5 });
+});
+
+test('Helix: the new layout goes to v2, the old one stays on v1', () => {
+  const panel = parseLabText(readFileSync(path.join(FIXTURES, 'helix_v2_panel.txt'), 'utf8'));
+  assert.equal(panel.source, 'helix_pdf_v2');
+  assert.equal(panel.observations.length, 7);
+  const alt = panel.observations.find((o) => o.test_name_raw === 'Аланинаминотрансфераза (АЛТ)');
+  assert.deepEqual(alt, { test_name_raw: 'Аланинаминотрансфераза (АЛТ)', result_text: '88.4', result_num: 88.4, unit_raw: 'Ед/л', ref_text_raw: '<38', ref_low: null, ref_high: 38 }, 'the current value and the reference under the row, not the previous result');
+  const dd = parseLabText(readFileSync(path.join(FIXTURES, 'helix_v2_ddimer.txt'), 'utf8'));
+  assert.equal(dd.source, 'helix_pdf_v2');
+  assert.deepEqual(dd.observations[0], { test_name_raw: 'D-димер', result_text: '312.5', result_num: 312.5, unit_raw: 'нг/мл', ref_text_raw: '<220', ref_low: null, ref_high: 220 });
+  const old = parseLabText(readFileSync(path.join(FIXTURES, 'helix_basic.txt'), 'utf8'));
+  assert.equal(old.source, 'helix_pdf_v1', 'old documents keep their parser id');
+  const apart = parseLabText(readFileSync(path.join(FIXTURES, 'helix_v2_plain.txt'), 'utf8').replace('Концентрация 4.10 ммоль/л 3.9 - 6.1', 'Концентрация ▲ 4.10 ммоль/л 3.9 - 6.1'));
+  assert.equal(apart.observations.find((o) => o.test_name_raw === 'Глюкоза').result_num, 4.1, 'a marker set apart from the number is still dropped');
 });
 
 test('Python semantics: float(), strip/split/splitlines, strptime', () => {

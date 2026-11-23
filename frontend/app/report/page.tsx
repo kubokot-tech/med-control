@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useTranslations } from 'use-intl';
 import Icon from '../ui/icons';
 import Link from 'next/link';
-import { apiFetch } from '../ui/labUtils';
+import { apiFetch, saveBlob } from '../ui/labUtils';
 import { todayKey } from '../ui/api';
 import { activeLanguage } from '../i18n/messages';
 
@@ -61,11 +61,7 @@ export default function ReportPage() {
       const r = await apiFetch(dossierUrl());
       if (!r.ok) throw new Error(await r.text());
       const blob = await r.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url; a.download = `${activeLanguage() === 'ru' ? 'dtc' : 'medcontrol'}-dossier-${to}.md`;
-      document.body.appendChild(a); a.click(); a.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 5000);
+      saveBlob(blob, `${activeLanguage() === 'ru' ? 'dtc' : 'medcontrol'}-dossier-${to}.md`);
       setDMsg(t('dossier.downloaded', { size: Math.round(blob.size / 1024) }));
     } catch (e: any) { setErr(String(e?.message || e)); } finally { setDBusy(false); }
   }
@@ -92,11 +88,7 @@ export default function ReportPage() {
       const r = await apiFetch(`/api/gateway/report/doctor.pdf?${reportQuery()}`);
       if (!r.ok) throw new Error(await r.text());
       const named = /filename\*=UTF-8''([^;]+)/.exec(r.headers.get('content-disposition') || '');
-      const url = URL.createObjectURL(await r.blob());
-      const a = document.createElement('a');
-      a.href = url; a.download = named ? decodeURIComponent(named[1]) : `MedControl-${from}-${to}.pdf`;
-      document.body.appendChild(a); a.click(); a.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 5000);
+      saveBlob(await r.blob(), named ? decodeURIComponent(named[1]) : `MedControl-${from}-${to}.pdf`);
     } catch (e: any) { setErr(String(e?.message || e)); } finally { setBusy(false); }
   }
 

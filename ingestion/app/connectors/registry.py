@@ -10,10 +10,11 @@ from __future__ import annotations
 
 from types import ModuleType
 
-from . import dnkom_pdf_v1, hadassah_pdf_v1, helix_pdf_v1, mknc_pdf_v1
+from . import dnkom_pdf_v1, hadassah_pdf_v1, helix_pdf_v1, helix_pdf_v2, mknc_pdf_v1
 
 # Order matters: specific detectors first; fallback parsers are tried last on documents nobody claims.
-PARSERS: list[ModuleType] = [helix_pdf_v1, hadassah_pdf_v1, dnkom_pdf_v1, mknc_pdf_v1]
+# helix_pdf_v2 (the new layout) before helix_pdf_v1: on old documents only v1 detects.
+PARSERS: list[ModuleType] = [helix_pdf_v2, helix_pdf_v1, hadassah_pdf_v1, dnkom_pdf_v1, mknc_pdf_v1]
 
 
 def by_id(pid: str) -> ModuleType | None:

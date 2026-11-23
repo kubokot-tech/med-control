@@ -1,0 +1,80 @@
+{
+ "candidates": [
+  "helix_pdf_v2",
+  "helix_pdf_v1",
+  "mknc_pdf_v1"
+ ],
+ "parses": {
+  "helix_pdf_v2": {
+   "lab_name": "Хеликс",
+   "doc_date": "2026-04-12",
+   "observations": [
+    {
+     "test_name": "Глюкоза",
+     "result_text": "4.10",
+     "result_num": 4.1,
+     "units": "ммоль/л",
+     "ref_text": "3.9 - 6.1",
+     "ref_low": 3.9,
+     "ref_high": 6.1,
+     "deviation_text": null,
+     "criticality_text": null
+    },
+    {
+     "test_name": "Креатинин",
+     "result_text": "88",
+     "result_num": 88.0,
+     "units": "мкмоль/л",
+     "ref_text": "62 - 106",
+     "ref_low": 62.0,
+     "ref_high": 106.0,
+     "deviation_text": null,
+     "criticality_text": null
+    }
+   ]
+  },
+  "helix_pdf_v1": {
+   "lab_name": "Хеликс",
+   "doc_date": "2026-04-12",
+   "observations": [
+    {
+     "test_name": "Глюкоза",
+     "result_text": "4.10",
+     "result_num": 4.1,
+     "units": "ммоль/л",
+     "ref_text": "3.9 - 6.1",
+     "ref_low": 3.9,
+     "ref_high": 6.1,
+     "deviation_text": null,
+     "criticality_text": null
+    },
+    {
+     "test_name": "Креатинин",
+     "result_text": "88",
+     "result_num": 88.0,
+     "units": "мкмоль/л",
+     "ref_text": "62 - 106",
+     "ref_low": 62.0,
+     "ref_high": 106.0,
+     "deviation_text": null,
+     "criticality_text": null
+    }
+   ]
+  },
+  "hadassah_pdf_v1": {
+   "lab_name": "Хадасса",
+   "doc_date": null,
+   "observations": []
+  },
+  "dnkom_pdf_v1": {
+   "lab_name": "ДНКОМ",
+   "doc_date": null,
+   "observations": []
+  },
+  "mknc_pdf_v1": {
+   "lab_name": null,
+   "doc_date": null,
+   "observations": []
+  }
+ }
+}

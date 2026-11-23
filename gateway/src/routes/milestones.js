@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { detectMime } from '../lib/attachmentsStore.js';
+import { firstFilePart } from '../lib/multipart.js';
 import { extractOrReply, getExtract } from '../lib/extracts.js';
 import { UUID_RX } from '../lib/labsQuery.js';
 import { DEFAULT_TZ } from '../lib/dates.js';
@@ -20,7 +21,7 @@ const Body = z.object({
 export const MilestonePatch = Body.extend({ tone: z.enum(TONES) }).partial();
 
 // Batch: multipart field "meta" = JSON array [{ date, kind, title, tone?, modality?, region? }], then files "file" in the same order.
-const BatchMeta = z.array(z.object({
+export const BatchMeta = z.array(z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   kind: z.enum(KINDS.filter((k) => k !== 'ai_review')),
   title: z.string().min(1).max(200),
@@ -77,16 +78,11 @@ export default async function milestonesRoutes(app) {
   app.post('/milestones/:id/attachments', { preHandler: app.authenticate }, async (req, reply) => {
     const id = String(req.params?.id || '');
     if (!UUID_RX.test(id)) return reply.code(400).send({ error: 'bad_id' });
-    let filePart = null;
-    for await (const p of req.parts()) {
-      if (p.type === 'file' && p.fieldname === 'file') { filePart = p; break; }
-    }
-    if (!filePart) return reply.code(400).send({ error: 'file_required' });
-    const buf = await filePart.toBuffer();
-    if (!buf?.length) return reply.code(400).send({ error: 'empty_file' });
-    const mime = detectMime(filePart.mimetype, filePart.filename);
-    if (!mime) return reply.code(415).send({ error: 'unsupported_type', mime: filePart.mimetype });
-    return { ok: true, attachment: await attachToMilestone(req.user.sub, id, { buf, mime, filename: filePart.filename }, { log: req.log }) };
+    const { buf, filename, mimetype } = await firstFilePart(req);
+    if (!buf?.length) return reply.code(400).send({ error: buf ? 'empty_file' : 'file_required' });
+    const mime = detectMime(mimetype, filename);
+    if (!mime) return reply.code(415).send({ error: 'unsupported_type', mime: mimetype });
+    return { ok: true, attachment: await attachToMilestone(req.user.sub, id, { buf, mime, filename }, { log: req.log }) };
   });
 
   // Text of an attached file (see lib/extracts.js): stored text, extract or re-extract, append to the comment

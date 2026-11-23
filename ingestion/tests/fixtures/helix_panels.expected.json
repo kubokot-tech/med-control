@@ -4,6 +4,100 @@
   "mknc_pdf_v1"
  ],
  "parses": {
+  "helix_pdf_v2": {
+   "lab_name": "Хеликс",
+   "doc_date": "2026-04-14",
+   "observations": [
+    {
+     "test_name": "Креатинин",
+     "result_text": "88",
+     "result_num": 88.0,
+     "units": "мкмоль/л",
+     "ref_text": "62 - 106",
+     "ref_low": 62.0,
+     "ref_high": 106.0,
+     "deviation_text": null,
+     "criticality_text": null
+    },
+    {
+     "test_name": "Скорость клубочковой фильтрации",
+     "result_text": "74",
+     "result_num": 74.0,
+     "units": "мл/мин/1,73м^2",
+     "ref_text": ">60",
+     "ref_low": 60.0,
+     "ref_high": null,
+     "deviation_text": null,
+     "criticality_text": null
+    },
+    {
+     "test_name": "С-реактивный белок",
+     "result_text": "<0.6",
+     "result_num": 0.6,
+     "units": "мг/л",
+     "ref_text": "0 - 5",
+     "ref_low": 0.0,
+     "ref_high": 5.0,
+     "deviation_text": null,
+     "criticality_text": null
+    },
+    {
+     "test_name": "Ферритин",
+     "result_text": "412.5",
+     "result_num": 412.5,
+     "units": "нг/мл",
+     "ref_text": null,
+     "ref_low": null,
+     "ref_high": null,
+     "deviation_text": null,
+     "criticality_text": null
+    },
+    {
+     "test_name": "Гликированный гемоглобин (HbA1c)",
+     "result_text": "5.9",
+     "result_num": 5.9,
+     "units": "%",
+     "ref_text": "4 - 6",
+     "ref_low": 4.0,
+     "ref_high": 6.0,
+     "deviation_text": null,
+     "criticality_text": null
+    },
+    {
+     "test_name": "Среднесуточная глюкоза (eAG)",
+     "result_text": "6.8",
+     "result_num": 6.8,
+     "units": "ммоль/л",
+     "ref_text": null,
+     "ref_low": null,
+     "ref_high": null,
+     "deviation_text": null,
+     "criticality_text": null
+    },
+    {
+     "test_name": "Протромбиновое время",
+     "result_text": "12.1",
+     "result_num": 12.1,
+     "units": "сек",
+     "ref_text": "9,4 - 12,5",
+     "ref_low": 9.4,
+     "ref_high": 12.5,
+     "deviation_text": null,
+     "criticality_text": null
+    },
+    {
+     "test_name": "Тромбоциты",
+     "result_text": "210",
+     "result_num": 210.0,
+     "units": "*10^9/л",
+     "ref_text": "150 - 400",
+     "ref_low": 150.0,
+     "ref_high": 400.0,
+     "deviation_text": null,
+     "criticality_text": null
+    }
+   ]
+  },
   "helix_pdf_v1": {
    "lab_name": "Хеликс",
    "doc_date": "2026-04-14",

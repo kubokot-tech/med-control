@@ -10,6 +10,7 @@ import { BIOMARKER_DB } from './BiomarkerInfo';
 import { fmtDelta, flagFor, refText, labValueText, isRefSource } from './labUtils';
 import RefSheet from './RefSheet';
 import { useFormat } from './format';
+import { labDocumentHref } from './recordLink';
 
 type Point = {
   date: string;
@@ -128,7 +129,7 @@ export default function SeriesView({
                 </>
               );
               return p.documentId
-                ? <Link key={i} href={`/labs/documents/${encodeURIComponent(String(p.documentId))}`} className="series-row" style={{ color: 'inherit' }}>{row}</Link>
+                ? <Link key={i} href={labDocumentHref(String(p.documentId))} className="series-row" style={{ color: 'inherit' }}>{row}</Link>
                 : <div key={i} className="series-row">{row}</div>;
             })}
             {!filteredPoints.length && <div className="series-row muted">{t('noDataPeriod')}</div>}

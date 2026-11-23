@@ -7,6 +7,7 @@ import { readFileSync } from 'node:fs';
 import { z } from 'zod';
 import { egressFetch } from '../lib/egress.js';
 import { labSampleFromPdf, SAMPLE_MAX_CHARS } from '../lib/labSample.js';
+import { firstFilePart } from '../lib/multipart.js';
 
 const VERSION = (() => { try { return JSON.parse(readFileSync(new URL('../../package.json', import.meta.url), 'utf8')).version; } catch { return '0'; } })();
 
@@ -20,13 +21,8 @@ const SendBody = z.object({
 
 export default async function labSampleRoutes(app) {
   app.post('/labs/sample', { preHandler: app.authenticate }, async (req, reply) => {
-    let filePart = null;
-    for await (const p of req.parts()) {
-      if (p.type === 'file' && p.fieldname === 'file') { filePart = p; break; }
-    }
-    if (!filePart) return reply.code(400).send({ error: 'file_required' });
-    const buf = await filePart.toBuffer();
-    if (!buf?.length) return reply.code(400).send({ error: 'empty_file' });
+    const { buf } = await firstFilePart(req);
+    if (!buf?.length) return reply.code(400).send({ error: buf ? 'empty_file' : 'file_required' });
     try {
       return await labSampleFromPdf(buf);
     } catch (e) {

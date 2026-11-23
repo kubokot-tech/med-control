@@ -11,13 +11,30 @@ import { flag } from './labsQuery.js';
 import { toCanonical, formatValueText, cleanUnit, comparatorOf } from './units.js';
 import crypto from 'node:crypto';
 import { parseLabsWithAi } from './labsAiParse.js';
+import { parseLabsPdf, pdfEngine } from './pdfEngine.js';
 import { llmConfig } from './llm.js';
 import { addEvent } from './feed.js';
-import { parseLabsPdf, pdfEngine } from './pdfEngine.js';
+import { traceStep } from './traceStep.js';
 import { DEFAULT_TZ, todayKey } from './dates.js';
 import { invalid } from './errors.js';
 import { userFormat, userLanguage } from './userLocale.js';
 import { t } from './i18n.js';
+
+/**
+ * HTTP answers for the failures commitLabsPdf throws, shared by the upload route and the iPad's direct call
+ * (ipad/web/gateway-entry.js). The message is Russian by convention; other languages go by the code (ui/api.ts).
+ * Returns null for anything else, so the caller rethrows and the error handler answers 500.
+ */
+export function commitPdfFailure(e) {
+  const message = 'Модель не смогла разобрать документ';
+  switch (e?.code) {
+    case 'not_pdf': return { status: 415, body: { error: 'not_pdf', message: 'Файл не похож на PDF' } };
+    case 'ingestion_failed': return { status: 502, body: { error: 'ingestion_failed', message: 'Формат лаборатории не распознан встроенными парсерами, а ключ ИИ не задан: добавьте его в Настройках → «Помощник ИИ»' } };
+    case 'ai_empty': return { status: 422, body: { error: 'ai_empty', message: 'Модель не нашла в документе результатов анализов', warnings: e.warnings } };
+    case 'provider': case 'bad_output': case 'refusal': return { status: 502, body: { error: e.code, message } };
+    default: return null;
+  }
+}
 
 /**
  * Test code for lab_tests: the raw name, plus « (моча)» when the name is ambiguous («Лейкоциты», «Эритроциты»)
@@ -151,6 +168,7 @@ export async function commitParsed({ userId, buf, filename, parsed, manual = fal
   }
 
   // Store the file outside the transaction (file writes can't be rolled back).
+  traceStep('save');
   const filePath = manual ? null : await fileStore.put(LABS_AREA, `${sha256}.pdf`, buf);
   const format = await userFormat(userId); // numbers in alert texts; read before the transaction holds the connection
 
