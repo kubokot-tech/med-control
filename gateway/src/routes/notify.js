@@ -2,6 +2,7 @@ import { pool } from '../lib/db.js';
 import { telegramConfig, telegramReady, sendTelegram, discoverChats, botInfo } from '../lib/telegram.js';
 import { backupStatus, backupLine } from '../lib/backupStatus.js';
 import { secretSource, storeSecret } from '../lib/config.js';
+import { updateAuthSettings } from '../lib/settings.js';
 import { ensureTelegramBot } from '../lib/telegramBot.js';
 import { reminderTimes, saveReminderTimes } from '../lib/reminderTimes.js';
 import { userFormat, userLanguage } from '../lib/userLocale.js';
@@ -62,9 +63,11 @@ export default async function notifyRoutes(app) {
       const notice = sendTelegram(t(await userLanguage(req.user.sub), 'notify.telegramChanged')).catch((e) => { req.log.warn({ err: e?.message }, 'telegram: the notice to the previous chat was not sent'); });
       await Promise.race([notice, new Promise((r) => { setTimeout(r, 5000).unref(); })]);
     }
-    if ('token' in next) await storeSecret('telegramBotToken', next.token);
-    if ('chatId' in next) await storeSecret('telegramChatId', next.chatId);
-    ensureTelegramBot();
+    await updateAuthSettings(async (_client, set) => {
+      if ('token' in next) await storeSecret('telegramBotToken', next.token, set);
+      if ('chatId' in next) await storeSecret('telegramChatId', next.chatId, set);
+    });
+    await ensureTelegramBot();
     return { ok: true, tokenSet: Boolean(telegramConfig().token), chatSet: Boolean(telegramConfig().chatId), ready: telegramReady() };
   });
 

@@ -1,4 +1,5 @@
 {
+  "report_sections_required": "Select at least one report section",
   "not_found": "Not found",
   "bad_id": "Invalid ID",
   "invalid_body": "Invalid data in the request",

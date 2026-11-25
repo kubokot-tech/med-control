@@ -41,8 +41,8 @@ export async function activeDailyItem(userId, { medicationId, nameLike } = {}) {
 
 /** Dose marks of a medication on a day, by dose number: [{ id, doseNo, status, takenAt }]. */
 export async function dayMarks(userId, medicationId, day) {
-  const r = await pool.query('select id, dose_no, status, taken_at from administrations where user_id = $1 and medication_id = $2 and day = $3::date order by dose_no', [userId, medicationId, day]);
-  return r.rows.map((x) => ({ id: x.id, doseNo: x.dose_no, status: x.status, takenAt: x.taken_at }));
+  const r = await pool.query('select id, dose_no, status, taken_at, expected_doses from administrations where user_id = $1 and medication_id = $2 and day = $3::date order by dose_no', [userId, medicationId, day]);
+  return r.rows.map((x) => ({ id: x.id, doseNo: x.dose_no, status: x.status, takenAt: x.taken_at, expectedDoses: x.expected_doses }));
 }
 
 /** Doses a day for a medication: its regimen item (given or active), else 1. */
@@ -57,7 +57,7 @@ export async function dosesFor(userId, medicationId, regimenItemId = null) {
 export async function dayStatus(userId, medicationId, day) {
   const marks = await dayMarks(userId, medicationId, day);
   if (!marks.length) return null;
-  const times = await dosesFor(userId, medicationId);
+  const times = Math.max(...marks.map((mark) => mark.expectedDoses));
   return { id: marks[marks.length - 1].id, status: statusOfDay(marks, times), taken: marks.filter((m) => m.status === 'TAKEN').length, times, marks };
 }
 
@@ -71,9 +71,9 @@ export async function recordDose(userId, { medicationId, regimenItemId, status, 
   if (!med.rows.length) { const e = new Error('medication not found'); e.code = 'medication_not_found'; throw e; }
   const takenAtTs = takenAt || new Date().toISOString();
   const day = dayKey(new Date(takenAtTs), tz);
-  const times = await dosesFor(userId, medicationId, regimenItemId);
-  const already = async () => { const d = await dayStatus(userId, medicationId, day); return { already: { id: d?.id, status: d?.status, taken: d?.taken, times }, date: day }; };
   const marks = await dayMarks(userId, medicationId, day);
+  const times = marks.length ? Math.max(...marks.map((mark) => mark.expectedDoses)) : await dosesFor(userId, medicationId, regimenItemId);
+  const already = async () => { const d = await dayStatus(userId, medicationId, day); return { already: { id: d?.id, status: d?.status, taken: d?.taken, times }, date: day }; };
   const used = new Set(marks.map((m) => m.doseNo));
   let slot = doseNo == null ? null : Number(doseNo);
   if (slot != null && (!Number.isInteger(slot) || slot < 1 || slot > times)) { const e = new Error('bad dose number'); e.code = 'bad_dose_no'; throw e; }
@@ -84,10 +84,10 @@ export async function recordDose(userId, { medicationId, regimenItemId, status, 
   const out = await transaction(async (client) => {
     const eventId = await addEvent(client, userId, { type: 'MED_ADMIN', occurredAt: takenAtTs, title, notes: notes || null, meta: { status, doseNo: slot, times }, source });
     const a = await client.query(
-      `insert into administrations (user_id, medication_id, regimen_item_id, taken_at, day, dose_no, status, dose_value, dose_unit, notes, event_id)
-       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+      `insert into administrations (user_id, medication_id, regimen_item_id, taken_at, day, dose_no, expected_doses, status, dose_value, dose_unit, notes, event_id)
+       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
        on conflict (user_id, medication_id, day, dose_no) do nothing returning id`,
-      [userId, medicationId, regimenItemId || null, takenAtTs, day, slot, status, doseValue ?? null, doseUnit ?? null, notes || null, eventId]
+      [userId, medicationId, regimenItemId || null, takenAtTs, day, slot, times, status, doseValue ?? null, doseUnit ?? null, notes || null, eventId]
     );
     if (!a.rows.length) abort(LOST_RACE); // another writer recorded the same dose first: roll back our event too
     return { ok: true, id: a.rows[0].id, status, date: day, name: med.rows[0].name, doseNo: slot, times, taken: marks.filter((m) => m.status === 'TAKEN').length + (status === 'TAKEN' ? 1 : 0) };

@@ -30,6 +30,17 @@
      "ref_high": 106.0,
      "deviation_text": null,
      "criticality_text": null
+    },
+    {
+     "test_name": "Интерлейкин 6",
+     "result_text": "8",
+     "result_num": 8.0,
+     "units": "пг/мл",
+     "ref_text": "<7",
+     "ref_low": null,
+     "ref_high": 7.0,
+     "deviation_text": null,
+     "criticality_text": null
     }
    ]
   },
@@ -56,6 +67,17 @@
      "ref_text": "62 - 106",
      "ref_low": 62.0,
      "ref_high": 106.0,
+     "deviation_text": null,
+     "criticality_text": null
+    },
+    {
+     "test_name": "Интерлейкин 6",
+     "result_text": "8",
+     "result_num": 8.0,
+     "units": "пг/мл",
+     "ref_text": "<7",
+     "ref_low": null,
+     "ref_high": 7.0,
      "deviation_text": null,
      "criticality_text": null
     }

@@ -17,13 +17,14 @@ DEPLOY_HOST=user@server DEPLOY_DIR=/srv/medcontrol/app scripts/release.sh
 
 Перед этим дождаться зелёного CI: `gh pr checks --watch`.
 
-`release.sh` (переменные `DEPLOY_HOST`, `DEPLOY_DIR`, `DEPLOY_KEY`; без `DEPLOY_DIR` каталог приложения на сервере `/srv/dtc/app`) распаковывает `origin/main` в каталог приложения и запускает там `sh scripts/deploy.sh <sha>-<время>`. Вывод дописывается в `.release.log` в корне репозитория на рабочей машине. `deploy.sh` (POSIX sh: на многих NAS нет bash) работает с `umask 077`, потому что дампы и логи содержат медицинские данные, и:
-1. делает дамп базы в `backups/predeploy/<tag>.dump` (хранятся 5 последних);
+`release.sh` (переменные `DEPLOY_HOST`, `DEPLOY_DIR`, `DEPLOY_KEY`; без `DEPLOY_DIR` каталог приложения на сервере `/srv/dtc/app`) распаковывает `origin/main` в каталог приложения и запускает там `scripts/deploy.sh`, передавая короткий SHA в `DEPLOY_REVISION`. Вывод дописывается в `.release.log` в корне репозитория на рабочей машине. `deploy.sh` (POSIX sh: на многих NAS нет bash) работает с `umask 077`, потому что дампы и логи содержат медицинские данные, и:
+1. сохраняет базу и файлы из работающего gateway в `backups/predeploy/<tag>/` (хранятся 5 последних);
 2. собирает все образы с новым тегом (`dtc/<сервис>:<tag>`, тег пишется в `.env` как `IMAGE_TAG`, прошлый — в `.deploy/previous`);
 3. переключает контейнеры (`docker compose up -d --remove-orphans`);
 4. пересоздаёт edge (`up -d --force-recreate --no-deps edge`): Caddyfile примонтирован одним файлом, после распаковки архива у него новый inode, и без пересоздания Caddy работал бы со старым конфигом (например, без новой CSP);
-5. ждёт `/health` и печатает `/health?deep=1`;
-6. удаляет образы, кроме текущего и предыдущего тега.
+5. ждёт `/health` и печатает `/health?deep=1`.
+
+Ротация удаляет только полные копии с меткой `.medcontrol-complete`. После успешного развёртывания скрипт очищает образы устаревшего автоматического тега этого Compose-проекта. Текущий и предыдущий теги сохраняются. Старые каталоги без метки и образы с пользовательскими тегами можно разобрать вручную.
 
 **Скрипты работают и без `.env`.** `deploy.sh` создаёт пустой `.env`, чтобы записать в него активный тег образов (`IMAGE_TAG`); имя пользователя и базы берутся по умолчанию, как в `docker-compose.yml`. `backup.sh` и `restore.sh` тоже обходятся без `.env`. `rollback.sh` без `.env` останавливается: возвращаться не к чему. `cloud-setup.sh` читает `.env` и дописывает в него `CLOUD_REMOTE`, пустой файл подойдёт.
 
@@ -36,7 +37,7 @@ DEPLOY_HOST=user@server DEPLOY_DIR=/srv/medcontrol/app scripts/release.sh
 cd /srv/medcontrol/app && sh scripts/rollback.sh       # или sh scripts/rollback.sh <tag>
 ```
 
-Миграции только вперёд: старый код работает на новой схеме, данные не теряются. Исключения отмечены в CHANGELOG как «откат только с восстановлением копии» (миграция 035, отметка каждого приёма): через них откатываться вместе с дампом `backups/predeploy/<tag>.dump`. Если новая версия испортила данные, восстановить `backups/predeploy/<tag>.dump` по `docs/RESTORE.md`.
+Образы gateway включают миграции своей версии. При несовместимом изменении схемы (например, миграция 035) восстанавливайте соответствующую копию одновременно с откатом: `sh scripts/rollback.sh <прежний-тег> --restore backups/predeploy/<тег-развёртывания> --yes`. В копии находятся БД и вложения на момент обновления. Порядок для более ранних выпусков описан в [RESTORE.md](RESTORE.md).
 
 Вручную: `git archive --format=tar origin/main | ssh … "cd /srv/medcontrol/app && tar -x"`, затем на сервере `docker compose up -d --build gateway frontend`. Если менялся `edge/Caddyfile`, отдельно `docker compose up -d --force-recreate --no-deps edge`. Во время перезапуска gateway (10–20 секунд: миграции, каталог, единицы) сайт отвечает 502. Это нормально.
 
@@ -215,7 +216,7 @@ GitHub Actions (`.github/workflows/ci.yml`) гоняет юнит- и интег
 - Статус: `cat $BACKUP_DIR/status.json`, карточка «Бэкапы» в Настройках, строка в Telegram в 08:30.
 - Права: сервис backup работает с `umask 077` (копии 700/600, `env` 600), но `status.json` пишет с правами 644. Gateway работает не от root и читает статус через том `/backups`, поэтому сама папка `BACKUP_DIR` должна быть 711 (проход без чтения списка), а не 700; сервис backup выставляет это сам. Если в Настройках «Сервис backup ещё не отчитывался», а `status.json` свежий, проверьте эти права.
 - Облако: служба backup выгружает копии через rclone в remote, названный в `CLOUD_REMOTE` (имя с двоеточием), по файлу `rclone.conf` из папки `RCLONE_DIR`. Подойдёт любое хранилище, с которым работает rclone. Копии ложатся в `<CLOUD_REMOTE>/backups` и `<CLOUD_REMOTE>/dicom`.
-  - `scripts/cloud-setup.sh` настраивает один вариант как пример: S3-совместимое хранилище и шифрование rclone crypt поверх него. Заведите бакет, затем `YC_ACCESS_KEY=… YC_SECRET_KEY=… YC_BUCKET=… bash scripts/cloud-setup.sh`. Адрес и регион по умолчанию от Yandex Object Storage, для другого хранилища задайте `YC_ENDPOINT` и `YC_REGION`. Скрипту нужен `.env`, хватит пустого (`touch .env && chmod 600 .env`): он допишет туда `CLOUD_REMOTE=yc-crypt:` и `RCLONE_DIR`. Ключ шифрования из `$RCLONE_DIR/CRYPT-KEY.txt` перенесите в менеджер паролей, затем `docker compose up -d backup` и разовый прогон.
+  - `scripts/cloud-setup.sh` настраивает один вариант как пример: S3-совместимое хранилище и шифрование rclone crypt поверх него. Заведите бакет, затем `YC_ACCESS_KEY=… YC_SECRET_KEY=… YC_BUCKET=… bash scripts/cloud-setup.sh`. Адрес и регион по умолчанию от Yandex Object Storage, для другого хранилища задайте `YC_ENDPOINT` и `YC_REGION`. Скрипту нужен `.env`, хватит пустого (`touch .env && chmod 600 .env`): он допишет туда `CLOUD_REMOTE=yc-crypt:` и `RCLONE_DIR`. Новая конфигурация по умолчанию сохраняется в `../medcontrol-rclone`. Повторный запуск проверяет существующую конфигурацию. Ключ шифрования из `$RCLONE_DIR/CRYPT-KEY.txt` перенесите в менеджер паролей, затем `docker compose up -d backup` и разовый прогон.
   - Своё хранилище: настройте remote командой `rclone config` на любой машине, положите получившийся `rclone.conf` в папку на сервере, укажите её в `RCLONE_DIR`, а имя remote в `CLOUD_REMOTE`. Чтобы копия в облаке была зашифрована, remote должен быть типа crypt. Если он другого типа, копия всё равно выгружается, но служба пишет в журнал предупреждение `UNENCRYPTED`, а в утренней строке Telegram и на карточке бэкапов появляется «копия в облако уходит без шифрования».
 - Восстановление: `docs/RESTORE.md`.
 
@@ -283,9 +284,5 @@ cd /srv/medcontrol/app && docker compose exec -T gateway node src/tools/appleHea
 - Внутренняя сеть `data` (без выхода в интернет) для Postgres, Orthanc и парсера PDF.
 - `no-new-privileges` у всех сервисов; `cap_drop: [ALL]` с минимальным `cap_add` у postgres, gateway, ingestion, frontend, edge, backup, watchdog; `read_only` у gateway, ingestion, frontend, edge, watchdog. Orthanc и egress только с `no-new-privileges`; egress, edge, orthanc, postgres и backup работают от root.
 - Фиксированные теги образов: `postgres:16.13`, `caddy:2.11.4-alpine`, `node:22.23.2-alpine`, `python:3.12.16-slim`. Обновлять осознанно, раз в квартал, после бэкапа.
-- Оставшееся в `npm audit` gateway проверено и в работе не достижимо (`npm audit fix` без `--force` их не исправляет):
-      `glob`, `minimatch`, `readdir-glob` через `archiver` 7, `exceljs` и `@fastify/static` 10 (`glob` 13, исправлено в 14): обход отмены
-      по `AbortSignal` и ReDoS в шаблонах файлов; шаблонов из запроса нет, `AbortSignal` в `glob` не передаётся,
-      архив собирается из перечисленных файлов. `uuid` < 11.1.1 через `exceljs`: ошибка только для v3/v5/v6 с переданным буфером, `exceljs` их так не вызывает.
-      Проверять заново при каждом обновлении: `cd gateway && npm audit`.
+- Совместимые версии транзитивных зависимостей `glob` и `uuid` закреплены в `gateway/package.json`. При изменении версий проверять архив ZIP, выгрузку XLSX и результат `npm audit --omit=dev`.
 - `postcss` внутри Next поднят до 8.5 через `overrides` в `frontend/package.json`: при обновлении Next проверить, нужен ли он ещё.

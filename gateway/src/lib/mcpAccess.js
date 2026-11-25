@@ -78,8 +78,8 @@ export function rateLimited(tokenId, now = Date.now()) {
   return w.n > RATE_PER_MIN;
 }
 
-export async function audit(userId, tokenId, { method, tool = null, ok, detail = null }) {
-  await pool.query('insert into mcp_audit (user_id, token_id, method, tool, ok, detail) values ($1,$2,$3,$4,$5,$6)', [userId, tokenId, method, tool, ok, detail]).catch(() => {});
+export async function audit(userId, tokenId, { method, tool = null, ok, detail = null }, client = pool) {
+  await client.query('insert into mcp_audit (user_id, token_id, method, tool, ok, detail) values ($1,$2,$3,$4,$5,$6)', [userId, tokenId, method, tool, ok, detail]);
 }
 
 export async function listAudit(userId, limit = 50) {

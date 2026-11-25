@@ -96,7 +96,6 @@ services:
       - ${DATA_DIR:-dtcdata}:/data
       - ${DICOM_DIR:-dicomdata}:/dicom:ro
       - ${BACKUP_DIR:-../medcontrol-backups}:/backups:ro
-      - ./db/migrations:/app/migrations:ro
     depends_on:
       postgres:
         condition: service_healthy
@@ -241,6 +240,8 @@ services:
     image: dtc/egress:${IMAGE_TAG:-dev}
     profiles: ["egress"]
     restart: unless-stopped
+    environment:
+      STACK_SUBNET: ${STACK_SUBNET:-172.31.250.0/24}
     mac_address: ${EGRESS_MAC:-02:dc:00:00:00:60}
     # gw_priority makes the macvlan side the default route (docker >= 28), so the
     # router sees this container's own MAC/IP and can route it through a VPN.

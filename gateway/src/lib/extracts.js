@@ -7,12 +7,10 @@ import * as fileStore from './files.js';
 import { pool } from './db.js';
 import { pdfPlainText } from './pdfEngine.js';
 import { llmChat, llmConfig } from './llm.js';
-import { ocrFile } from './ocr.js';
+import { ocrFile, pdfLayers, needsPageOcr } from './ocr.js';
 import { prompt } from './aiPrompts.js';
 import { userLanguage } from './userLocale.js';
 import { t } from './i18n.js';
-
-const MIN_CHARS_PER_PAGE = 80; // below this the PDF is most likely a scan
 
 const meta = (x) => ({ sha256: x.sha256, method: x.method, model: x.model, chars: Number(x.chars ?? x.text?.length ?? 0), createdAt: x.createdAt || x.created_at, hasSummary: Boolean(x.has_summary ?? x.summary), summaryModel: x.summary_model || x.summaryModel || null });
 
@@ -68,16 +66,18 @@ export async function extractBySha(userId, sha256, { mode = 'auto', fetchImpl = 
   const buf = await fileStore.read(f.file_url);
   let method = 'pdf_text', model = null, text = '';
   const isPdf = f.mime_type === 'application/pdf';
+  let layers;
   if (isPdf && mode !== 'llm') {
     const r = await pdfText(buf, f.filename, fetchImpl);
     text = r.text || '';
-    const scanned = !r.pages || r.chars / r.pages < MIN_CHARS_PER_PAGE;
+    layers = pdfLayers(r) || [];
+    const scanned = needsPageOcr(r);
     if (scanned && (mode === 'auto' || mode === 'ocr')) text = '';
-    if (scanned && mode === 'text') { const e = new Error('no text layer'); e.code = 'no_text_layer'; throw e; }
+    if (scanned && mode === 'text' && (!r.pages || r.chars / r.pages < 80 || layers.some((s) => !s.trim()))) { const e = new Error('no text layer'); e.code = 'no_text_layer'; throw e; }
   }
   if (!isPdf && mode === 'text') { const e = new Error('not a pdf'); e.code = 'no_text_layer'; throw e; }
   if (!text && (mode === 'ocr' || (mode === 'auto' && !sees(isPdf)) || (mode === 'llm' && llmConfig().enabled && !sees(isPdf)))) {
-    text = (await ocr({ mimeType: f.mime_type, data: buf })).text.trim();
+    text = (await ocr({ mimeType: f.mime_type, data: buf, layers, language: await userLanguage(userId) })).text.trim();
     if (!text) { const e = new Error('Текст не распознан: возможно, это не документ или снимок слишком мелкий'); e.code = 'bad_output'; throw e; }
     method = 'ocr';
   }

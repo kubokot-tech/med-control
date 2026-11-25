@@ -51,7 +51,7 @@ export default function NotesPage() {
     setBusy(true); setErr(null); setMsg(null);
     try {
       const fd = new FormData();
-      for (const f of Array.from(files)) fd.append('files', f, f.name);
+      for (const f of Array.from(files)) fd.append('files', f);
       const r = await apiFetch('/api/gateway/notes/import', { method: 'POST', body: fd });
       const j = await r.json();
       if (!r.ok) throw new Error(errorRu(j));

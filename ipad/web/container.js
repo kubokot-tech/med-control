@@ -11,24 +11,32 @@ const plugin = () => import('@tauri-apps/plugin-fs');
 let chain = Promise.resolve();
 
 export function queueFile(absPath, bytesOrNull) {
-  if (!containerOn() || !String(absPath).startsWith('/data/')) return;
+  if (!containerOn() || !String(absPath).startsWith('/data/')) return Promise.resolve(false);
   const rel = `${FILES}${absPath}`;
-  const copy = bytesOrNull ? Uint8Array.from(bytesOrNull) : null;
-  chain = chain.then(() => writeRel(rel, copy)).catch((e) => console.warn('[medcontrol] file copy failed', e));
+  // The shim owns this immutable buffer; each overwrite replaces the buffer in its map.
+  const write = chain.then(() => writeRel(rel, bytesOrNull));
+  chain = write.catch(() => {});
+  return write.then(() => true);
 }
 
-export async function readDatabaseCopy() {
-  if (!containerOn()) return null;
-  // The newest complete copy wins; the previous generation survives a crash between the two renames.
-  // A read error is not «no copy»: it propagates, so the caller can refuse to start (and overwrite) blindly.
-  let failed = false;
-  for (const name of ['pgdata.tar', 'pgdata.tar.prev']) {
+let keepPrevious = false;
+
+export async function readDatabaseCopy(validate, read = readRel) {
+  let failure;
+  for (const name of ['pgdata.tar', 'pgdata.tar.prev', 'pgdata.tar.tmp']) {
     try {
-      const bytes = await readRel(`${ROOT}/${name}`);
-      if (bytes && bytes.byteLength > 1024) return bytes;
-    } catch { failed = true; }
+      const bytes = await read(`${ROOT}/${name}`);
+      if (!bytes) continue;
+      const blob = new Blob([bytes]);
+      // Snapshots written by dumpDataDir() are gzip-compressed tar archives.
+      // Drain gzip first so a damaged stream cannot leave PGlite half initialized.
+      await blob.stream().pipeThrough(new DecompressionStream('gzip')).pipeTo(new WritableStream());
+      await validate(blob);
+      keepPrevious = name !== 'pgdata.tar';
+      return { blob, generation: name };
+    } catch (e) { failure = e; }
   }
-  if (failed) throw new Error('the database copy is there but could not be read');
+  if (failure) throw new Error('No readable database snapshot', { cause: failure });
   return null;
 }
 
@@ -38,7 +46,7 @@ export function writeDatabaseCopy(bytes) {
 }
 
 async function writeTar(bytes) {
-  const { writeFile, rename, mkdir, BaseDirectory } = await plugin();
+  const { writeFile, rename, mkdir, exists, BaseDirectory } = await plugin();
   const base = { baseDir: BaseDirectory.AppData };
   const dirs = { oldPathBaseDir: BaseDirectory.AppData, newPathBaseDir: BaseDirectory.AppData };
   await mkdir(ROOT, { ...base, recursive: true });
@@ -48,18 +56,19 @@ async function writeTar(bytes) {
   await writeFile(tmp, bytes, base);
   // Each rename is atomic: at any crash moment at least one of dest/prev/tmp is a complete copy.
   // The old copy becomes the previous generation instead of being deleted first.
-  await rename(dest, prev, dirs).catch(() => {});
+  if (!keepPrevious && await exists(dest, base)) await rename(dest, prev, dirs);
   await rename(tmp, dest, dirs);
+  keepPrevious = false;
   return true;
 }
 
 async function writeRel(rel, bytesOrNull) {
-  const { mkdir, writeFile, remove, BaseDirectory } = await plugin();
+  const { mkdir, writeFile, exists, remove, BaseDirectory } = await plugin();
   const base = { baseDir: BaseDirectory.AppData };
   const dir = rel.slice(0, rel.lastIndexOf('/'));
   await mkdir(dir, { ...base, recursive: true });
   if (bytesOrNull) await writeFile(rel, bytesOrNull, base);
-  else await remove(rel, base).catch(() => {});
+  else if (await exists(rel, base)) await remove(rel, base);
 }
 
 async function readRel(rel) {
@@ -69,22 +78,23 @@ async function readRel(rel) {
   return readFile(rel, base);
 }
 
-/** Files the container has and IndexedDB no longer does: [absolutePath, bytes]. */
-export async function restoreFiles() {
-  if (!containerOn()) return [];
-  const { readDir, readFile, BaseDirectory } = await plugin();
+/** Enumerate paths without reading attachment bodies. Read missing files one at a time. */
+export async function* containerFiles() {
+  if (!containerOn()) return;
+  const { exists, readDir, readFile, stat, BaseDirectory } = await plugin();
   const base = { baseDir: BaseDirectory.AppData };
-  const out = [];
-  async function walk(dir) {
-    let entries = [];
-    try { entries = await readDir(dir, base); } catch { return; }
-    for (const entry of entries) {
+  if (!(await exists(FILES, base))) return;
+  async function* walk(dir) {
+    for (const entry of await readDir(dir, base)) {
       const child = `${dir}/${entry.name}`;
-      const directory = entry.isDirectory === true || entry.is_directory === true;
-      if (directory) await walk(child);
-      else out.push(['/' + child.slice(`${FILES}/`.length), await readFile(child, base)]);
+      if (entry.isDirectory) yield* walk(child);
+      else {
+        const path = '/' + child.slice(`${FILES}/`.length);
+        if (path.startsWith('/data/')) {
+          yield { path, read: () => readFile(child, base), stat: () => stat(child, base) };
+        }
+      }
     }
   }
-  await walk(FILES);
-  return out.filter(([p]) => p.startsWith('/data/'));
+  yield* walk(FILES);
 }

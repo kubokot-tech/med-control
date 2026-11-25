@@ -142,8 +142,13 @@ export async function updateCourse(userId, id, c) {
   const cols = { agentId: 'agent_id', title: 'title', plannedCount: 'planned_count', cadenceDays: 'cadence_days', startDate: 'start_date', status: 'status', remind: 'remind', notes: 'notes' };
   const sets = ['updated_at = now()']; const vals = [userId, id];
   for (const [k, col] of Object.entries(cols)) if (k in c && c[k] !== undefined) { vals.push(c[k]); sets.push(`${col} = $${vals.length}`); }
-  const r = await pool.query(`update infusion_courses set ${sets.join(', ')} where user_id = $1 and id = $2 returning id`, vals);
-  if (!r.rows.length) return null;
+  const updated = await transaction(async (client) => {
+    const r = await client.query(`update infusion_courses set ${sets.join(', ')} where user_id = $1 and id = $2 returning id`, vals);
+    if (!r.rows.length) return false;
+    if ('plannedCount' in c && !c.status) await closeCourseIfComplete(client, userId, id);
+    return true;
+  });
+  if (!updated) return null;
   return (await listCourses(userId)).find((x) => x.id === id) || null;
 }
 export async function deleteCourse(userId, id) {

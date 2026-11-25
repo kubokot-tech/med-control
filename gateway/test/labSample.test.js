@@ -34,6 +34,12 @@ test('a person does not survive: names, initials, addresses, contacts, numbers',
   assert.equal(out.split('\n')[7], 'Дата взятия: 01.02.2026 12:00 Исследование 2026-02-01');
 });
 
+test('letters, combining marks and digits from other scripts are anonymized', () => {
+  const out = anon('Пациент: Թեստ անուն العربية 患者名 a\u0301bc ١٢٣ 𝟘');
+  assert.doesNotMatch(out, /[Թեստանուالعربية患者名\u0301١٢٣𝟘]/u);
+  assert.match(out, /777 7$/);
+});
+
 test('every digit is replaced, even inside a number with a unit', () => {
   const out = anonymizeLabText('Гемоглобин 123 г/л 120 - 160', { randomDigit: () => '0' });
   assert.equal(out, 'Гемоглобин 000 г/л 000 - 000');

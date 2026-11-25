@@ -46,3 +46,28 @@ test('historic days raise no alerts, device BP never lowers a manual reading, pu
   await importSamples(USER_ID, parseHealthAutoExport(steps(5200)));
   assert.equal((await db.pool.query(`select steps from symptom_entries where user_id=$1 and date='2025-03-01'`, [USER_ID])).rows[0].steps, 5200, 'daily aggregate updated');
 });
+
+test('a diastolic red reading wins over a higher systolic normal reading', { skip: SKIP }, async () => {
+  const { importSamples, diaryFieldsForDay } = await import('../../src/lib/healthImport.js');
+  const day = '2026-01-18';
+  const sample = (time, systolic, diastolic) => ({ kind: 'blood_pressure', ts: new Date(day + time), value: { systolic, diastolic, units: 'mmHg' } });
+  await importSamples(USER_ID, [sample('T09:00Z', 135, 105), sample('T12:00Z', 139, 83)], { tz: 'UTC' });
+  assert.deepEqual(await diaryFieldsForDay(USER_ID, day, 'UTC'), { bpSys: 135, bpDia: 105 });
+});
+
+test('legacy Fahrenheit samples and their daily maximum are repaired, preserving manual corrections', { skip: SKIP }, async () => {
+  const { readFile } = await import('node:fs/promises');
+  const { diaryFieldsForDay } = await import('../../src/lib/healthImport.js');
+  for (const [day, diaryTemp] of [['2025-04-01', 98.6], ['2025-04-02', 36.5]]) {
+    await db.pool.query("insert into health_samples (user_id,kind,ts,value,source) values ($1,'body_temperature',$2,$3,'xml')",
+      [USER_ID, day + 'T08:00Z', { qty: 98.6, units: '°F' }]);
+    await db.pool.query('insert into symptom_entries(user_id,date,temp_c) values ($1,$2,$3)', [USER_ID, day, diaryTemp]);
+    assert.equal((await diaryFieldsForDay(USER_ID, day, 'Europe/Moscow')).tempC, 37);
+  }
+  const migration = await readFile(new URL('../../../db/migrations/040_health_temperature.sql', import.meta.url), 'utf8');
+  await db.pool.query(migration);
+  const rows = await db.pool.query("select temp_c::float as c from symptom_entries where date between '2025-04-01' and '2025-04-02' order by date");
+  assert.deepEqual(rows.rows, [{ c: 37 }, { c: 36.5 }]);
+  const samples = await db.pool.query("select distinct value from health_samples where source='xml'");
+  assert.deepEqual(samples.rows, [{ value: { qty: 37, units: 'degC' } }]);
+});

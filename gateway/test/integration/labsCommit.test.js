@@ -56,3 +56,52 @@ test('commitParsed refuses non-PDF bytes and bad dates', { skip: SKIP }, async (
   const r = await commitParsed({ userId: USER_ID, buf: other, filename: 'y.pdf', parsed: { ...parsed, doc_date: '03.02.2026' } });
   assert.equal(r.docDate, null, 'unparseable date is dropped, not stored');
 });
+
+test('laboratory calendar date survives import in western and eastern time zones', { skip: SKIP }, async () => {
+  const { commitManual } = await import('../../src/lib/labsCommit.js');
+  const { dayKey } = await import('../../src/lib/dates.js');
+  for (const tz of ['America/New_York', 'Pacific/Kiritimati', 'Etc/GMT+12']) {
+    await db.pool.query('update users set timezone=$2 where id=$1', [USER_ID, tz]);
+    const day = '2026-01-01';
+    const result = await commitManual(USER_ID, { date: day, rows: [{ key: 'ALT', value: '20', unit: 'Ед/л' }] }, { tz });
+    const event = (await db.pool.query('select occurred_at from events where id=$1', [result.eventId])).rows[0];
+    assert.equal(dayKey(event.occurred_at, tz), day);
+    assert.equal(dayKey(event.occurred_at, 'UTC'), day);
+  }
+});
+
+test('normalization preserves bounds and old lost signs recover only from the original observation', { skip: SKIP }, async () => {
+  const { commitManual } = await import('../../src/lib/labsCommit.js');
+  const { renormalizeUnits } = await import('../../src/lib/units.js');
+  const { readFile } = await import('node:fs/promises');
+  const result = await commitManual(USER_ID, { date: '2026-01-18', rows: [{ key: 'HGB', value: '<=9', unit: 'g/dL' }] });
+  const args = [result.documentId];
+  const stored = async () => (await db.pool.query('select value_text from lab_results where document_id=$1', args)).rows[0].value_text;
+  assert.equal(await stored(), '<=90');
+  await db.pool.query("update lab_results set value_text='<=9', value_numeric=9, unit_canonical=unit_original where document_id=$1", args);
+  await renormalizeUnits(db.pool, db.quiet);
+  assert.equal(await stored(), '<=90');
+  const sql = await readFile(new URL('../../../db/migrations/039_restore_lab_comparators.sql', import.meta.url), 'utf8');
+  await db.pool.query("update lab_results set value_text='90' where document_id=$1", args);
+  await db.pool.query(sql);
+  assert.equal(await stored(), '<=90');
+  await db.pool.query("update lab_results set value_text='<=9' where document_id=$1", args);
+  await db.pool.query(sql);
+  assert.equal(await stored(), '<=90');
+  await db.pool.query('insert into ingest_observations_raw(document_id,test_name_raw,result_text,result_num,unit_raw) select document_id,test_name_raw,\'9\',9,unit_raw from ingest_observations_raw where document_id=$1', args);
+  await db.pool.query("update lab_results set value_text='90' where document_id=$1", args);
+  await db.pool.query(sql);
+  assert.equal(await stored(), '90');
+});
+
+test('worst result distinguishes a conclusive low bound from an indeterminate interval', { skip: SKIP }, async () => {
+  const { commitManual } = await import('../../src/lib/labsCommit.js');
+  const { buildSummary } = await import('../../src/lib/labsSummary.js');
+  const marker = 'Synthetic interval';
+  for (const [date, value] of [['2026-01-04', '<3.9'], ['2026-01-05', '>2'], ['2026-01-06', '5']]) {
+    await commitManual(USER_ID, { date, rows: [{ name: marker, value, unit: 'U/L', refLow: 3.9, refHigh: 6.1 }] });
+  }
+  const summary = await buildSummary({ userId: USER_ID, pick: 'worst', range: 'all' });
+  const cell = summary.rows.find((r) => r.test === marker).cells['2026-01'];
+  assert.equal(cell.valueText, '<3.9');
+});

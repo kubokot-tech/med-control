@@ -49,6 +49,7 @@ import mcpRoutes from '../../gateway/src/routes/mcp.js';
 import patientRoutes from '../../gateway/src/routes/patient.js';
 import homeRoutes from '../../gateway/src/routes/home.js';
 import { edition, platform } from '../../gateway/src/lib/edition.js';
+import { nextDoseDay } from '../../gateway/src/lib/schedule.js';
 import { startScheduler } from '../../gateway/src/lib/scheduler.js';
 import { HARDCODED_USER_ID, passwordConfirmed } from '../../gateway/src/lib/auth.js';
 import { commitLabsPdf, commitPdfFailure } from '../../gateway/src/lib/labsCommit.js';
@@ -56,6 +57,7 @@ import { createMilestonesBatch, attachToMilestone } from '../../gateway/src/lib/
 import { detectMime, safeMime, storeAttachment } from '../../gateway/src/lib/attachmentsStore.js';
 import { createNote, parseMarkdownImport } from '../../gateway/src/lib/notes.js';
 import { attachReport } from '../../gateway/src/lib/appointments.js';
+import { userLanguage } from '../../gateway/src/lib/userLocale.js';
 import { anamnesisFromFile } from '../../gateway/src/lib/anamnesisFile.js';
 import { labSampleFromPdf } from '../../gateway/src/lib/labSample.js';
 import { importArchive } from '../../gateway/src/lib/importArchive.js';
@@ -325,7 +327,7 @@ async function anamnesisExtract({ filename, bytes } = {}) {
   if (!buf.length) return json(400, { error: 'empty_file' });
   if (buf.length > FILE_MAX) return json(413, { error: 'too_large' });
   try {
-    return json(200, await anamnesisFromFile(buf, filename));
+    return json(200, await anamnesisFromFile(buf, filename, { language: await userLanguage(HARDCODED_USER_ID) }));
   } catch (e) {
     if (['unsupported_file', 'no_text_in_file', 'ocr_failed', 'ingestion_failed'].includes(e.code)) return json(422, { error: e.code });
     return caught(e);
@@ -368,7 +370,8 @@ async function request({ method = 'GET', url, headers = {}, body } = {}) {
   const payload = body instanceof Uint8Array && !Buffer.isBuffer(body) ? Buffer.from(body.buffer, body.byteOffset, body.byteLength) : body;
   const res = await app.inject({ method, url, headers, payload });
   const type = String(res.headers['content-type'] || '');
-  const text = /json|text|xml|csv|javascript/.test(type) || !type;
+  const mime = type.split(';', 1)[0].trim().toLowerCase();
+  const text = !mime || mime.startsWith('text/') || /^application\/(?:json|xml|javascript|[^/]+\+(?:json|xml))$/.test(mime);
   return { status: res.statusCode, headers: res.headers, body: text ? res.payload : new Uint8Array(res.rawPayload) };
 }
 
@@ -379,7 +382,7 @@ const queued = (fn, readsOnly = false) => (...args) => gate(() => {
   return fn(...args);
 });
 globalThis.mcGateway = {
-  ready: ready.then(() => marks),
+  ready: ready.then(() => marks), nextDoseDay,
   request: queued(request, true), commitPdf: queued(commitPdf), milestoneBatch: queued(milestoneBatch),
   milestoneAttach: queued(milestoneAttach), attachmentGet: queued(attachmentGet), notesImport: queued(notesImport),
   noteFiles: queued(noteFiles), appointmentReport: queued(appointmentReport), anamnesisExtract: queued(anamnesisExtract),

@@ -78,6 +78,15 @@ test('MCP: off by default, switched on only with the acknowledgement, per-agent 
   assert.ok(s.audit.some((a) => a.tool === 'add_note' && !a.ok && a.detail === 'scope'));
   assert.ok(!JSON.stringify(s.audit).includes('Сводка агента'));
 
+  await db.pool.query("alter table mcp_audit add constraint reject_success_audit check (not ok) not valid");
+  try {
+    const blocked = await call(write.token, rpc('tools/call', { name: 'add_note', arguments: { title: 'Synthetic audit rollback', body: 'test' } }));
+    assert.equal(blocked.json().result.isError, true);
+    assert.equal((await db.pool.query("select id from notes where title='Synthetic audit rollback'")).rows.length, 0);
+  } finally {
+    await db.pool.query('alter table mcp_audit drop constraint reject_success_audit');
+  }
+
   // revoke one token; switching off revokes the rest and hides the endpoint
   await app.inject({ method: 'DELETE', url: `/settings/mcp/tokens/${read.info.id}` });
   assert.equal((await call(read.token, rpc('ping'))).statusCode, 401);

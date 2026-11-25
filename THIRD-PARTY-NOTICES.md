@@ -10,7 +10,7 @@
 
 ## Сервер (gateway)
 
-Пакетов: 336. По лицензиям: MIT — 257, ISC — 30, Apache-2.0 — 20, BSD-3-Clause — 8, BlueOak-1.0.0 — 8, Apache-2.0 (данные tessdata) — 2, Unlicense — 2, MIT/X11 — 2, 0BSD — 2, MIT/X11 (по репозиторию автора, substack/node-buffers) — 1, (MIT OR GPL-3.0-or-later) — 1, (MIT AND Zlib) — 1, MIT (LICENSE в пакете) — 1, BSD-2-Clause — 1.
+Пакетов: 303. По лицензиям: MIT — 234, ISC — 22, Apache-2.0 — 20, BSD-3-Clause — 8, BlueOak-1.0.0 — 6, Apache-2.0 (данные tessdata) — 2, Unlicense — 2, MIT/X11 — 2, 0BSD — 2, MIT/X11 (по репозиторию автора, substack/node-buffers) — 1, (MIT OR GPL-3.0-or-later) — 1, (MIT AND Zlib) — 1, MIT (LICENSE в пакете) — 1, BSD-2-Clause — 1.
 
 | Пакет | Версия | Лицензия |
 |---|---|---|
@@ -39,7 +39,7 @@
 | @formatjs/icu-messageformat-parser | 3.5.18 | MIT |
 | @formatjs/icu-skeleton-parser | 2.1.11 | MIT |
 | @hexagon/base64 | 1.1.28 | MIT |
-| @isaacs/cliui | 8.0.2 | ISC |
+| @isaacs/nonrecursive-glob-match | 1.1.0 | BlueOak-1.0.0 |
 | @levischuck/tiny-cbor | 0.2.11 | MIT |
 | @lukeed/ms | 2.0.2 | MIT |
 | @napi-rs/canvas | 1.1.0 | MIT |
@@ -70,7 +70,6 @@
 | @peculiar/utils | 2.0.3 | MIT |
 | @peculiar/x509 | 2.1.0 | MIT |
 | @pinojs/redact | 0.4.0 | MIT |
-| @pkgjs/parseargs | 0.11.0 | MIT |
 | @simplewebauthn/server | 14.0.1 | MIT |
 | @stablelib/base64 | 1.0.1 | MIT |
 | @swc/helpers | 0.5.23 | Apache-2.0 |
@@ -81,10 +80,6 @@
 | abstract-logging | 2.0.1 | MIT |
 | ajv | 8.20.0 | MIT |
 | ajv-formats | 3.0.1 | MIT |
-| ansi-regex | 6.3.0 | MIT |
-| ansi-regex | 5.0.1 | MIT |
-| ansi-styles | 6.2.3 | MIT |
-| ansi-styles | 4.3.0 | MIT |
 | archiver | 7.0.1 | MIT |
 | archiver | 5.3.2 | MIT |
 | archiver-utils | 5.0.2 | MIT |
@@ -111,9 +106,9 @@
 | bluebird | 3.4.7 | MIT |
 | bmp-js | 0.1.0 | MIT |
 | bn.js | 4.12.5 | MIT |
-| brace-expansion | 2.1.7 | MIT |
 | brace-expansion | 1.1.21 | MIT |
-| brace-expansion | 5.0.12 | MIT |
+| brace-expansion | 5.1.0 | MIT |
+| brace-expansion | 2.1.7 | MIT |
 | brotli | 1.3.3 | MIT |
 | browserify-zlib | 0.2.0 | MIT |
 | buffer | 5.7.1 | MIT |
@@ -124,8 +119,6 @@
 | buffers | 0.1.1 | MIT/X11 (по репозиторию автора, substack/node-buffers) |
 | chainsaw | 0.1.0 | MIT/X11 |
 | clone | 2.1.2 | MIT |
-| color-convert | 2.0.1 | MIT |
-| color-name | 1.1.4 | MIT |
 | compress-commons | 6.0.2 | MIT |
 | compress-commons | 4.1.2 | MIT |
 | concat-map | 0.0.1 | MIT |
@@ -135,7 +128,6 @@
 | crc-32 | 1.2.2 | Apache-2.0 |
 | crc32-stream | 6.0.0 | MIT |
 | crc32-stream | 4.0.3 | MIT |
-| cross-spawn | 7.0.6 | MIT |
 | crypto-js | 4.2.0 | MIT |
 | dayjs | 1.11.23 | MIT |
 | debug | 4.4.3 | MIT |
@@ -143,10 +135,7 @@
 | dequal | 2.0.3 | MIT |
 | dfa | 1.2.0 | MIT |
 | duplexer2 | 0.1.4 | BSD-3-Clause |
-| eastasianwidth | 0.2.0 | MIT |
 | ecdsa-sig-formatter | 1.0.11 | Apache-2.0 |
-| emoji-regex | 9.2.2 | MIT |
-| emoji-regex | 8.0.0 | MIT |
 | end-of-stream | 1.4.5 | MIT |
 | escape-html | 1.0.3 | MIT |
 | event-target-shim | 5.0.1 | MIT |
@@ -173,13 +162,11 @@
 | fastseries | 1.7.2 | ISC |
 | find-my-way | 9.10.0 | MIT |
 | fontkit | 2.0.4 | MIT |
-| foreground-child | 3.3.1 | ISC |
 | fs-constants | 1.0.0 | MIT |
 | fs.realpath | 1.0.0 | ISC |
 | fstream | 1.0.12 | ISC |
-| glob | 10.5.0 | ISC |
 | glob | 7.2.3 | ISC |
-| glob | 13.0.6 | BlueOak-1.0.0 |
+| glob | 14.0.6 | BlueOak-1.0.0 |
 | graceful-fs | 4.2.11 | ISC |
 | http-errors | 2.0.1 | MIT |
 | idb-keyval | 6.3.0 | Apache-2.0 |
@@ -189,12 +176,9 @@
 | inherits | 2.0.4 | ISC |
 | intl-messageformat | 11.2.15 | BSD-3-Clause |
 | ipaddr.js | 2.3.0 | MIT |
-| is-fullwidth-code-point | 3.0.0 | MIT |
 | is-stream | 2.0.1 | MIT |
 | is-url | 1.2.4 | MIT |
 | isarray | 1.0.0 | MIT |
-| isexe | 2.0.0 | ISC |
-| jackspeak | 3.4.3 | BlueOak-1.0.0 |
 | jpeg-exif | 1.1.4 | MIT |
 | json-schema-ref-resolver | 3.0.0 | MIT |
 | json-schema-resolver | 3.0.0 | MIT |
@@ -220,13 +204,11 @@
 | lodash.isundefined | 3.0.1 | MIT |
 | lodash.union | 4.6.0 | MIT |
 | lodash.uniq | 4.5.0 | MIT |
-| lru-cache | 10.4.3 | ISC |
 | lru-cache | 11.5.3 | BlueOak-1.0.0 |
 | mime | 3.0.0 | MIT |
 | minimalistic-assert | 1.0.1 | ISC |
-| minimatch | 9.0.9 | ISC |
 | minimatch | 3.1.5 | ISC |
-| minimatch | 10.2.6 | BlueOak-1.0.0 |
+| minimatch | 11.0.9 | BlueOak-1.0.0 |
 | minimatch | 5.1.9 | ISC |
 | minimist | 1.2.8 | MIT |
 | minipass | 7.1.3 | BlueOak-1.0.0 |
@@ -240,13 +222,10 @@
 | once | 1.4.0 | ISC |
 | openapi-types | 12.1.3 | MIT |
 | opencollective-postinstall | 2.0.3 | MIT |
-| package-json-from-dist | 1.0.1 | BlueOak-1.0.0 |
 | pako | 1.0.11 | (MIT AND Zlib) |
 | pako | 0.2.9 | MIT |
 | path-is-absolute | 1.0.1 | MIT |
-| path-key | 3.1.1 | MIT |
-| path-scurry | 1.11.1 | BlueOak-1.0.0 |
-| path-scurry | 2.0.2 | BlueOak-1.0.0 |
+| path-scurry | 3.0.0 | BlueOak-1.0.0 |
 | pdfjs-dist | 6.4.299 | Apache-2.0 |
 | pdfkit | 0.16.0 | MIT |
 | pg | 8.18.0 | MIT |
@@ -296,9 +275,6 @@
 | set-cookie-parser | 2.7.2 | MIT |
 | setimmediate | 1.0.5 | MIT |
 | setprototypeof | 1.2.0 | ISC |
-| shebang-command | 2.0.0 | MIT |
-| shebang-regex | 3.0.0 | MIT |
-| signal-exit | 4.1.0 | ISC |
 | sonic-boom | 4.2.0 | MIT |
 | split2 | 4.2.0 | ISC |
 | standardwebhooks | 1.1.1 | MIT |
@@ -307,12 +283,6 @@
 | streamx | 2.28.1 | MIT |
 | string_decoder | 1.1.1 | MIT |
 | string_decoder | 1.3.0 | MIT |
-| string-width | 5.1.2 | MIT |
-| string-width | 4.2.3 | MIT |
-| string-width-cjs | 4.2.3 | MIT |
-| strip-ansi | 6.0.1 | MIT |
-| strip-ansi | 7.2.0 | MIT |
-| strip-ansi-cjs | 6.0.1 | MIT |
 | tar-stream | 2.2.0 | MIT |
 | tar-stream | 3.2.1 | MIT |
 | teex | 1.0.1 | MIT |
@@ -335,13 +305,10 @@
 | unicode-trie | 2.0.0 | MIT |
 | unzipper | 0.10.14 | MIT |
 | util-deprecate | 1.0.2 | MIT |
-| uuid | 8.3.2 | MIT |
+| uuid | 11.1.1 | MIT |
 | wasm-feature-detect | 1.9.0 | Apache-2.0 |
 | webidl-conversions | 3.0.1 | BSD-2-Clause |
 | whatwg-url | 5.0.0 | MIT |
-| which | 2.0.2 | ISC |
-| wrap-ansi | 8.1.0 | MIT |
-| wrap-ansi-cjs | 7.0.0 | MIT |
 | wrappy | 1.0.2 | ISC |
 | xmlchars | 2.2.0 | MIT |
 | xtend | 4.0.2 | MIT |
@@ -390,15 +357,15 @@
 | @img/sharp-win32-arm64 | 0.35.5 | Apache-2.0 AND LGPL-3.0-or-later |
 | @img/sharp-win32-ia32 | 0.35.5 | Apache-2.0 AND LGPL-3.0-or-later |
 | @img/sharp-win32-x64 | 0.35.5 | Apache-2.0 AND LGPL-3.0-or-later |
-| @next/env | 15.5.28 | MIT |
-| @next/swc-darwin-arm64 | 15.5.28 | MIT |
-| @next/swc-darwin-x64 | 15.5.28 | MIT |
-| @next/swc-linux-arm64-gnu | 15.5.28 | MIT |
-| @next/swc-linux-arm64-musl | 15.5.28 | MIT |
-| @next/swc-linux-x64-gnu | 15.5.28 | MIT |
-| @next/swc-linux-x64-musl | 15.5.28 | MIT |
-| @next/swc-win32-arm64-msvc | 15.5.28 | MIT |
-| @next/swc-win32-x64-msvc | 15.5.28 | MIT |
+| @next/env | 15.5.29 | MIT |
+| @next/swc-darwin-arm64 | 15.5.29 | MIT |
+| @next/swc-darwin-x64 | 15.5.29 | MIT |
+| @next/swc-linux-arm64-gnu | 15.5.29 | MIT |
+| @next/swc-linux-arm64-musl | 15.5.29 | MIT |
+| @next/swc-linux-x64-gnu | 15.5.29 | MIT |
+| @next/swc-linux-x64-musl | 15.5.29 | MIT |
+| @next/swc-win32-arm64-msvc | 15.5.29 | MIT |
+| @next/swc-win32-x64-msvc | 15.5.29 | MIT |
 | @schummar/icu-type-parser | 1.21.5 | MIT |
 | @simplewebauthn/browser | 14.0.0 | MIT |
 | @swc/helpers | 0.5.15 | Apache-2.0 |
@@ -488,7 +455,7 @@
 | micromark-util-types | 2.0.2 | MIT |
 | ms | 2.1.3 | MIT |
 | nanoid | 3.3.20 | MIT |
-| next | 15.5.28 | MIT |
+| next | 15.5.29 | MIT |
 | parse-entities | 4.0.2 | MIT |
 | picocolors | 1.1.1 | ISC |
 | postcss | 8.5.32 | MIT |
@@ -525,7 +492,7 @@
 
 ## Приложение iPad (ipad)
 
-Пакетов: 133. По лицензиям: MIT — 122, ISC — 4, MIT OR Apache-2.0 — 2, BSD-3-Clause — 2, Apache-2.0 OR MIT — 1, (MIT AND Zlib) — 1, (MIT AND BSD-3-Clause) — 1.
+Пакетов: 59. По лицензиям: MIT — 53, MIT OR Apache-2.0 — 2, Apache-2.0 OR MIT — 1, BSD-3-Clause — 1, ISC — 1, (MIT AND Zlib) — 1.
 
 | Пакет | Версия | Лицензия |
 |---|---|---|
@@ -533,48 +500,23 @@
 | @tauri-apps/api | 2.12.5 | Apache-2.0 OR MIT |
 | @tauri-apps/plugin-fs | 2.7.1 | MIT OR Apache-2.0 |
 | @tauri-apps/plugin-notification | 2.8.1 | MIT OR Apache-2.0 |
-| asn1.js | 4.10.1 | MIT |
 | assert | 2.1.0 | MIT |
 | available-typed-arrays | 1.0.7 | MIT |
 | base64-js | 1.5.1 | MIT |
-| bn.js | 4.12.5 | MIT |
-| bn.js | 5.2.5 | MIT |
-| brorand | 1.1.0 | MIT |
-| browser-resolve | 2.0.0 | MIT |
-| browserify-aes | 1.2.0 | MIT |
-| browserify-cipher | 1.0.1 | MIT |
-| browserify-des | 1.0.2 | MIT |
-| browserify-rsa | 4.1.1 | MIT |
-| browserify-sign | 4.2.6 | ISC |
 | browserify-zlib | 0.2.0 | MIT |
 | buffer | 5.7.1 | MIT |
-| buffer-xor | 1.0.3 | MIT |
 | builtin-status-codes | 3.0.0 | MIT |
 | call-bind | 1.0.9 | MIT |
 | call-bind-apply-helpers | 1.0.2 | MIT |
 | call-bound | 1.0.4 | MIT |
-| cipher-base | 1.0.7 | MIT |
-| console-browserify | 1.2.0 | MIT |
 | constants-browserify | 1.0.0 | MIT |
-| core-util-is | 1.0.3 | MIT |
-| create-ecdh | 4.0.5 | MIT |
-| create-hash | 1.2.0 | MIT |
-| create-hmac | 1.1.7 | MIT |
-| create-require | 1.1.1 | MIT |
-| crypto-browserify | 3.12.1 | MIT |
 | define-data-property | 1.1.4 | MIT |
 | define-properties | 1.2.1 | MIT |
-| des.js | 1.1.0 | MIT |
-| diffie-hellman | 5.0.3 | MIT |
-| domain-browser | 4.22.0 | MIT |
 | dunder-proto | 1.0.1 | MIT |
-| elliptic | 6.6.1 | MIT |
 | es-define-property | 1.0.1 | MIT |
 | es-errors | 1.3.0 | MIT |
 | es-object-atoms | 1.1.2 | MIT |
 | events | 3.3.0 | MIT |
-| evp_bytestokey | 1.0.3 | MIT |
-| find-up | 5.0.0 | MIT |
 | for-each | 0.3.5 | MIT |
 | function-bind | 1.1.2 | MIT |
 | generator-function | 2.0.1 | MIT |
@@ -584,84 +526,35 @@
 | has-property-descriptors | 1.0.2 | MIT |
 | has-symbols | 1.1.0 | MIT |
 | has-tostringtag | 1.0.2 | MIT |
-| hash-base | 3.0.5 | MIT |
-| hash-base | 3.1.2 | MIT |
-| hash.js | 1.1.7 | MIT |
 | hasown | 2.0.4 | MIT |
-| hmac-drbg | 1.0.1 | MIT |
 | https-browserify | 1.0.0 | MIT |
 | ieee754 | 1.2.1 | BSD-3-Clause |
 | inherits | 2.0.4 | ISC |
 | is-arguments | 1.2.0 | MIT |
 | is-callable | 1.2.7 | MIT |
-| is-core-module | 2.18.0 | MIT |
 | is-generator-function | 1.1.2 | MIT |
 | is-nan | 1.3.2 | MIT |
 | is-regex | 1.2.1 | MIT |
 | is-typed-array | 1.1.15 | MIT |
-| isarray | 1.0.0 | MIT |
-| isarray | 2.0.5 | MIT |
-| isomorphic-timers-promises | 1.0.1 | MIT |
-| locate-path | 6.0.0 | MIT |
 | math-intrinsics | 1.1.0 | MIT |
-| md5.js | 1.3.5 | MIT |
-| miller-rabin | 4.0.1 | MIT |
-| minimalistic-assert | 1.0.1 | ISC |
-| minimalistic-crypto-utils | 1.0.1 | MIT |
-| node-stdlib-browser | 1.3.1 | MIT |
-| object-inspect | 1.13.4 | MIT |
 | object-is | 1.1.6 | MIT |
 | object-keys | 1.1.1 | MIT |
 | object.assign | 4.1.7 | MIT |
-| os-browserify | 0.3.0 | MIT |
-| p-limit | 3.1.0 | MIT |
-| p-locate | 5.0.0 | MIT |
 | pako | 1.0.11 | (MIT AND Zlib) |
-| parse-asn1 | 5.1.10 | ISC |
 | path-browserify | 1.0.1 | MIT |
-| path-exists | 4.0.0 | MIT |
-| path-parse | 1.0.7 | MIT |
-| pbkdf2 | 3.1.7 | MIT |
-| pkg-dir | 5.0.0 | MIT |
 | possible-typed-array-names | 1.1.0 | MIT |
 | process | 0.11.10 | MIT |
-| process-nextick-args | 2.0.1 | MIT |
-| public-encrypt | 4.0.3 | MIT |
-| punycode | 1.4.1 | MIT |
-| qs | 6.17.1 | BSD-3-Clause |
-| querystring-es3 | 0.2.1 | MIT |
-| randombytes | 2.1.0 | MIT |
-| randomfill | 1.0.4 | MIT |
-| readable-stream | 2.3.8 | MIT |
 | readable-stream | 3.6.2 | MIT |
-| resolve | 1.22.14 | MIT |
-| ripemd160 | 2.0.3 | MIT |
-| safe-buffer | 5.1.2 | MIT |
 | safe-buffer | 5.2.1 | MIT |
 | safe-regex-test | 1.1.0 | MIT |
 | set-function-length | 1.2.2 | MIT |
-| setimmediate | 1.0.5 | MIT |
-| sha.js | 2.4.12 | (MIT AND BSD-3-Clause) |
-| side-channel | 1.1.1 | MIT |
-| side-channel-list | 1.0.1 | MIT |
-| side-channel-map | 1.0.1 | MIT |
-| side-channel-weakmap | 1.0.2 | MIT |
 | stream-browserify | 3.0.0 | MIT |
 | stream-http | 3.2.0 | MIT |
-| string_decoder | 1.1.1 | MIT |
 | string_decoder | 1.3.0 | MIT |
-| supports-preserve-symlinks-flag | 1.0.0 | MIT |
-| timers-browserify | 2.0.12 | MIT |
-| to-buffer | 1.2.2 | MIT |
-| tty-browserify | 0.0.1 | MIT |
-| typed-array-buffer | 1.0.3 | MIT |
-| url | 0.11.4 | MIT |
 | util | 0.12.5 | MIT |
 | util-deprecate | 1.0.2 | MIT |
-| vm-browserify | 1.1.2 | MIT |
 | which-typed-array | 1.1.24 | MIT |
 | xtend | 4.0.2 | MIT |
-| yocto-queue | 0.1.0 | MIT |
 
 ## Настольное приложение (desktop)
 
@@ -679,11 +572,11 @@
 
 | Пакет | Версия | Лицензия |
 |---|---|---|
-| fastapi | 0.115.6 | MIT |
+| fastapi | 0.165.0 | MIT |
 | uvicorn[standard] | 0.34.0 | BSD-3-Clause |
 | pydantic | 2.10.5 | MIT |
-| python-multipart | 0.0.20 | Apache-2.0 |
-| pypdf | 6.0.0 | BSD-3-Clause |
+| python-multipart | 0.0.34 | Apache-2.0 |
+| pypdf | 6.21.4 | BSD-3-Clause |
 
 ## Алгоритмы
 

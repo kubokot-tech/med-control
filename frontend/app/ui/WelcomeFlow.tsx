@@ -5,14 +5,15 @@ import Link from 'next/link';
 import { useTranslations } from 'use-intl';
 import Icon from './icons';
 import FileButton from './FileButton';
-import { apiFetch, getToken } from './labUtils';
+import { comparatorOf } from '../../../shared/labBounds.js';
+import { apiFetch, flagFor, getToken } from './labUtils';
 import { errorRu } from './api';
 import { useEdition } from './edition';
 
 type Preset = { id: string; name: string; status: 'ready' | 'example'; summary: string };
 type ProviderId = 'openrouter' | 'anthropic' | 'openai' | 'gigachat';
 type Upload = { name: string; state: 'busy' | 'done' | 'review' | 'duplicate' | 'error'; inserted?: number; error?: string };
-type SummaryRow = { name?: string; short?: string; test?: string; unit?: string; refLow?: number | null; refHigh?: number | null; cells: Record<string, { valueNum?: number | null }> };
+type SummaryRow = { name?: string; short?: string; test?: string; unit?: string; refLow?: number | null; refHigh?: number | null; cells: Record<string, { valueNum?: number | null; valueText?: string | null; unit?: string | null; refLow?: number | null; refHigh?: number | null }> };
 
 const STEP_KEY = 'mc_welcome_step';
 const STEPS = ['about', 'protocol', 'anamnesis', 'ai', 'labs', 'done'] as const;
@@ -28,12 +29,13 @@ async function send(url: string, method: string, body: unknown) {
 
 /** The latest value of a summary row outside its range, for the last step. */
 function outOfRange(rows: SummaryRow[], months: string[]) {
-  const found: { name: string; value: number; unit: string }[] = [];
+  const found: { name: string; value: string; unit: string }[] = [];
   for (const row of rows) {
     const month = [...months].reverse().find((m) => row.cells[m]?.valueNum != null);
-    const value = month ? row.cells[month].valueNum : null;
-    if (value == null) continue;
-    if ((row.refLow != null && value < row.refLow) || (row.refHigh != null && value > row.refHigh)) found.push({ name: row.short || row.name || row.test || '', value, unit: row.unit || '' });
+    const cell = month ? row.cells[month] : null;
+    if (!cell || cell.valueNum == null) continue;
+    const flag = flagFor(cell.valueNum, cell.refLow, cell.refHigh, cell.valueText);
+    if (flag === 'low' || flag === 'high') found.push({ name: row.short || row.name || row.test || '', value: comparatorOf(cell.valueText) + cell.valueNum, unit: cell.unit || '' });
   }
   return found;
 }
@@ -65,7 +67,7 @@ export default function WelcomeFlow() {
   const [aiAskPassword, setAiAskPassword] = useState(false);
   const [aiPassword, setAiPassword] = useState('');
   const [uploads, setUploads] = useState<Upload[]>([]);
-  const [overview, setOverview] = useState<{ values: number; flagged: { name: string; value: number; unit: string }[] } | null>(null);
+  const [overview, setOverview] = useState<{ values: number; flagged: { name: string; value: string; unit: string }[] } | null>(null);
 
   useEffect(() => {
     if (!getToken()) { window.location.replace('/login'); return; }

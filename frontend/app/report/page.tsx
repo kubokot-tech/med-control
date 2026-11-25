@@ -134,7 +134,7 @@ export default function ReportPage() {
           </label>
         ))}
         {noPatient && <div className="msg msg--warning" style={{ lineHeight: 1.5 }}>{t.rich('noPatient', { link: (c) => <Link href="/settings/anamnesis">{c}</Link> })}</div>}
-        <button type="button" className="btn btn--primary btn--lg btn--block" onClick={download} disabled={busy}><Icon name="download" />{busy ? t('building') : t('downloadPdf')}</button>
+        <button type="button" className="btn btn--primary btn--lg btn--block" onClick={download} disabled={busy || (!withQuestions && !SECTION_KEYS.some((key) => sections[key]))}><Icon name="download" />{busy ? t('building') : t('downloadPdf')}</button>
         <div className="muted" style={{ fontSize: 14 }}>{t('footnote')}</div>
       </div>
 

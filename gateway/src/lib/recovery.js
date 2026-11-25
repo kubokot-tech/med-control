@@ -4,9 +4,9 @@
  * replaces the code. Not used when the password lives in .env (the server admin changes it there).
  */
 import { randomInt } from 'node:crypto';
-import { getSetting, setSetting } from './settings.js';
+import { getSetting, updateAuthSettings } from './settings.js';
 import { hashPassword, verifyPassword, passwordProblem } from './password.js';
-import { credentialsSource } from './setup.js';
+import { credentialsSource, USER_ID } from './setup.js';
 
 // Crockford base32: no I, L, O, U; 20 characters = 100 bits
 const ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
@@ -27,9 +27,13 @@ export function normalizeRecoveryCode(input) {
 
 /** A fresh code; the previous one stops working. */
 export async function issueRecoveryCode() {
+  return updateAuthSettings((_client, set) => replaceRecoveryCode(set));
+}
+
+async function replaceRecoveryCode(set) {
   const code = newRecoveryCode();
-  await setSetting('auth_recovery_hash', hashPassword(normalizeRecoveryCode(code)));
-  await setSetting('auth_recovery_created', new Date().toISOString());
+  await set('auth_recovery_hash', hashPassword(normalizeRecoveryCode(code)));
+  await set('auth_recovery_created', new Date().toISOString());
   return code;
 }
 
@@ -49,6 +53,16 @@ export async function recoverPassword(code, next) {
   const typed = normalizeRecoveryCode(code);
   if (typed.length !== LENGTH || !verifyPassword(typed, h)) throw fail('invalid_recovery_code');
   if (passwordProblem(next)) throw fail('weak_password');
-  await setSetting('auth_password_hash', hashPassword(next));
-  return issueRecoveryCode();
+  return updateAuthSettings(async (client, set) => {
+    const current = await client.query("select value from app_settings where key='auth_recovery_hash' for update");
+    if (current.rows[0]?.value !== h) throw fail('invalid_recovery_code');
+    const replacement = await replaceRecoveryCode(set);
+    await set('auth_password_hash', hashPassword(next));
+    const version = await client.query("select value from app_settings where key='token_version' for update");
+    await set('token_version', String(Number(version.rows[0]?.value || 0) + 1));
+    await set('integration_token_hash', '');
+    await set('integration_token_created', '');
+    await client.query('update mcp_tokens set revoked_at=now() where user_id=$1 and revoked_at is null', [USER_ID]);
+    return replacement;
+  });
 }

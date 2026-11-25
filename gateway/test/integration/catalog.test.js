@@ -25,3 +25,17 @@ test('a changed or missing row is brought back to the seed, and only that one', 
   assert.equal((await db.pool.query(`select count(*)::int as n from lab_catalog where key = 'HGB'`)).rows[0].n, 1);
   assert.equal(await loadCatalog(db.pool), 0);
 });
+
+test('legacy total T4 is separated from FT4 without losing the original test names', { skip: SKIP }, async () => {
+  const { readFile } = await import('node:fs/promises');
+  const names = ['Тироксин (Т4) общий', 'Т4', 'Тироксин (Т4) свободный'];
+  for (const name of names) {
+    await db.pool.query("insert into lab_tests (name, code, canonical_key) values ($1,$1,'FT4')", [name]);
+  }
+  const sql = await readFile(new URL('../../../db/migrations/038_total_t4.sql', import.meta.url), 'utf8');
+  await db.pool.query(sql);
+  const { rows } = await db.pool.query('select code, canonical_key from lab_tests where code = any($1::text[])', [names]);
+  assert.deepEqual(Object.fromEntries(rows.map((r) => [r.code, r.canonical_key])), {
+    'Тироксин (Т4) общий': null, 'Т4': null, 'Тироксин (Т4) свободный': 'FT4',
+  });
+});

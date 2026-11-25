@@ -6,12 +6,12 @@ import { useTranslations } from 'use-intl';
 import Icon from './icons';
 import { apiJson, errorRu, todayKey } from './api';
 import type { RefSettings } from './RefSheet';
+import { parseDecimal } from './decimal';
 import { labDocumentHref } from './recordLink';
 
 type Row = { key: string; name: string; value: string; unit: string; refLow: string; refHigh: string };
 const OTHER = '__other';
 const emptyRow = (): Row => ({ key: '', name: '', value: '', unit: '', refLow: '', refHigh: '' });
-const num = (s: string) => (s.trim() === '' ? null : Number(s.replace(',', '.')));
 
 /**
  * Labs → Upload → "Enter manually": results from a paper report or a lab without a parser, without AI.
@@ -20,6 +20,7 @@ const num = (s: string) => (s.trim() === '' ? null : Number(s.replace(',', '.'))
  */
 export default function ManualLabEntry() {
   const t = useTranslations('labs');
+  const common = useTranslations('common');
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<RefSettings['items']>([]);
   const [date, setDate] = useState(todayKey());
@@ -40,6 +41,9 @@ export default function ManualLabEntry() {
   async function save() {
     setBusy(true); setErr(null); setDone(null);
     try {
+      const incomplete = rows.findIndex((row) => Object.values(row).some((value) => value.trim()) && !filled.includes(row));
+      if (incomplete >= 0) throw new Error(t('manual.incomplete', { n: incomplete + 1 }));
+      const num = (value: string) => parseDecimal(value, common('invalidNumber'));
       const body = {
         date, labName: lab.trim() || null,
         rows: filled.map((r) => ({ key: r.key && r.key !== OTHER ? r.key : null, name: r.key === OTHER ? r.name.trim() : null, value: r.value.trim(), unit: r.unit.trim() || null, refLow: num(r.refLow), refHigh: num(r.refHigh) })),

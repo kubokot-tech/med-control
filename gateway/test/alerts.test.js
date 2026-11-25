@@ -51,3 +51,26 @@ test('alert texts and the backup line use the user\'s formats (userFormat), Russ
   assert.match(backupLine(s), /Бэкап 3 нояб\., 10:05:/, 'Moscow by default');
   assert.match(backupLine(s, createFormat({ timeZone: 'Asia/Yekaterinburg' })), /Бэкап 3 нояб\., 12:05:/, 'the user\'s zone');
 });
+
+test('incompatible units and uncertain bounds do not trigger numeric rules', () => {
+  assert.deepEqual(labFindings([{ key: 'HGB', value: 9, unit: 'ммоль/л', refLow: 8, refHigh: 11 }]), []);
+  const rule = { key: 'GLU', op: 'lt', value: 3.9, severity: 'RED', message: 'GLU {v}' };
+  const input = { key: 'GLU', value: 3.9, unit: 'ммоль/л' };
+  assert.equal(labFindings([{ ...input, valueText: '<3.9' }], { rules: [rule] })[0].message, 'GLU <3,9');
+  assert.deepEqual(labFindings([{ ...input, valueText: '≤3.9' }], { rules: [rule] }), []);
+});
+
+test('censored measurements preserve strict bounds and have no numeric trend across units', async () => {
+  const { flag, mapSeriesPoints } = await import('../src/lib/labsQuery.js');
+  assert.equal(flag(3.9, 3.9, 6.1, '<3.9'), 'low');
+  assert.equal(flag(3.9, 3.9, 6.1, '≤3.9'), '');
+  assert.equal(flag(8, null, 8, '≤8'), 'ok');
+  const rows = [
+    { value_numeric: 145, unit_canonical: 'г/л' },
+    { value_numeric: 9, unit_canonical: 'ммоль/л' },
+    { value_numeric: 8, unit_canonical: 'ммоль/л', value_text: '<8' },
+    { value_numeric: 4, unit_canonical: 'ммоль/л' },
+    { value_numeric: 6, unit_canonical: 'ммоль/л' },
+  ];
+  assert.deepEqual(mapSeriesPoints(rows).map((p) => p.delta), [null, null, null, null, 2]);
+});

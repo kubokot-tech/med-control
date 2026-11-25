@@ -62,12 +62,12 @@ export default function Sparkline({
           : null;
       const x = padding + i * stepX;
       const y = v === null ? null : toY(v);
-      return { x, y };
+      return { x, y, i };
     })
-    .filter((c) => c.y !== null) as Array<{ x: number; y: number }>;
+    .filter((c) => c.y !== null) as Array<{ x: number; y: number; i: number }>;
 
   const d = coords
-    .map((c, idx) => `${idx === 0 ? 'M' : 'L'} ${c.x.toFixed(2)} ${c.y.toFixed(2)}`)
+    .map((c, idx) => `${idx === 0 || c.i !== coords[idx - 1].i + 1 ? 'M' : 'L'} ${c.x.toFixed(2)} ${c.y.toFixed(2)}`)
     .join(' ');
 
   const areaD =
@@ -119,7 +119,7 @@ export default function Sparkline({
           stroke="var(--chart-ref)" strokeWidth="0.8" strokeDasharray="3 2" opacity="0.5"
         />
       )}
-      {showArea && (
+      {showArea && coords.length === points.length && (
         <path d={areaD} fill={stroke} opacity="0.1" />
       )}
       <path d={d} fill="none" stroke={stroke} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />

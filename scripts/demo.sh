@@ -10,7 +10,10 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 ENVF=scripts/demo.env
-dc() { docker compose --env-file "$ENVF" "$@"; }
+# Shell variables have higher precedence than --env-file. Start the demo with isolated storage and settings.
+unset DATA_DIR PG_DIR DICOM_DIR ORTHANC_DIR BACKUP_DIR MIRROR_DIR RCLONE_DIR DATABASE_URL COMPOSE_FILE COMPOSE_PROFILES
+unset ENV_FILE APP_PORT APP_URL STACK_SUBNET IMAGE_TAG
+dc() { docker compose -p medcontrol-demo --env-file "$ENVF" "$@"; }
 PORT=$(grep -E '^APP_PORT=' "$ENVF" | cut -d= -f2)
 URL="http://localhost:${PORT}"
 

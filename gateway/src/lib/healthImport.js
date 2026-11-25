@@ -3,11 +3,12 @@
  * from a Shortcut, or the one-off export.xml. Samples are kept raw in health_samples and folded into the
  * symptom diary per day (blood pressure, weight, temperature, pulse, steps), which runs the alert rules.
  */
+import { bpSeverity } from './alerts.js';
 import { pool } from './db.js';
 import { dayKey, DEFAULT_TZ } from './dates.js';
 import { saveSymptoms } from './symptoms.js';
 import { getSetting, setSetting } from './settings.js';
-import { parseHealthDate } from './healthParse.js';
+import { temperature } from './healthParse.js';
 
 export { parseHealthDate, parseHealthAutoExport, parseHealthXml } from './healthParse.js';
 
@@ -30,7 +31,7 @@ export async function importSamples(userId, samples, { tz = DEFAULT_TZ, source =
     // pulse and steps alone do not create a diary day; they enrich days that have readings or entries
     if (!cur && e.bpSys == null && e.weightKg == null && e.tempC == null) continue;
     // a higher reading entered by hand wins over the device
-    if (cur?.bp_sys != null && e.bpSys != null && cur.bp_sys > e.bpSys) { delete e.bpSys; delete e.bpDia; }
+    if (cur?.bp_sys != null && e.bpSys != null && compareBp(cur.bp_sys, cur.bp_dia, e.bpSys, e.bpDia) > 0) { delete e.bpSys; delete e.bpDia; }
     if (!Object.keys(e).length) continue;
     const r = await saveSymptoms(userId, day, e, tz);
     alertsRaised += r.alertsRaised; daysUpdated++;
@@ -40,18 +41,22 @@ export async function importSamples(userId, samples, { tz = DEFAULT_TZ, source =
   return summary;
 }
 
+function compareBp(sys, dia, otherSys, otherDia) {
+  return bpSeverity(sys, dia) - bpSeverity(otherSys, otherDia) || sys - otherSys || dia - otherDia;
+}
+
 /** Diary fields for one day from all stored samples of that day: the highest blood pressure reading (alerts must not miss a morning spike), last weight, max temperature, resting or average pulse, steps summed. */
 export async function diaryFieldsForDay(userId, day, tz = DEFAULT_TZ) {
   // range on ts (uses the index), day boundaries in the user's time zone
   const r = await pool.query(`select kind, ts, value from health_samples where user_id = $1 and ts >= ($3::date)::timestamp at time zone $2 and ts < ($3::date + 1)::timestamp at time zone $2 order by ts`, [userId, tz, day]);
   const by = (k) => r.rows.filter((x) => x.kind === k);
   const e = {};
-  const bp = by('blood_pressure').reduce((best, x) => (!best || x.value.systolic >= best.value.systolic ? x : best), null);
+  const bp = by('blood_pressure').reduce((best, x) => (!best || compareBp(x.value.systolic, x.value.diastolic, best.value.systolic, best.value.diastolic) >= 0 ? x : best), null);
   if (bp) { e.bpSys = Math.round(bp.value.systolic); e.bpDia = Math.round(bp.value.diastolic); }
   const w = by('weight_body_mass').at(-1);
   if (w) e.weightKg = Math.round(w.value.qty * 10) / 10;
-  const t = by('body_temperature');
-  if (t.length) e.tempC = Math.round(Math.max(...t.map((x) => x.value.qty)) * 10) / 10;
+  const temperatures = by('body_temperature').map(({ value }) => temperature(value.qty, value.units)).filter(Boolean);
+  if (temperatures.length) e.tempC = Math.round(Math.max(...temperatures.map((v) => v.qty)) * 10) / 10;
   const rhr = by('resting_heart_rate').at(-1);
   const hr = by('heart_rate');
   if (rhr) e.pulse = Math.round(rhr.value.qty);

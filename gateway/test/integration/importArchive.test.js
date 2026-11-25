@@ -115,6 +115,8 @@ async function makeZip(files) {
 async function emptyInstall() {
   const tables = (await db.pool.query(`select tablename from pg_tables where schemaname = 'public' and tablename not in ('schema_migrations', 'lab_catalog', 'users', 'app_settings')`)).rows.map((r) => r.tablename);
   await db.pool.query(`truncate ${tables.map((t) => `"${t}"`).join(', ')} cascade`);
+  const { PATIENT_KEYS } = await import('../../src/lib/patientCard.js');
+  await db.pool.query('delete from app_settings where key = any($1::text[])', [['anamnesis', 'anamnesis_brief', 'treatment_protocol', ...PATIENT_KEYS]]);
 }
 
 test('catalog rows the new installation already made (infusion catalog, lab test codes) are matched, not a failure', { skip: SKIP }, async () => {
@@ -219,4 +221,31 @@ test('the file type of an archive is not taken on trust: only upload types are s
     await db.pool.query(`update attachments set mime_type = 'text/html' where sha256 = $1`, [sha('c')]);
     assert.equal((await get(sha('c'))).headers['content-type'], 'application/octet-stream');
   } finally { await web.close(); }
+});
+
+test('patient settings alone protect a destination, and every card field round-trips', { skip: SKIP }, async () => {
+  await emptyInstall();
+  const { loadSettings } = await import('../../src/lib/settings.js');
+  const { savePatientCard, patientCard } = await import('../../src/lib/patientCard.js');
+  await loadSettings();
+  const card = await savePatientCard({ name: 'Example', callName: 'Demo', birthDate: '2000-01-01',
+    diagnosis: 'Fixture', keptBy: 'relative', photo: 'data:image/jpeg;base64,YQ==', moments: false }, { today: '2026-01-01' });
+  const zip = (await app.inject({ method: 'GET', url: '/export/all.zip' })).rawPayload;
+  assert.equal((await app.inject({ method: 'GET', url: '/import/status' })).json().empty, false);
+  assert.equal((await app.inject({ method: 'POST', url: '/import/archive', ...form(zip) })).statusCode, 409);
+  await emptyInstall();
+  await loadSettings();
+  const response = await app.inject({ method: 'POST', url: '/import/archive', ...form(zip) });
+  assert.equal(response.statusCode, 200, response.body);
+  assert.deepEqual(patientCard(), card);
+});
+
+test('archive restore refuses missing and corrupt files listed in the manifest', { skip: SKIP }, async () => {
+  await emptyInstall();
+  for (const extra of [{}, { 'files/example.pdf': Buffer.from('wrong content') }]) {
+    const zip = await makeZip({ 'manifest.json': { files: { 'files/example.pdf': '0'.repeat(64) } },
+      'tables/events.json': [], ...extra });
+    const response = await app.inject({ method: 'POST', url: '/import/archive', ...form(zip) });
+    assert.equal(response.statusCode, 400, response.body);
+  }
 });

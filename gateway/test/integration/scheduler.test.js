@@ -18,11 +18,13 @@ test('dose reminder goes out once in the morning window and not again', { skip: 
   await sched.tick();
   assert.equal(sent.length, 1);
   assert.match(sent[0].text, /Ленватиниб 24 мг сегодня ещё не отмечен/);
-  assert.equal(sent[0].extra.reply_markup.inline_keyboard[0][0].callback_data, 'dose:TAKEN:2026-03-10');
+  assert.match(sent[0].extra.reply_markup.inline_keyboard[0][0].callback_data, /^dose:TAKEN:2026-03-10:[0-9a-f-]{36}$/);
   await sched.tick();
   assert.equal(sent.length, 1, 'notifications table dedupes');
   const n = await db.pool.query(`select kind, ref from notifications where user_id=$1`, [USER_ID]);
-  assert.deepEqual(n.rows, [{ kind: 'dose', ref: '2026-03-10' }]);
+  assert.equal(n.rows.length, 1);
+  assert.equal(n.rows[0].kind, 'dose');
+  assert.match(n.rows[0].ref, /^2026-03-10:[0-9a-f-]{36}$/);
 });
 
 test('evening reminder is skipped once the dose is recorded', { skip: SKIP }, async () => {
@@ -60,7 +62,7 @@ test('sender failure releases the claim so the next tick retries', { skip: SKIP 
   await assert.rejects(s2.tick(), /telegram down/);
   await s2.tick();
   assert.equal(calls, 2);
-  const n = await db.pool.query(`select count(*)::int as n from notifications where user_id=$1 and kind='dose' and ref='2026-03-12'`, [USER_ID]);
+  const n = await db.pool.query(`select count(*)::int as n from notifications where user_id=$1 and kind='dose' and ref like '2026-03-12:%'`, [USER_ID]);
   assert.equal(n.rows[0].n, 1);
   s2();
 });
@@ -101,4 +103,25 @@ test('reminder times from Settings, in the user\'s own time zone; the repeat can
     await assert.rejects(saveReminderTimes({ doseAt: '07:00' }), (e) => e.code === 'set_in_env');
   } finally { delete process.env.REMIND_DOSE_AT; }
   await db.pool.query(`update users set timezone = 'Europe/Moscow' where id = $1`, [USER_ID]);
+});
+
+test('two systemic drugs each receive one reminder bound to that medication', { skip: SKIP }, async () => {
+  const { startScheduler } = await import('../../src/lib/scheduler.js');
+  const { createMedication } = await import('../../src/lib/medsCreate.js');
+  const { saveReminderTimes } = await import('../../src/lib/reminderTimes.js');
+  await saveReminderTimes({ doseAt: '08:30', doseAgainAt: '' });
+  const first = (await db.pool.query("select id from medications where user_id=$1 and name='Ленватиниб'", [USER_ID])).rows[0];
+  const med = await createMedication(USER_ID, { name: 'Second', role: 'systemic', startDate: '2026-01-01' });
+  const got = [];
+  const stop = startScheduler({ pool: db.pool, userId: USER_ID, log: db.quiet, intervalMs: 3_600_000,
+    now: () => new Date('2026-03-24T09:00:00+07:00'), readyImpl: () => true,
+    sendImpl: async (text, chat, extra) => { if (extra?.reply_markup?.inline_keyboard) got.push(extra.reply_markup.inline_keyboard[0][0].callback_data); } });
+  try {
+    await db.pool.query("update users set timezone='Asia/Novosibirsk' where id=$1", [USER_ID]);
+    await stop.tick();
+    await stop.tick();
+    for (const id of [first.id, med.medicationId]) {
+      assert.equal(got.filter((code) => code === 'dose:TAKEN:2026-03-24:' + id).length, 1);
+    }
+  } finally { stop(); }
 });

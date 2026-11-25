@@ -42,10 +42,6 @@ function shape(r) {
 }
 
 export async function createPglitePool({ dataDir, loadDataDir } = {}) {
-  // The iPad page prepares a database copy from the app container before the first open (ipad/web/env.js).
-  // The contract lives here, in one place: wait for the preparation, then take the copy it found.
-  if (globalThis.__MC_BEFORE_DB) await globalThis.__MC_BEFORE_DB;
-  const load = loadDataDir ?? globalThis.__MC_PGLITE_LOAD;
   const { PGlite } = await import('@electric-sql/pglite');
   const { pgcrypto } = await import('@electric-sql/pglite/contrib/pgcrypto');
   const opts = {
@@ -53,12 +49,24 @@ export async function createPglitePool({ dataDir, loadDataDir } = {}) {
     extensions: { pgcrypto },
     parsers: { [DATE]: (v) => v, [INT8]: (v) => v },
   };
+  // Validate recovery candidates in memory first. Opening a damaged archive in the live
+  // IndexedDB can leave an empty database that prevents recovery on the next launch.
+  const recovery = loadDataDir ? null : await globalThis.__MC_RECOVER_DB?.(async (blob) => {
+    const probe = await PGlite.create({ ...opts, dataDir: 'memory://', loadDataDir: blob });
+    try { await probe.query('select 1 from users limit 1'); } finally { await probe.close(); }
+  });
+  const load = loadDataDir ?? recovery?.blob;
   if (load) opts.loadDataDir = load;
   let db;
   try {
+    if (load && load.size < 10) throw new Error('Truncated database snapshot');
     db = await PGlite.create(opts);
   } catch (e) {
-    if (!loadDataDir) throw e;
+    if (!load) throw e;
+    if (!loadDataDir) {
+      globalThis.__MC_RESTORE_FAILED = true;
+      throw e;
+    }
     // The browser edition must not overwrite the stored copy with what may be an empty database:
     // the iPad page reads this flag and holds its snapshots until the owner resolves the situation.
     globalThis.__MC_RESTORE_FAILED = true;
@@ -67,6 +75,7 @@ export async function createPglitePool({ dataDir, loadDataDir } = {}) {
     db = await PGlite.create(opts);
   }
   await db.exec(`set time zone 'UTC'`);
+  recovery?.opened();
 
   const acquire = makeLock();
   // The transaction that owns the lock in this async context; `open` turns false at COMMIT/ROLLBACK, so a stray

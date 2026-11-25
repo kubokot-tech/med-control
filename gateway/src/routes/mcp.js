@@ -30,7 +30,7 @@ export default async function mcpRoutes(app) {
     const { timeZone, language } = await getUserLocale(token.user_id);
     const out = await handleMcp(req.body, {
       userId: token.user_id, tz: timeZone, language, token, version: VERSION, log: req.log,
-      audit: (e) => audit(token.user_id, token.id, e),
+      audit: (entry, client) => audit(token.user_id, token.id, entry, client),
     });
     if (out.body == null) return reply.code(out.status).send();
     return reply.code(out.status).header('content-type', 'application/json').send(out.body);

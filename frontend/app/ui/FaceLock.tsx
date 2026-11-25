@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useTranslations } from 'use-intl';
 import { LoginChrome } from './AuthChrome';
 import Icon from './icons';
@@ -40,12 +40,26 @@ export default function FaceLock({ children }: { children: React.ReactNode }) {
   const [msg, setMsg] = useState<string | null>(null);
   const [round, setRound] = useState(0);
 
+  const dialog = useRef<HTMLDialogElement>(null);
+  const generation = useRef(0);
+  const [hasOpened, setHasOpened] = useState(false);
+  function unlock() { setHasOpened(true); setPhase('open'); }
+
+  useLayoutEffect(() => {
+    // A modal is in the browser's top layer, including when an editor already has a dialog open.
+    if (phase !== 'open' && dialog.current && !dialog.current.open) dialog.current.showModal();
+  }, [phase]);
+
   useEffect(() => {
     if (!STATIC) return;
-    if (!getToken()) { setPhase('open'); return; }
-    setPhase('locked');
+    if (getToken()) setPhase('locked');
+    else unlock();
     const onVis = () => {
+      if (!getToken()) return;
       if (document.visibilityState === 'hidden') {
+        generation.current++;
+        setBusy(false);
+        setPassword('');
         setPhase('locked');
         setPasswordMode(false);
         setMsg(null);
@@ -59,13 +73,14 @@ export default function FaceLock({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (phase !== 'locked' || passwordMode || document.visibilityState === 'hidden') return;
+    const attempt = generation.current;
     let gone = false;
     setBusy(true);
     setMsg(null);
     askFace(t('faceLock.reason'), t('faceLock.fallback')).then((code) => {
-      if (gone) return;
+      if (gone || attempt !== generation.current || document.hidden) return;
       setBusy(false);
-      if (code === 'ok') setPhase('open');
+      if (code === 'ok') unlock();
       else if (code === 'password' || code === 'unavailable') {
         setPasswordMode(true);
         if (code === 'unavailable') setMsg(t('faceLock.unavailable'));
@@ -77,6 +92,7 @@ export default function FaceLock({ children }: { children: React.ReactNode }) {
 
   async function onPassword(e: React.FormEvent) {
     e.preventDefault();
+    const attempt = generation.current;
     setBusy(true);
     setMsg(null);
     try {
@@ -94,9 +110,10 @@ export default function FaceLock({ children }: { children: React.ReactNode }) {
       if (!r.ok) { setMsg(t('loginForm.invalid')); return; }
       const j = await r.json();
       if (!j.token) { setMsg(t('loginForm.invalid')); return; }
+      if (attempt !== generation.current || document.hidden) return;
       signedIn(j);
       setPassword('');
-      setPhase('open');
+      unlock();
     } catch {
       setMsg(t('connectionError'));
     } finally {
@@ -104,36 +121,39 @@ export default function FaceLock({ children }: { children: React.ReactNode }) {
     }
   }
 
-  if (phase === 'open') return <>{children}</>;
+  if (!STATIC) return <>{children}</>;
 
   return (
-    <div className="login-page" style={{ position: 'fixed', inset: 0, zIndex: 200 }}>
-      <div className="login-card">
-        <LoginChrome />
-        {passwordMode ? (
-          <form onSubmit={onPassword} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <div className="field">
-              <label htmlFor="face-password">{t('loginForm.password')}</label>
-              <input id="face-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" autoFocus required />
+    <>
+      {hasOpened && <div hidden={phase !== 'open'} inert={phase !== 'open'} style={phase === 'open' ? { display: 'contents' } : undefined}>{children}</div>}
+      {phase !== 'open' && <dialog ref={dialog} data-mc-locked className="login-page" onCancel={(e) => e.preventDefault()} style={{ position: 'fixed', inset: 0, margin: 0, border: 0, width: '100%', maxWidth: 'none', height: '100%', maxHeight: 'none' }}>
+        <div className="login-card">
+          <LoginChrome />
+          {passwordMode ? (
+            <form onSubmit={onPassword} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div className="field">
+                <label htmlFor="face-password">{t('loginForm.password')}</label>
+                <input id="face-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" autoFocus required />
+              </div>
+              <button type="submit" disabled={busy || !password} className="btn btn--primary btn--lg btn--block">
+                <Icon name="check" strokeWidth={2.2} />
+                {busy ? t('loginForm.signingIn') : t('loginForm.signInToApp')}
+              </button>
+              <button type="button" className="btn btn--ghost btn--sm" onClick={() => { setPasswordMode(false); setMsg(null); setRound((n) => n + 1); }}>{t('faceLock.back')}</button>
+              {msg && <div className="msg msg--error">{msg}</div>}
+            </form>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <button type="button" disabled={busy} className="btn btn--primary btn--lg btn--block" onClick={() => setRound((n) => n + 1)}>
+                <Icon name="check" strokeWidth={2.2} />
+                {busy ? t('faceLock.opening') : t('faceLock.open')}
+              </button>
+              <button type="button" className="btn btn--ghost btn--sm" onClick={() => { setPasswordMode(true); setMsg(null); }}>{t('faceLock.usePassword')}</button>
+              {msg && <div className="msg msg--error">{msg}</div>}
             </div>
-            <button type="submit" disabled={busy || !password} className="btn btn--primary btn--lg btn--block">
-              <Icon name="check" strokeWidth={2.2} />
-              {busy ? t('loginForm.signingIn') : t('loginForm.signInToApp')}
-            </button>
-            <button type="button" className="btn btn--ghost btn--sm" onClick={() => { setPasswordMode(false); setMsg(null); setRound((n) => n + 1); }}>{t('faceLock.back')}</button>
-            {msg && <div className="msg msg--error">{msg}</div>}
-          </form>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <button type="button" disabled={busy} className="btn btn--primary btn--lg btn--block" onClick={() => setRound((n) => n + 1)}>
-              <Icon name="check" strokeWidth={2.2} />
-              {busy ? t('faceLock.opening') : t('faceLock.open')}
-            </button>
-            <button type="button" className="btn btn--ghost btn--sm" onClick={() => { setPasswordMode(true); setMsg(null); }}>{t('faceLock.usePassword')}</button>
-            {msg && <div className="msg msg--error">{msg}</div>}
-          </div>
-        )}
-      </div>
-    </div>
+          )}
+        </div>
+      </dialog>}
+    </>
   );
 }

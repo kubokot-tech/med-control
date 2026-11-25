@@ -2,6 +2,7 @@
 
 import { useRef, useState, useCallback, useEffect } from 'react';
 import { useTranslations } from 'use-intl';
+import { comparatorOf } from '../../../shared/labBounds.js';
 import { useFormat } from './format';
 
 type ChartPoint = {
@@ -93,7 +94,7 @@ export default function LabChart({
 
   const valid = points
     .map((p, i) => ({ ...p, origIdx: i }))
-    .filter((p) => p.valueNum != null && !Number.isNaN(p.valueNum));
+    .filter((p) => p.valueNum != null && Number.isFinite(p.valueNum) && !comparatorOf(p.valueText) && p.unit === unit);
 
   const hasEnoughData = valid.length >= 2;
 
@@ -126,11 +127,11 @@ export default function LabChart({
     const ySp = yMx - yMn;
     const iH = CHART_H - PAD.top - PAD.bottom;
 
-    const toXLocal = (i: number) => PAD.left + (i / Math.max(1, valid.length - 1)) * iW;
+    const toXLocal = (i: number) => PAD.left + (i / Math.max(1, points.length - 1)) * iW;
     const toYLocal = (v: number) => PAD.top + iH - ((v - yMn) / ySp) * iH;
 
     const localCoords = valid.map((p, i) => ({
-      x: toXLocal(i),
+      x: toXLocal(p.origIdx),
       y: toYLocal(p.valueNum as number),
     }));
 
@@ -182,18 +183,18 @@ export default function LabChart({
   const innerW = vbW - PAD.left - PAD.right;
   const innerH = CHART_H - PAD.top - PAD.bottom;
 
-  const toX = (i: number) => PAD.left + (i / Math.max(1, valid.length - 1)) * innerW;
+  const toX = (i: number) => PAD.left + (i / Math.max(1, points.length - 1)) * innerW;
   const toY = (v: number) => PAD.top + innerH - ((v - yMin) / ySpan) * innerH;
 
   const coords = valid.map((p, i) => ({
-    x: toX(i),
+    x: toX(p.origIdx),
     y: toY(p.valueNum as number),
     point: p,
     idx: i,
   }));
 
   const linePath = coords
-    .map((c, i) => `${i === 0 ? 'M' : 'L'} ${c.x.toFixed(1)} ${c.y.toFixed(1)}`)
+    .map((c, i) => `${i === 0 || c.point.origIdx !== coords[i - 1].point.origIdx + 1 ? 'M' : 'L'} ${c.x.toFixed(1)} ${c.y.toFixed(1)}`)
     .join(' ');
 
   const areaPath =
@@ -203,7 +204,7 @@ export default function LabChart({
 
   // Trend line
   let trendPath = '';
-  if (showTrend && coords.length >= 3) {
+  if (showTrend && coords.length >= 3 && valid.length === points.length) {
     const trendPts = coords.map((c, i) => ({ x: i, y: c.point.valueNum as number }));
     const reg = linearRegression(trendPts);
     if (reg) {
@@ -243,9 +244,9 @@ export default function LabChart({
   }
 
   const hp = hover ? coords[hover.idx]?.point : null;
-  const hpDevKey = hp?.valueNum != null ? getDeviation(hp.valueNum, refLow, refHigh) : null;
+  const hpDevKey = hp?.valueNum != null ? getDeviation(hp.valueNum, hp.refLow, hp.refHigh) : null;
   const hpDev = hpDevKey ? t(`chart.${hpDevKey.key}`, { pct: hpDevKey.pct }) : null;
-  const hpFlag = hp?.valueNum != null ? getFlagColor(hp.valueNum, refLow, refHigh) : 'var(--chart-dot-neutral)';
+  const hpFlag = hp?.valueNum != null ? getFlagColor(hp.valueNum, hp.refLow, hp.refHigh) : 'var(--chart-dot-neutral)';
 
   return (
     <div ref={wrapRef} style={{ position: 'relative' }}>
@@ -306,7 +307,7 @@ export default function LabChart({
         ))}
 
         {/* Area fill */}
-        <path d={areaPath} fill="var(--chart-line)" opacity="0.06" />
+        {valid.length === points.length && <path d={areaPath} fill="var(--chart-line)" opacity="0.06" />}
 
         {/* Trend line */}
         {trendPath && (
@@ -335,7 +336,7 @@ export default function LabChart({
           <circle
             key={i} cx={c.x} cy={c.y}
             r={hover?.idx === i ? 7 : 4}
-            fill={getFlagColor(c.point.valueNum as number, refLow, refHigh)}
+            fill={getFlagColor(c.point.valueNum as number, c.point.refLow, c.point.refHigh)}
             stroke="var(--surface)" strokeWidth="2"
             style={{ cursor: 'pointer', transition: 'r 0.15s ease' }}
           />

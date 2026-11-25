@@ -64,10 +64,14 @@ jobs:
           src=$(ls desktop/src-tauri/target/${{ matrix.target }}/release/bundle/${{ matrix.bundle }}/*.${{ matrix.ext }} | head -n1)
           [ -n "$src" ] || { echo "no installer built"; exit 1; }
           cp "$src" "dist/${{ matrix.file }}"
-          pkg=$(ls desktop/src-tauri/target/${{ matrix.target }}/release/bundle/${{ matrix.pkgdir }}/${{ matrix.pkgglob }} 2>/dev/null | head -n1)
-          if [ -n "$pkg" ] && [ -f "$pkg.sig" ]; then
-            cp "$pkg" "dist/${{ matrix.pkg }}"
-            cp "$pkg.sig" "dist/${{ matrix.pkg }}.sig"
+          shopt -s nullglob
+          packages=(desktop/src-tauri/target/${{ matrix.target }}/release/bundle/${{ matrix.pkgdir }}/${{ matrix.pkgglob }})
+          if (( ${#packages[@]} > 0 )); then
+            pkg=${packages[0]}
+            if [ -f "$pkg.sig" ]; then
+              cp "$pkg" "dist/${{ matrix.pkg }}"
+              cp "$pkg.sig" "dist/${{ matrix.pkg }}.sig"
+            fi
           fi
           ls -l dist
       - uses: actions/upload-artifact@v4
@@ -100,12 +104,10 @@ jobs:
             || gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --title "MedControl $TAG" --latest=false \
                  --notes "История версий: CHANGELOG.md. Changelog: CHANGELOG.md."
           gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json body -q .body > release-body.md
-          if ls dist/*.sig >/dev/null 2>&1; then
-            node scripts/updater-manifest.mjs "$TAG" "$GITHUB_REPOSITORY" dist release-body.md > dist/latest.json
-            cat dist/latest.json
-          else
-            echo "::warning::No update packages: installed apps will not see this release"
-          fi
+          for installer in MedControl-macOS-AppleSilicon.dmg MedControl-macOS-Intel.dmg MedControl-Windows-Setup.exe; do
+            test -s "dist/$installer" || { echo "::error::Missing installer: $installer"; exit 1; }
+          done
+          node scripts/updater-manifest.mjs "$TAG" "$GITHUB_REPOSITORY" dist release-body.md > dist/latest.json
           rm -f dist/*.sig
           gh release upload "$TAG" dist/* --repo "$GITHUB_REPOSITORY" --clobber
       - name: Make it the latest release

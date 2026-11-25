@@ -55,7 +55,8 @@ export async function saveSymptoms(userId, date, e, tz = DEFAULT_TZ, opts = {}) 
   // jsonb scales: merged into the day's object, a null removes the key
   if (extraKeys.length) { cols.push('scales'); vals.push(JSON.stringify(Object.fromEntries(extraKeys.map((k) => [k, e[k] ?? null])))); }
   const language = await userLanguage(userId);
-  return transaction(async (client) => {
+  const transact = opts.transact ?? transaction;
+  return transact(async (client) => {
     const placeholders = cols.map((c, i) => (c === 'scales' ? `jsonb_strip_nulls($${i + 3}::jsonb)` : `$${i + 3}`)).join(', ');
     const updates = cols.map((c, i) => (c === 'scales' ? `scales = jsonb_strip_nulls(symptom_entries.scales || $${i + 3}::jsonb)` : `${c} = $${i + 3}`)).join(', ');
     const r = await client.query(

@@ -84,3 +84,14 @@ test('diary scales: extra scales live in jsonb, merge on partial updates, null r
   invalidateProfileCache();
   assert.match(await buildPatientProfile(USER_ID), /отёки \(0–3\) 2/);
 });
+
+test('extending a completed infusion course makes its next session due', { skip: SKIP }, async () => {
+  const { createAgent, createCourse, createInfusion, updateCourse, dueCourses } = await import('../../src/lib/infusions.js');
+  const agent = await createAgent(USER_ID, { name: 'Synthetic extension test' });
+  const course = await createCourse(USER_ID, { agentId: agent.id, startDate: '2026-02-11', plannedCount: 1, cadenceDays: 3 });
+  await createInfusion(USER_ID, { agentId: agent.id, courseId: course.id, date: '2026-02-11' });
+  const extended = await updateCourse(USER_ID, course.id, { plannedCount: 2 });
+  assert.equal(extended.status, 'active');
+  assert.equal(extended.nextDue, '2026-02-14');
+  assert.ok((await dueCourses(USER_ID, '2026-02-14')).some((row) => row.id === course.id));
+});

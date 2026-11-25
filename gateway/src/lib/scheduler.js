@@ -82,13 +82,13 @@ export function startScheduler({ pool, userId, log = console, intervalMs = 60_00
     const { activeItems } = await import('./medsRecord.js');
     const items = await activeItems(userId);
     // marks so far today per medication: with «2 раза в день» the repeat still comes while a dose is unmarked
-    const todayRows = (await pool.query(`select medication_id, count(*)::int as n, bool_or(status = 'PAUSED') as paused from administrations where user_id=$1 and day = $2::date group by medication_id`, [userId, today])).rows;
-    const marked = new Map(todayRows.map((x) => [x.medication_id, x.n]));
-    const paused = new Set(todayRows.filter((x) => x.paused).map((x) => x.medication_id));
+    const todayRows = (await pool.query(`select medication_id, count(*)::int as n, max(expected_doses) as times, bool_or(status = 'PAUSED') as paused from administrations where user_id=$1 and day = $2::date group by medication_id`, [userId, today])).rows;
+    const marked = new Map(todayRows.map((x) => [x.medication_id, x]));
     for (const it of items) {
-      const done = marked.get(it.medicationId) || 0;
-      const times = Math.max(1, Number(it.timesPerDay) || 1);
-      if (done >= times || paused.has(it.medicationId)) continue; // all doses marked, or a therapy pause today
+      const marks = marked.get(it.medicationId);
+      const done = marks?.n ?? 0;
+      const times = marks?.times ?? it.timesPerDay;
+      if (done >= times || marks?.paused) continue; // all doses marked, or a therapy pause today
       if (!isDoseDay(it, today)) continue; // weekly or every-N-days schedules: no reminder on other days
       const slots = it.role === 'systemic' ? [['dose', cfg.doseAt], ...(cfg.doseAgainAt ? [['dose_again', cfg.doseAgainAt]] : [])] : (it.remindAt ? [[`dose:${it.medicationId}`, it.remindAt]] : []);
       for (const [kind, at] of slots) {
@@ -100,8 +100,8 @@ export function startScheduler({ pool, userId, log = console, intervalMs = 60_00
         const text = kind === 'dose_again'
           ? (done > 0 ? say('doseCounted', { name: it.name, dose, done, times, url }) : say('doseAgain', { name: it.name, dose, url }))
           : say('dose', { name: it.name, dose, how, url });
-        const suffix = it.role === 'systemic' ? '' : `:${it.medicationId}`;
-        await send(kind, today, text, keyboard([[{ text: say('taken'), data: `dose:TAKEN:${today}${suffix}` }, { text: say('skip'), data: `dose:SKIPPED:${today}${suffix}` }]]));
+        const suffix = `:${it.medicationId}`;
+        await send(kind, it.role === 'systemic' ? today + suffix : today, text, keyboard([[{ text: say('taken'), data: `dose:TAKEN:${today}${suffix}` }, { text: say('skip'), data: `dose:SKIPPED:${today}${suffix}` }]]));
       }
     }
 

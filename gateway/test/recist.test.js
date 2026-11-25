@@ -53,3 +53,19 @@ test('modality groups are compared separately, same-date studies ordered by crea
   assert.equal(mri.group, 'МРТ');
   assert.equal(mri.response, 'baseline');
 });
+
+test('missing targets give no numeric response and do not lower the nadir', () => {
+  const measurements = [
+    { studyId: 's1', lesionId: 'a', sizeMm: 20 }, { studyId: 's1', lesionId: 'b', sizeMm: 20 },
+    { studyId: 's2', lesionId: 'a', sizeMm: 20 },
+    { studyId: 's3', lesionId: 'a', sizeMm: 20 }, { studyId: 's3', lesionId: 'b', sizeMm: 20 },
+  ];
+  const points = computeRecist(studies, lesions, measurements);
+  assert.deepEqual(points.map((p) => [p.response, p.sum, p.nadir]), [['baseline', 40, 40], ['NA', null, 40], ['SD', 40, 40]]);
+  assert.equal(points[1].changeFromBaselinePct, null);
+});
+
+test('growth from the nadir takes precedence over shrinkage from baseline', () => {
+  const points = computeRecist(studies, lesions, [100, 40, 60].map((sizeMm, i) => ({ studyId: studies[i].id, lesionId: 'a', sizeMm })));
+  assert.deepEqual(points.map((p) => p.response), ['baseline', 'PR', 'PD']);
+});

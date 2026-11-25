@@ -10,6 +10,7 @@ import ExcelJS from 'exceljs';
 import PDFDocument from 'pdfkit';
 import { pool } from '../lib/db.js';
 import { buildLabsWhere, readLabsQuery, flag, refText } from '../lib/labsQuery.js';
+import { comparatorOf } from '../../../shared/labBounds.js';
 import { buildSummary } from '../lib/labsSummary.js';
 import { catalog, markerName } from '../lib/canonical.js';
 import { displayUnit } from '../../../shared/units.js';
@@ -55,8 +56,21 @@ async function allResults(q, tz) {
     date: dayOf(x.collected_at, tz), name: (x.key && markerName(x.key, u.language)) || x.code, code: x.code, key: x.key, category: catWord(x.category, language),
     value: show(x, x.value_numeric), text: x.value_text, unit: (x.key ? u.unit(x.key, x.unit_canonical) : displayUnit(x.unit_canonical, u.language)) || '', unitOriginal: x.unit_original || '',
     refLow: show(x, x.ref_low), refHigh: show(x, x.ref_high),
-    flagCode: flag(x.value_numeric, x.ref_low, x.ref_high), flag: flagWord(flag(x.value_numeric, x.ref_low, x.ref_high), language), lab: x.lab_name || '', documentId: x.document_id || '',
+    flagCode: flag(x.value_numeric, x.ref_low, x.ref_high, x.value_text), flag: flagWord(flag(x.value_numeric, x.ref_low, x.ref_high, x.value_text), language), lab: x.lab_name || '', documentId: x.document_id || '',
   }));
+}
+
+/** Preserve bounds and show cell-specific units/ranges when they differ from the row header. */
+function pivotValue(cell, row, fmt, numericCell = false) {
+  if (!cell) return null;
+  const cmp = comparatorOf(cell.valueText);
+  const differentUnit = cell.unit !== row.unit;
+  const differentRange = cell.refLow !== row.refLow || cell.refHigh !== row.refHigh;
+  if (numericCell && cell.valueNum != null && !cmp && !differentUnit && !differentRange) return cell.valueNum;
+  const value = cell.valueNum != null ? cmp + fmt(cell.valueNum) : (cell.valueText || '—');
+  const unit = differentUnit ? ' ' + (cell.unit || '—') : '';
+  const range = differentRange ? ' (' + (refText(cell.refLow, cell.refHigh, fmt) || '—') + ')' : '';
+  return value + unit + range;
 }
 
 export default async function labsExportRoutes(app) {
@@ -83,12 +97,12 @@ export default async function labsExportRoutes(app) {
     ws.addRow([word('col.marker'), word('col.unit'), word('col.range'), ...months.map(month)]); head(ws, 3);
     for (const row of rows) {
       const ref = refText(row.refLow, row.refHigh, fmtNum);
-      const line = [row.short || row.name || row.test, row.unit || '', ref, ...months.map((m) => { const c = row.cells[m]; return c ? (c.valueNum != null ? c.valueNum : (c.valueText || '')) : null; })];
+      const line = [row.short || row.name || row.test, row.unit || '', ref, ...months.map((m) => pivotValue(row.cells[m], row, fmtNum, true))];
       const rr = ws.addRow(line);
       rr.getCell(1).font = { bold: row.isCanonical };
       months.forEach((m, i) => {
         const c = row.cells[m]; if (!c) return;
-        const f = flag(c.valueNum, row.refLow, row.refHigh);
+        const f = flag(c.valueNum, c.refLow, c.refHigh, c.valueText);
         const cell = rr.getCell(4 + i);
         cell.numFmt = '0.###';
         if (FILL[f]) { cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: FILL[f] } }; cell.font = { color: { argb: FONT[f] }, bold: f !== 'ok' }; }
@@ -170,7 +184,7 @@ export default async function labsExportRoutes(app) {
         const mw = (W - nameW - unitW - refW) / ms.length;
         table([word('col.marker'), word('col.unit'), word('col.rangeShort'), ...ms.map(month)], rs.map((r) => [
           { text: r.short || r.name || r.test, bold: r.isCanonical }, r.unit || '', refText(r.refLow, r.refHigh, fmtNum) || '—',
-          ...ms.map((m) => { const c = r.cells[m]; if (!c) return { text: '—', color: C.fg3 }; const f = flag(c.valueNum, r.refLow, r.refHigh); return { text: (c.valueNum != null ? fmtNum(c.valueNum) : (c.valueText || '—')) + (c.n > 1 ? `·${c.n}` : ''), bold: f === 'high' || f === 'low', color: f === 'high' || f === 'low' ? C.warn : f === 'ok' ? C.accent : C.fg }; }),
+          ...ms.map((m) => { const c = r.cells[m]; if (!c) return { text: '—', color: C.fg3 }; const f = flag(c.valueNum, c.refLow, c.refHigh, c.valueText); return { text: pivotValue(c, r, fmtNum) + (c.n > 1 ? `·${c.n}` : ''), bold: f === 'high' || f === 'low', color: f === 'high' || f === 'low' ? C.warn : f === 'ok' ? C.accent : C.fg }; }),
         ]), [nameW, unitW, refW, ...ms.map(() => mw)], ['left', 'left', 'left', ...ms.map(() => 'center')]);
       }
     }

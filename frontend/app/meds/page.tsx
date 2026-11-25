@@ -1,5 +1,7 @@
 'use client';
 
+import { parseDecimal } from '../ui/decimal';
+
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslations } from 'use-intl';
 import Icon from '../ui/icons';
@@ -65,6 +67,8 @@ const isStatus = (s: string): s is Status => Object.prototype.hasOwnProperty.cal
 const pillOf = (s: string) => (isStatus(s) ? STATUS_PILL[s] : '');
 
 export default function MedsPage() {
+  const common = useTranslations('common');
+  const num = (value: string) => parseDecimal(value, common('invalidNumber'));
   const t = useTranslations('meds');
   const f = useFormat();
   const ed = useEdition();
@@ -154,15 +158,14 @@ export default function MedsPage() {
   function openMedNew() { setMedForm({ name: '', role: 'support', doseValue: '', doseUnit: '', timesPerDay: '1', remindAt: '08:00', instructions: '', startDate: todayIso || '', freq: 'DAILY', days: [], interval: '2' }); setMedOpen('new'); }
   function openMedEdit(it: MedItem) { setMedForm({ name: it.medication.name, role: it.medication.role || 'support', doseValue: it.doseValue != null ? String(it.doseValue) : '', doseUnit: it.doseUnit || '', timesPerDay: String(it.timesPerDay || 1), remindAt: it.remindAt || '', instructions: it.medication.instructions || '', startDate: '', freq: it.frequencyRule || 'DAILY', days: it.scheduleDays || [], interval: String(it.intervalDays || 2) }); setMedOpen(it); }
   function scheduleBody() {
-    return { frequencyRule: medForm.freq, scheduleDays: medForm.freq === 'WEEKLY' ? medForm.days : null, intervalDays: medForm.freq === 'EVERY_N_DAYS' ? Math.max(2, Number(medForm.interval) || 2) : null };
+    return { frequencyRule: medForm.freq, scheduleDays: medForm.freq === 'WEEKLY' ? medForm.days : null, intervalDays: medForm.freq === 'EVERY_N_DAYS' ? (num(medForm.interval) ?? 2) : null };
   }
   async function saveMed() {
     setActing(true); setErr(null);
     try {
-      const num = (v: string) => { const n = parseFloat(v.replace(',', '.')); return Number.isFinite(n) ? n : null; };
       const r = medOpen === 'new'
-        ? await apiFetch('/api/gateway/meds/medications', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: medForm.name, role: medForm.role, doseValue: num(medForm.doseValue), doseUnit: medForm.doseUnit || null, timesPerDay: Number(medForm.timesPerDay) || 1, remindAt: medForm.remindAt || null, instructions: medForm.instructions || null, startDate: medForm.startDate || undefined, ...scheduleBody() }) })
-        : await apiFetch(`/api/gateway/meds/medications/${(medOpen as MedItem).medication.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: medForm.name, role: medForm.role, timesPerDay: Number(medForm.timesPerDay) || 1, remindAt: medForm.remindAt || null, instructions: medForm.instructions || null, ...scheduleBody() }) });
+        ? await apiFetch('/api/gateway/meds/medications', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: medForm.name, role: medForm.role, doseValue: num(medForm.doseValue), doseUnit: medForm.doseUnit || null, timesPerDay: num(medForm.timesPerDay) ?? 1, remindAt: medForm.remindAt || null, instructions: medForm.instructions || null, startDate: medForm.startDate || undefined, ...scheduleBody() }) })
+        : await apiFetch(`/api/gateway/meds/medications/${(medOpen as MedItem).medication.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: medForm.name, role: medForm.role, timesPerDay: num(medForm.timesPerDay) ?? 1, remindAt: medForm.remindAt || null, instructions: medForm.instructions || null, ...scheduleBody() }) });
       if (!r.ok) throw new Error(errorRu(await r.json().catch(() => ({}))));
       setMedOpen(null); await load();
     } catch (e: any) { setErr(String(e?.message || e)); } finally { setActing(false); }
@@ -197,11 +200,12 @@ export default function MedsPage() {
   }
   async function saveDose() {
     if (!item) return;
-    const value = parseFloat(doseForm.value.replace(',', '.'));
-    if (!value || !doseForm.date) { setErr(t('dose.required')); return; }
+
     setActing(true);
     setErr(null);
     try {
+      const value = num(doseForm.value);
+      if (value === null || value <= 0 || !doseForm.date) throw new Error(t('dose.required'));
       const r = await apiFetch('/api/gateway/meds/doses', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -372,7 +376,7 @@ export default function MedsPage() {
       {calMed && todayIso && (
         <MedsCalendar open={true} onClose={() => setCalMed(null)} medicationId={calMed.medicationId} regimenItemId={calMed.regimenItemId} regimenStart={calMed.start} today={todayIso} onChanged={load} schedule={calMed.schedule} />
       )}
-      <BottomSheet open={medOpen !== null} onClose={() => setMedOpen(null)} title={medOpen === 'new' ? t('medForm.titleNew') : t('medForm.title')}>
+      <BottomSheet error={err} open={medOpen !== null} onClose={() => setMedOpen(null)} title={medOpen === 'new' ? t('medForm.titleNew') : t('medForm.title')}>
         <div className="sheet__block">
           <label className="field"><span>{t('medForm.name')}</span><input value={medForm.name} onChange={(e) => setMedForm({ ...medForm, name: e.target.value })} placeholder={t('medForm.namePlaceholder')} maxLength={120} /></label>
           <div className="section-label">{t('medForm.role')}</div>
@@ -416,7 +420,7 @@ export default function MedsPage() {
           {medOpen !== 'new' && medOpen && <button type="button" className="btn btn--ghost" onClick={() => stopMed(medOpen)} disabled={acting}>{t('medForm.stop')}</button>}
         </div>
       </BottomSheet>
-      <BottomSheet open={doseOpen} onClose={() => setDoseOpen(false)} title={t('dose.change')}>
+      <BottomSheet error={err} open={doseOpen} onClose={() => setDoseOpen(false)} title={t('dose.change')}>
         <div className="sheet__block">
           <div className="muted">{t('dose.current', { dose: dose || '—' })}</div>
           <label className="field"><span>{t('dose.newLabel', { unit: unitRu(item?.doseUnit) || t('units.mg') })}</span><input inputMode="decimal" placeholder="20" value={doseForm.value} onChange={(e) => setDoseForm({ ...doseForm, value: e.target.value })} /></label>

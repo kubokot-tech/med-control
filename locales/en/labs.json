@@ -143,6 +143,7 @@
     }
   },
   "manual": {
+    "incomplete": "Row {n}: enter both the marker and its result.",
     "title": "Enter manually",
     "desc": "A paper lab report or a lab MedControl doesn't know, without AI.",
     "open": "Enter",

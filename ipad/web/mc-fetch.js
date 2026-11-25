@@ -26,11 +26,6 @@
   function bytesOf(value) {
     const ready = value && value.mcBytes;
     if (ready) return Promise.resolve(ready instanceof Uint8Array ? ready : new Uint8Array(ready));
-    const bag = globalThis.__mcBytes;
-    const key = value && `${value.name}\0${value.size}\0${value.lastModified}`;
-    const hit = bag && value && bag.get(key);
-    // One use per pick: the copied File keeps its own mcBytes for a retry, the bag must not grow all session.
-    if (hit) { bag.delete(key); return Promise.resolve(hit); }
     if (value && typeof value.arrayBuffer === 'function') {
       return Promise.race([
         value.arrayBuffer().then((buf) => new Uint8Array(buf)),
@@ -153,7 +148,7 @@
     return null;
   }
 
-  window.fetch = async function (input, init) {
+  async function gatewayFetch(input, init) {
     const form = init && typeof FormData !== 'undefined' && init.body instanceof FormData ? init.body : null;
     const rawUrl = typeof input === 'string' ? input : (input && input.url);
     const early = form ? gatewayUrl(rawUrl) : null;
@@ -234,6 +229,18 @@
     const gw = await load();
     const r = await gw.request({ method: req.method, url: url.pathname.slice('/api/gateway'.length) + url.search, headers, body });
     return toResponse(r, req.method);
+  }
+
+  window.fetch = async function (input, init) {
+    const response = await gatewayFetch(input, init);
+    const method = (init?.method || input?.method || 'GET').toUpperCase();
+    if (response.ok && method !== 'GET' && method !== 'HEAD') {
+      const url = gatewayUrl(typeof input === 'string' ? input : input?.url);
+      if (url && /^\/api\/gateway\/(meds|notify|appointments|infusions|alerts|protocol|import)(\/|$)/.test(url.pathname)) {
+        window.dispatchEvent(new Event('mc-reminders-changed'));
+      }
+    }
+    return response;
   };
 
   function filenameFrom(res, url) {
@@ -279,10 +286,22 @@
 
   // WKWebView does not open a blob address in a new window, and it ignores a download link.
   // Show the file here; Download uses the system share sheet, which can put it in Files.
-  async function showFile(url, blob, name) {
+  let viewerGeneration = 0;
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) return;
+    viewerGeneration++;
+    const viewer = document.getElementById('mc-file-view');
+    if (viewer) { URL.revokeObjectURL(viewer.mcUrl); viewer.remove(); }
+  });
+
+  async function showFile(url, blob, name, generation) {
     const prev = document.getElementById('mc-file-view');
     if (prev) { if (prev.mcUrl) URL.revokeObjectURL(prev.mcUrl); prev.remove(); }
     const words = await fileWords();
+    if (generation !== viewerGeneration || document.hidden || document.querySelector('[data-mc-locked]')) {
+      URL.revokeObjectURL(url);
+      return;
+    }
     const root = document.createElement('div');
     root.id = 'mc-file-view';
     root.mcUrl = url;
@@ -339,11 +358,12 @@
     document.body.appendChild(root);
   }
 
-  function presentBlob(url) {
+  function presentBlob(url, requestedName) {
+    const generation = viewerGeneration;
     original(url).then(async (r) => {
       const blob = await r.blob();
-      const name = blobNames.get(url) || (blob.name && blob.name !== 'blob' ? blob.name : fallbackName(blob));
-      await showFile(URL.createObjectURL(blob), blob, name);
+      const name = requestedName || blobNames.get(url) || (blob.name && blob.name !== 'blob' ? blob.name : fallbackName(blob));
+      await showFile(URL.createObjectURL(blob), blob, name, generation);
     }).catch(() => {});
   }
 
@@ -437,7 +457,7 @@
     if (raw && raw.startsWith('blob:') && !a.dataset.mcSave) {
       e.preventDefault();
       e.stopPropagation();
-      presentBlob(raw);
+      presentBlob(raw, a.download);
       return;
     }
     const file = gatewayUrl(raw);

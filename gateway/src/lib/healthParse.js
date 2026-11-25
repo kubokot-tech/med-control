@@ -7,6 +7,13 @@ export function parseHealthDate(s) {
   return Number.isNaN(d.getTime()) ? null : d;
 }
 const num = (v) => (v == null || v === '' ? null : Number(String(v).replace(',', '.')));
+export function temperature(qty, units) {
+  if (!Number.isFinite(qty)) return null;
+  const unit = String(units ?? '').trim().toLowerCase();
+  if (['°c', 'degc', 'c', 'celsius'].includes(unit)) return { qty, units: 'degC' };
+  if (['°f', 'degf', 'f', 'fahrenheit'].includes(unit)) return { qty: Math.round((qty - 32) * 5 / 9 * 10) / 10, units: 'degC' };
+  return null;
+}
 const KIND_ALIASES = { blood_pressure: 'blood_pressure', weight_body_mass: 'weight_body_mass', body_mass: 'weight_body_mass', weight: 'weight_body_mass', body_temperature: 'body_temperature', heart_rate: 'heart_rate', resting_heart_rate: 'resting_heart_rate', step_count: 'step_count', steps: 'step_count' };
 
 /** Health Auto Export payload → [{ kind, ts, value }] (unknown metrics kept as-is under their name). */
@@ -24,7 +31,11 @@ export function parseHealthAutoExport(payload) {
       else if (kind === 'heart_rate') { value.min = num(d.Min ?? d.min); value.avg = num(d.Avg ?? d.avg ?? d.qty); value.max = num(d.Max ?? d.max); if (value.avg == null) continue; }
       else { value.qty = num(d.qty ?? d.value ?? d.Avg); if (value.qty == null) continue; }
       if (kind === 'weight_body_mass' && /lb/i.test(m.units || '')) { value.qty = Math.round(value.qty * 0.45359237 * 10) / 10; value.units = 'kg'; }
-      if (kind === 'body_temperature' && /f/i.test(m.units || '') && value.qty > 45) { value.qty = Math.round(((value.qty - 32) * 5 / 9) * 10) / 10; value.units = 'degC'; }
+      if (kind === 'body_temperature') {
+        const normalized = temperature(value.qty, value.units);
+        if (!normalized) continue;
+        Object.assign(value, normalized);
+      }
       out.push({ kind, ts, value });
     }
   }
@@ -55,7 +66,10 @@ export async function* parseHealthXml(lines) {
     const v = num(attr(line, 'value'));
     if (!ts || v == null) continue;
     const units = attr(line, 'unit');
-    if (kind === 'heart_rate') yield { kind, ts, value: { avg: v, min: v, max: v, units } };
+    if (kind === 'body_temperature') {
+      const value = temperature(v, units);
+      if (value) yield { kind, ts, value };
+    } else if (kind === 'heart_rate') yield { kind, ts, value: { avg: v, min: v, max: v, units } };
     else if (kind === 'weight_body_mass' && /lb/i.test(units || '')) yield { kind, ts, value: { qty: Math.round(v * 0.45359237 * 10) / 10, units: 'kg' } };
     else yield { kind, ts, value: { qty: v, units } };
   }

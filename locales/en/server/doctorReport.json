@@ -74,6 +74,7 @@
     "from": "From",
     "dose": "Dose",
     "reason": "Reason",
+    "otherMedication": "Other medication",
     "support": "Supportive medication",
     "how": "How",
     "date": "Date",

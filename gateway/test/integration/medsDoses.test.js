@@ -82,3 +82,31 @@ test('history from before per-dose marks stays whole; a pause from the calendar 
   const n = await db.pool.query(`select count(*)::int c from administrations where day = '2026-04-20'`);
   assert.equal(n.rows[0].c, 2, 'both doses of the day are paused');
 });
+
+test('frequency changes preserve history and corrections update the linked feed', { skip: SKIP }, async () => {
+  const { createMedication } = await import('../../src/lib/medsCreate.js');
+  const { updateMedication, updateAdministration } = await import('../../src/lib/meds.js');
+  const { recordDose } = await import('../../src/lib/medsRecord.js');
+  const { dayStatuses } = await import('../../src/lib/medsDays.js');
+  const day = '2025-12-04';
+  const a = await createMedication(USER_ID, { name: 'A', role: 'systemic', startDate: day });
+  const b = await createMedication(USER_ID, { name: 'B', role: 'systemic', startDate: day });
+  const mark = (item, status) => recordDose(USER_ID, { ...item, status, takenAt: day + 'T12:00Z', tz: 'UTC' });
+  const first = await mark(a, 'TAKEN');
+  const period = { from: day, to: day };
+  await createMedication(USER_ID, { name: 'Weekly', role: 'systemic', startDate: day, frequencyRule: 'WEEKLY', scheduleDays: [1] });
+  await createMedication(USER_ID, { name: 'Alternate', role: 'systemic', startDate: '2025-12-03', frequencyRule: 'EVERY_N_DAYS', intervalDays: 2 });
+  await createMedication(USER_ID, { name: 'Future', role: 'systemic', startDate: '2025-12-05' });
+  const stopped = await createMedication(USER_ID, { name: 'Stopped', role: 'systemic', startDate: '2025-12-01' });
+  await updateMedication(USER_ID, stopped.medicationId, { stop: true, stopDate: day });
+  assert.deepEqual((await dayStatuses(USER_ID, period))[0], { day, taken: 1, times: 2, status: 'PARTIAL' });
+  await mark(b, 'SKIPPED');
+  assert.deepEqual((await dayStatuses(USER_ID, period))[0], { day, taken: 1, times: 2, status: 'PARTIAL' });
+  await updateMedication(USER_ID, a.medicationId, { timesPerDay: 2 });
+  assert.deepEqual((await dayStatuses(USER_ID, { ...period, medicationId: a.medicationId }))[0], { day, taken: 1, times: 1, status: 'TAKEN' });
+  await updateAdministration(USER_ID, first.id, { status: 'SKIPPED', notes: 'corrected' });
+  const event = (await db.pool.query('select e.title, e.notes, e.meta from events e join administrations a on a.event_id=e.id where a.id=$1', [first.id])).rows[0];
+  assert.equal(event.meta.status, 'SKIPPED');
+  assert.equal(event.notes, 'corrected');
+  assert.match(event.title, /SKIPPED/);
+});

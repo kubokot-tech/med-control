@@ -1,5 +1,7 @@
 'use client';
 
+import { parseDecimal } from '../ui/decimal';
+
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'use-intl';
@@ -27,7 +29,7 @@ type Study = {
   orthancStudyId?: string | null; studyInstanceUid?: string | null;
 };
 type Lesion = { id: string; name: string; location: string | null; isTarget: boolean; retired: boolean };
-type Recist = { group?: string; studyId: string; date: string; sum: number; lesionCount: number; baseline: number; nadir: number; changeFromBaselinePct: number; changeFromNadirPct: number; response: string };
+type Recist = { group?: string; studyId: string; date: string; sum: number | null; lesionCount: number; baseline: number | null; nadir: number | null; changeFromBaselinePct: number | null; changeFromNadirPct: number | null; response: string };
 type Data = { studies: Study[]; lesions: Lesion[]; recist: Recist[]; aiEnabled: boolean; aiModel?: string; orthancEnabled?: boolean };
 type Folder = { folder: string; import: { files: number; imported: number; studies: { date: string | null; modality: string; linked: string }[]; finished_at: string | null; error: string | null } | null };
 type Job = { folder: string; status: string; files: number; imported: number; error: string | null };
@@ -36,9 +38,10 @@ type Report = { modality: string; region: string; date: string | null; impressio
 // response codes; labels: imaging.page.response.<code>
 const RESP = ['NA', 'SD', 'PR', 'PD', 'CR'] as const;
 const respPill = (r: string | null) => (r === 'PR' || r === 'CR' ? 'ok' : r === 'PD' ? 'pill--danger' : r === 'SD' ? 'pill--info' : '');
-const num = (s: string) => (s.trim() === '' ? null : parseFloat(s.replace(',', '.')));
 
 export default function ImagingPage() {
+  const common = useTranslations('common');
+  const num = (value: string) => parseDecimal(value, common('invalidNumber'));
   const t = useTranslations('imaging.page');
   const label = useMedLabels();
   const ed = useEdition();
@@ -129,12 +132,15 @@ export default function ImagingPage() {
       if (!r.ok) throw new Error(await r.text());
       const j = await r.json();
       const milestoneId: string | null = j.study?.milestoneId ?? (studyEdit !== 'new' ? (studyEdit as Study).milestoneId : null);
+      // A failed attachment upload can be retried against the study we have already saved.
+      setStudyEdit(j.study);
       for (const f of pending) {
-        if (!milestoneId) break;
+        if (!milestoneId) throw new Error(t('missingFileTarget'));
         const fd = new FormData();
-        fd.set('file', f, f.name);
+        fd.set('file', f);
         const up = await apiFetch(`/api/gateway/milestones/${milestoneId}/attachments`, { method: 'POST', body: fd });
         if (!up.ok) throw new Error(t('fileError', { name: f.name, error: await up.text() }));
+        setPending((remaining) => remaining.filter((file) => file !== f));
       }
       setPending([]);
       setStudyEdit(null);
@@ -158,7 +164,7 @@ export default function ImagingPage() {
     setBusy(true); setErr(null);
     try {
       for (const f of files) {
-        const fd = new FormData(); fd.set('file', f, f.name);
+        const fd = new FormData(); fd.set('file', f);
         const r = await apiFetch(`/api/gateway/milestones/${id}/attachments`, { method: 'POST', body: fd });
         if (!r.ok) throw new Error(await r.text());
       }
@@ -189,7 +195,11 @@ export default function ImagingPage() {
     if (!measureFor) return;
     setBusy(true); setErr(null);
     try {
-      const measurements = Object.entries(sizes).map(([lesionId, v]) => ({ lesionId, sizeMm: num(v) }));
+      const measurements = Object.entries(sizes).flatMap(([lesionId, value]) => {
+        const sizeMm = num(value);
+        const previous = measureFor.measurements[lesionId]?.sizeMm ?? null;
+        return sizeMm === previous ? [] : [{ lesionId, sizeMm }];
+      });
       const r = await apiFetch(`/api/gateway/imaging/studies/${measureFor.id}/measurements`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ measurements }) });
       if (!r.ok) throw new Error(await r.text());
       setMeasureFor(null);
@@ -273,7 +283,7 @@ export default function ImagingPage() {
         <div className="card meds-card" style={{ marginBottom: 20 }}>
           <div className="meds-card__row">
             <div className="card__title">{t('recist.title')}</div>
-            {(() => { const last = (lungRows.length ? lungRows : recistRows)[(lungRows.length ? lungRows : recistRows).length - 1]; return <span className={`pill ${respPill(last.response)}`}>{label.response(last.response)}{last.response !== 'baseline' ? ` · ${t('recist.fromBaseline', { pct: `${last.changeFromBaselinePct > 0 ? '+' : ''}${last.changeFromBaselinePct}` })}` : ''}</span>; })()}
+            {(() => { const last = (lungRows.length ? lungRows : recistRows)[(lungRows.length ? lungRows : recistRows).length - 1]; return <span className={`pill ${respPill(last.response)}`}>{label.response(last.response)}{last.response !== 'baseline' && last.changeFromBaselinePct !== null ? ` · ${t('recist.fromBaseline', { pct: `${last.changeFromBaselinePct > 0 ? '+' : ''}${last.changeFromBaselinePct}` })}` : ''}</span>; })()}
           </div>
           <LabChart points={chartPoints} unit={t('unitMm')} showTrend={false} />
           <div className="muted" style={{ fontSize: 14 }}>{t('recist.note')}</div>
@@ -305,7 +315,7 @@ export default function ImagingPage() {
               {data.recist.length > 0 && (
                 <tr>
                   <td><div className="pivot__name"><span className="pivot__name-plain">{t('pivot.sum')}</span><div className="pivot__code">{t('pivot.targetLesions')}</div></div></td>
-                  {studiesAsc.map((s) => { const r = recistByStudy.get(s.id); return <td key={s.id}>{r ? <span className={`pill ${respPill(r.response)}`}>{r.sum} · {r.response === 'baseline' ? t('pivot.baseline') : r.response}</span> : <span className="muted">—</span>}</td>; })}
+                  {studiesAsc.map((s) => { const r = recistByStudy.get(s.id); return <td key={s.id}>{r ? <span className={`pill ${respPill(r.response)}`}>{r.sum ?? '—'} · {r.response === 'baseline' ? t('pivot.baseline') : r.response}</span> : <span className="muted">—</span>}</td>; })}
                 </tr>
               )}
             </tbody>
@@ -332,7 +342,7 @@ export default function ImagingPage() {
                 {s.response && <span className={`pill ${respPill(s.response)}`}>{label.response(s.response)}</span>}
               </div>
               {s.impression && <div className="ms-card__notes">{s.impression}</div>}
-              {r && <div className="muted" style={{ fontSize: 14 }}>{r.response !== 'baseline'
+              {r && <div className="muted" style={{ fontSize: 14 }}>{r.sum == null ? label.response(r.response) : r.response !== 'baseline' && r.changeFromBaselinePct != null
                 ? t('card.sumChange', { sum: r.sum, pct: `${r.changeFromBaselinePct > 0 ? '+' : ''}${r.changeFromBaselinePct}`, label: label.response(r.response) })
                 : t('card.sumBaseline', { sum: r.sum })}</div>}
               <div className="ms-card__files">
@@ -355,7 +365,7 @@ export default function ImagingPage() {
         })}
       </div>
 
-      <BottomSheet open={archiveOpen} onClose={() => setArchiveOpen(false)} title={t('archiveSheet.title')}>
+      <BottomSheet error={err} open={archiveOpen} onClose={() => setArchiveOpen(false)} title={t('archiveSheet.title')}>
         <div className="muted" style={{ fontSize: 14, lineHeight: 1.5 }}>
           {t.rich('archiveSheet.desc', { code: (c) => <code>{c}</code>, hasVersion: archive?.version ? 'yes' : 'no', version: archive?.version || '' })}
         </div>
@@ -388,7 +398,7 @@ export default function ImagingPage() {
       {sliceFor && <SliceSheet open={sliceFor !== null} onClose={() => setSliceFor(null)} studyId={sliceFor.id} title={`${label.modality(sliceFor.modality)} ${fmtDate(sliceFor.date)}`} onSaved={load} />}
 
       {/* Study sheet */}
-      <BottomSheet open={studyEdit !== null} onClose={() => setStudyEdit(null)} title={studyEdit === 'new' ? t('studySheet.newTitle') : t('studySheet.title')}>
+      <BottomSheet error={err} open={studyEdit !== null} onClose={() => setStudyEdit(null)} title={studyEdit === 'new' ? t('studySheet.newTitle') : t('studySheet.title')}>
         <div className="sheet__block"><div className="section-label">{t('studySheet.modality')}</div>
           <div className="seg" style={{ flexWrap: 'wrap' }}>{MODALITIES.map((m) => <button key={m} type="button" className={`seg__btn ${form.modality === m ? 'seg__btn--active' : ''}`} onClick={() => setForm({ ...form, modality: m })}>{label.modality(m)}</button>)}</div></div>
         <label className="field"><span>{t('studySheet.date')}</span><input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} /></label>
@@ -406,7 +416,7 @@ export default function ImagingPage() {
       </BottomSheet>
 
       {/* Measurements sheet */}
-      <BottomSheet open={measureFor !== null} onClose={() => setMeasureFor(null)} title={measureFor ? t('measureSheet.title', { date: fmtShort(measureFor.date) }) : ''}>
+      <BottomSheet error={err} open={measureFor !== null} onClose={() => setMeasureFor(null)} title={measureFor ? t('measureSheet.title', { date: fmtShort(measureFor.date) }) : ''}>
         <div className="muted" style={{ fontSize: 14 }}>{t('measureSheet.hint')}</div>
         {lesions.map((l) => (
           <label key={l.id} className="field" style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
@@ -426,7 +436,7 @@ export default function ImagingPage() {
       </BottomSheet>
 
       {/* AI parse sheet */}
-      <BottomSheet open={parseFor !== null} onClose={() => setParseFor(null)} title={t('parseSheet.title')}>
+      <BottomSheet error={err} open={parseFor !== null} onClose={() => setParseFor(null)} title={t('parseSheet.title')}>
         {!report && (
           <>
             <div className="muted" style={{ fontSize: 14 }}>

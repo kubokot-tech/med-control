@@ -1,4 +1,7 @@
 # Secrets
+rclone/
+**/rclone.conf
+**/CRYPT-KEY.txt
 .env
 .env.*
 !.env.example

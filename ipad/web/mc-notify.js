@@ -33,41 +33,31 @@
   };
   // Compare the real local epoch, not the shifted one at() builds for the plugin: behind UTC the shifted
   // value would drop reminders due sooner than the offset, ahead of UTC it would let past ones through.
-  const future = (day, hour, minute) => new Date(`${day}T${pad(hour)}:${pad(minute)}:00`).getTime() > Date.now() + 20000;
+  const localTime = (day, hour, minute) => new Date(`${day}T${pad(hour)}:${pad(minute)}:00`).getTime();
+  const future = (day, hour, minute) => localTime(day, hour, minute) > Date.now() + 20000;
 
-  function doseDays(item, hour, minute) {
-    const rule = item.frequencyRule || 'DAILY';
-    const start = String(item.startDate || today()).slice(0, 10);
-    if (rule === 'WEEKLY') {
-      const days = (item.scheduleDays && item.scheduleDays.length) ? item.scheduleDays : [];
-      const iso = days.length ? days : [new Date(`${start}T12:00:00`).getDay() || 7];
-      return iso.map((d) => ({ kind: 'weekly', weekday: d === 7 ? 1 : d + 1, hour, minute }));
+  function doseDays(regimen, item, kind, hour, minute) {
+    const current = today();
+    const start = String(regimen.startDate || current).slice(0, 10);
+    const end = regimen.endDate && String(regimen.endDate).slice(0, 10);
+    const marks = item.today?.marks || [];
+    const doneToday = marks.some((mark) => mark.status === 'PAUSED') ||
+      marks.length >= (item.timesPerDay || 1) || (kind === 'dose' && marks.length > 0);
+    const first = start > current ? start : current;
+    const out = [];
+    // Fill at most one native queue per slot. The final queue is sorted across all medications.
+    const schedule = { ...item, startDate: start };
+    const next = (from) => window.mcGateway.nextDoseDay(schedule, from);
+    for (let day = next(first); day && out.length < 60; day = next(addDays(day, 1))) {
+      if (end && day >= end) break;
+      if (day === current && doneToday) continue;
+      if (future(day, hour, minute)) out.push({ day, hour, minute });
     }
-    if (rule === 'EVERY_N_DAYS') {
-      const n = Math.round(Number(item.intervalDays));
-      if (!Number.isFinite(n) || n < 2) return [{ kind: 'daily', hour, minute }];
-      const out = [];
-      for (let i = 0; i < 120 && out.length < 6; i++) {
-        const day = addDays(today(), i);
-        if (day < start) continue;
-        if (daysBetween(start, day) % n === 0 && future(day, hour, minute)) out.push({ kind: 'once', day, hour, minute });
-      }
-      return out;
-    }
-    return [{ kind: 'daily', hour, minute }];
+    return out;
   }
 
-  let doseMap = {};
   function pushNote(list, body, extra, when) {
-    const N = plugin();
-    const schedule = when.kind === 'once'
-      ? N.Schedule.at(at(when.day, when.hour, when.minute))
-      : when.kind === 'weekly'
-        ? N.Schedule.interval({ hour: when.hour, minute: when.minute, weekday: when.weekday })
-        : N.Schedule.interval({ hour: when.hour, minute: when.minute });
-    const id = 1000 + list.length;
-    if (extra) doseMap[id] = extra;
-    list.push({ id, title: W.title, body, actionTypeId: extra ? 'dose' : undefined, extra: extra || undefined, schedule });
+    list.push({ body, extra, date: at(when.day, when.hour, when.minute), day: when.day, due: localTime(when.day, when.hour, when.minute) });
   }
 
   async function get(url) {
@@ -78,9 +68,11 @@
   }
 
   let scheduling = false;
+  let refreshPending = false;
   async function schedule() {
     const N = plugin();
-    if (!N || scheduling) return;
+    if (!N) return;
+    if (scheduling) { refreshPending = true; return; }
     if (!localStorage.getItem('dtc_token')) return;
     scheduling = true;
     try {
@@ -104,7 +96,6 @@
         soft('/api/gateway/protocol'),
       ]);
       if (!meds) return;
-      doseMap = {};
       const notes = [];
       const doseAt = notify?.schedule?.doseAt || '11:00';
       const againAt = notify?.schedule?.doseAgainAt || '';
@@ -120,7 +111,7 @@
             const clock = hm(time);
             if (!clock) continue;
             const body = kind === 'again' ? w.again(name) : w.dose(name);
-            for (const when of doseDays(it, clock[0], clock[1])) pushNote(notes, body, extra, when);
+            for (const when of doseDays(reg, it, kind, clock[0], clock[1])) pushNote(notes, body, extra, when);
           }
         }
       }
@@ -163,25 +154,35 @@
         pushNote(notes, w.labsStale(when, hint), null, { kind: 'once', day: addDays(today(), delta), hour: 10, minute: 0 });
       }
       const seen = new Set(JSON.parse(localStorage.getItem('mc_alert_notes') || '[]'));
+      await N.cancelAll();
       for (const a of alerts?.alerts || []) {
         if (!a.id || seen.has(a.id)) continue;
+        N.sendNotification({ title: w.title, body: a.message || a.title || w.alert });
         seen.add(a.id);
-        const text = a.message || a.title || w.alert;
-        notes.push({ title: w.title, body: text });
+        localStorage.setItem('mc_alert_notes', JSON.stringify([...seen].slice(-200)));
       }
-      if (notes.length > 60) notes.length = 60;
+      // Delivered notifications may stay in Notification Center after a refresh.
+      const oldActions = JSON.parse(localStorage.getItem('mc_dose_actions') || '{}');
+      const doseMap = Object.fromEntries(Object.entries(oldActions).filter(([, extra]) => extra.day === today() && extra.due <= Date.now()));
+      let nextId = Number(localStorage.getItem('mc_next_note_id')) || 1000;
+      const upcoming = notes.sort((a, b) => a.date - b.date).slice(0, 60);
+      for (const note of upcoming) {
+        const id = nextId++;
+        const extra = note.extra && { ...note.extra, day: note.day, due: note.due };
+        if (extra) doseMap[id] = extra;
+        N.sendNotification({ id, title: w.title, body: note.body, extra, actionTypeId: extra ? 'dose' : undefined, schedule: N.Schedule.at(note.date) });
+      }
+      localStorage.setItem('mc_next_note_id', String(nextId));
       localStorage.setItem('mc_dose_actions', JSON.stringify(doseMap));
-      await N.cancelAll();
-      for (const note of notes) N.sendNotification(note);
       if (!localStorage.getItem('mc_sample_note')) {
         localStorage.setItem('mc_sample_note', '1');
         N.sendNotification({ title: w.title, body: w.sample, actionTypeId: 'dose' });
       }
-      localStorage.setItem('mc_alert_notes', JSON.stringify([...seen].slice(-200)));
     } catch (e) {
       console.error('[medcontrol] notifications', e);
     } finally {
       scheduling = false;
+      if (refreshPending) { refreshPending = false; schedule(); }
     }
   }
 
@@ -201,7 +202,7 @@
           extra = saved[nid] || saved[String(nid)] || null;
         } catch { extra = null; }
       }
-      if (!extra || !extra.medicationId) return;
+      if (!extra || !extra.medicationId || extra.day !== today()) return;
       fetch('/api/gateway/meds/administrations', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -213,6 +214,7 @@
   function boot() {
     if (!plugin() || !window.mcWords) { setTimeout(boot, 300); return; }
     listen();
+    window.addEventListener('mc-reminders-changed', schedule);
     schedule();
     document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') schedule(); });
     setInterval(() => { if (document.visibilityState === 'visible') schedule(); }, 15 * 60 * 1000);

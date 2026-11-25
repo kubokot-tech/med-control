@@ -64,10 +64,10 @@ export default function SeriesView({
   const [sheetOpen, setSheetOpen] = useState(false);
   const [refOpen, setRefOpen] = useState(false);
 
-  const refLow = last?.refLow ?? points?.[0]?.refLow ?? null;
-  const refHigh = last?.refHigh ?? points?.[0]?.refHigh ?? null;
+  const refLow = last?.refLow ?? null;
+  const refHigh = last?.refHigh ?? null;
   const filteredPoints = useMemo(() => filterByPeriod(points, period), [points, period]);
-  const flag = last ? flagFor(last.valueNum, refLow, refHigh) : '';
+  const flag = last ? flagFor(last.valueNum, refLow, refHigh, last.valueText) : '';
   const hasInfo = Boolean(testKey && BIOMARKER_DB[testKey]);
 
   return (
@@ -118,7 +118,7 @@ export default function SeriesView({
           </div>
           <div className="series-table">
             {filteredPoints.slice().reverse().map((p, i) => {
-              const flag = flagFor(p.valueNum, p.refLow ?? refLow, p.refHigh ?? refHigh);
+              const flag = flagFor(p.valueNum, p.refLow, p.refHigh, p.valueText);
               const val = labValueText(f, p.valueNum, p.valueText);
               const row = (
                 <>

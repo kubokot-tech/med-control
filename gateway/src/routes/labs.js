@@ -161,7 +161,7 @@ export default async function labsRoutes(app) {
         short: markerShort(key, u.language),
         name: markerName(key, u.language),
         last,
-        points: points.slice(-24).map((p) => ({ date: p.date, valueNum: p.valueNum, valueText: p.valueText })),
+        points: points.slice(-24).map((p) => ({ date: p.date, valueNum: p.valueNum, valueText: p.valueText, unit: p.unit })),
       };
     });
 

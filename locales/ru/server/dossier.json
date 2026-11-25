@@ -24,6 +24,7 @@
     "lastReview": "## 11. Последняя оценка анализов другой моделью (ответ ИИ, не факт)"
   },
   "support": "- Поддерживающие препараты: {list}.",
+  "otherMedications": "- Другие препараты: {list}.",
   "supportItem": "{name}{dose}{times}{instructions}, с {date}",
   "current": "- Текущая схема: {name} {dose}, {schedule}, с {date}.",
   "doseHistory": "- История доз: {list}.",

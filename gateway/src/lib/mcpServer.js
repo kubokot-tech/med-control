@@ -2,6 +2,7 @@
  * MCP over Streamable HTTP, stateless (docs/MCP.md): one JSON-RPC message per POST, answered with one JSON response;
  * no server-sent stream, no sessions. Methods: initialize, ping, tools/list, tools/call; notifications get 202.
  */
+import { transaction } from './db.js';
 import { toolByName, toolInfo, toolsFor } from './mcpTools.js';
 import { raw, t } from './i18n.js';
 
@@ -51,8 +52,15 @@ export async function handleMcp(msg, ctx) {
       return { status: 200, body: rpcError(id, -32602, `invalid arguments: ${parsed.error.issues.map((i) => `${i.path.join('.') || '(root)'} ${i.message}`).join('; ')}`) };
     }
     try {
-      const data = await tool.run(ctx.userId, parsed.data, { tz: ctx.tz, language: ctx.language, tokenName: ctx.token.name });
-      await ctx.audit({ method, tool: name, ok: true });
+      let auditedWrite = false;
+      const transact = (write) => transaction(async (client) => {
+        const value = await write(client);
+        await ctx.audit({ method, tool: name, ok: true }, client);
+        auditedWrite = true;
+        return value;
+      });
+      const data = await tool.run(ctx.userId, parsed.data, { tz: ctx.tz, language: ctx.language, tokenName: ctx.token.name, transact });
+      if (!auditedWrite) await ctx.audit({ method, tool: name, ok: data?.ok !== false, detail: data?.error });
       return { status: 200, body: rpc(id, { content: [{ type: 'text', text: JSON.stringify(data) }], structuredContent: data, isError: false }) };
     } catch (e) {
       ctx.log?.warn?.({ err: e.message, tool: name }, 'mcp tool failed');

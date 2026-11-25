@@ -133,9 +133,21 @@ export async function updateAdministration(userId, id, { status, notes } = {}) {
   if (status && ADMIN_STATUSES.includes(status)) { params.push(status); sets.push(`status = $${params.length}`); }
   if (notes !== undefined) { params.push(notes); sets.push(`notes = $${params.length}`); }
   if (!sets.length) throw invalid('nothing_to_update');
-  const r = await pool.query(`update administrations set ${sets.join(', ')} where user_id = $1 and id = $2 returning id, status`, params);
-  if (!r.rows.length) throw notFound();
-  return { id: r.rows[0].id, status: r.rows[0].status };
+  const language = await userLanguage(userId);
+  return transaction(async (client) => {
+    const r = await client.query(`update administrations set ${sets.join(', ')} where user_id = $1 and id = $2
+      returning id, status, event_id, medication_id, notes, dose_no, expected_doses`, params);
+    const mark = r.rows[0];
+    if (!mark) throw notFound();
+    if (mark.event_id) {
+      const med = await client.query('select name from medications where id=$1', [mark.medication_id]);
+      const meta = { status: mark.status, doseNo: mark.dose_no, times: mark.expected_doses };
+      const title = t(language, mark.expected_doses > 1 ? 'feedTitles.medDose' : 'feedTitles.med',
+        { name: med.rows[0].name, n: mark.dose_no, times: mark.expected_doses, status: mark.status });
+      await updateEvent(client, userId, mark.event_id, { type: 'MED_ADMIN', title, notes: mark.notes, meta });
+    }
+    return { id: mark.id, status: mark.status };
+  });
 }
 
 /** Dose history of a regimen item, newest first. */
@@ -196,12 +208,11 @@ export async function setDays(userId, { medicationId, regimenItemId = null, from
   const medName = med.rows[0].name;
   const times = await dosesFor(userId, medicationId, regimenItemId);
   // a day set from the calendar is the whole day: every dose gets the status (a pause or a skip covers the evening dose too)
-  const wanted = status === 'CLEAR' ? [] : Array.from({ length: times }, (_, i) => i + 1);
   const language = await userLanguage(userId);
-  const titleOf = (n) => t(language, times > 1 ? 'feedTitles.medDose' : 'feedTitles.med', { name: medName, n, times, status });
+  const titleOf = (n, times) => t(language, times > 1 ? 'feedTitles.medDose' : 'feedTitles.med', { name: medName, n, times, status });
   return transaction(async (client) => {
     const existing = await client.query(
-      `select id, day::text as day, dose_no, event_id from administrations where user_id=$1 and medication_id=$2 and day between $3 and $4`,
+      `select id, day::text as day, dose_no, event_id, expected_doses from administrations where user_id=$1 and medication_id=$2 and day between $3 and $4`,
       [userId, medicationId, from, to]
     );
     const byDay = new Map();
@@ -209,6 +220,8 @@ export async function setDays(userId, { medicationId, regimenItemId = null, from
     let updated = 0, inserted = 0, deleted = 0;
     for (const day of days) {
       const rows = byDay.get(day) || new Map();
+      const expected = rows.size ? Math.max(...[...rows.values()].map((r) => r.expected_doses)) : times;
+      const wanted = status === 'CLEAR' ? [] : Array.from({ length: expected }, (_, i) => i + 1);
       for (const [n, row] of rows) {
         if (wanted.includes(n)) continue;
         await client.query('delete from administrations where id=$1', [row.id]);
@@ -221,14 +234,14 @@ export async function setDays(userId, { medicationId, regimenItemId = null, from
         const row = rows.get(n);
         if (row) {
           await client.query(`update administrations set status=$2::admin_status, taken_at=(($3::date || ' 12:00')::timestamp at time zone $4), day=$3, dose_value=coalesce($5, case when $2::text = 'TAKEN' then dose_value end), dose_unit=coalesce($6, case when $2::text = 'TAKEN' then dose_unit end) where id=$1`, [row.id, status, day, tz, du.doseValue, du.doseUnit]);
-          if (row.event_id) await updateEvent(client, userId, row.event_id, { title: titleOf(n), meta: { status, doseNo: n, times } });
+          if (row.event_id) await updateEvent(client, userId, row.event_id, { title: titleOf(n, expected), meta: { status, doseNo: n, times: expected } });
           updated++;
         } else {
-          const eventId = await addEvent(client, userId, { type: 'MED_ADMIN', date: day, time: '12:00', tz, title: titleOf(n), notes: 'календарь', meta: { status, doseNo: n, times }, source: 'calendar' });
+          const eventId = await addEvent(client, userId, { type: 'MED_ADMIN', date: day, time: '12:00', tz, title: titleOf(n, expected), notes: 'календарь', meta: { status, doseNo: n, times: expected }, source: 'calendar' });
           await client.query(
-            `insert into administrations (user_id, medication_id, regimen_item_id, taken_at, day, dose_no, status, dose_value, dose_unit, notes, event_id)
-             values ($1,$2,$3,(($4::date || ' 12:00')::timestamp at time zone $5),$4,$6,$7,$8,$9,'календарь',$10)`,
-            [userId, medicationId, regimenItemId || null, day, tz, n, status, du.doseValue, du.doseUnit, eventId]
+            `insert into administrations (user_id, medication_id, regimen_item_id, taken_at, day, dose_no, status, dose_value, dose_unit, notes, event_id, expected_doses)
+             values ($1,$2,$3,(($4::date || ' 12:00')::timestamp at time zone $5),$4,$6,$7,$8,$9,'календарь',$10,$11)`,
+            [userId, medicationId, regimenItemId || null, day, tz, n, status, du.doseValue, du.doseUnit, eventId, expected]
           );
           inserted++;
         }

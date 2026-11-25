@@ -167,13 +167,17 @@ export async function saveMeasurements(userId, studyId, measurements) {
   if (!st.rows.length) throw notFound();
   await transaction(async (client) => {
     for (const m of measurements) {
-      if (m.sizeMm == null && !m.note) {
+      if (m.sizeMm == null && m.note === undefined) {
+        // Clearing a diameter must keep any annotation that was entered separately.
+        await client.query('update lesion_measurements set size_mm = null where user_id = $1 and study_id = $2 and lesion_id = $3 and note is not null', [userId, studyId, m.lesionId]);
+        await client.query('delete from lesion_measurements where user_id = $1 and study_id = $2 and lesion_id = $3 and note is null', [userId, studyId, m.lesionId]);
+      } else if (m.sizeMm == null && !m.note) {
         await client.query('delete from lesion_measurements where user_id = $1 and study_id = $2 and lesion_id = $3', [userId, studyId, m.lesionId]);
       } else {
         await client.query(
           `insert into lesion_measurements (user_id, lesion_id, study_id, size_mm, note) values ($1,$2,$3,$4,$5)
-           on conflict (lesion_id, study_id) do update set size_mm = excluded.size_mm, note = excluded.note`,
-          [userId, m.lesionId, studyId, m.sizeMm, m.note || null]
+           on conflict (lesion_id, study_id) do update set size_mm = excluded.size_mm, note = case when $6 then excluded.note else lesion_measurements.note end`,
+          [userId, m.lesionId, studyId, m.sizeMm, m.note || null, m.note !== undefined]
         );
       }
     }

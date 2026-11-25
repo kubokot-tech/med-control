@@ -433,6 +433,7 @@ a.event-card:hover { border-color: var(--border-2); box-shadow: var(--shadow-lg)
 .btn--sm { min-height: 44px; padding: 0 16px; font-size: var(--text-sm); }
 /* iPad static export: the file input covers the label so the tap is a real user gesture on the control. */
 .file-btn { position: relative; }
+.file-btn:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
 .file-btn > input[type="file"] { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; font-size: 16px; }
 .file-btn[aria-disabled="true"] { opacity: .5; cursor: not-allowed; }
 .file-btn[aria-disabled="true"] > input { pointer-events: none; }

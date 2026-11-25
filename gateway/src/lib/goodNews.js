@@ -32,8 +32,8 @@ export function goodNewsFrom({ milestones = [], labs = [], today, days = GOOD_NE
     const last = rows[rows.length - 1];
     const prev = rows[rows.length - 2];
     if (last.date < since || last.date > today) continue;
-    const was = flag(prev.value, prev.refLow, prev.refHigh);
-    if (flag(last.value, last.refLow, last.refHigh) === 'ok' && (was === 'high' || was === 'low')) {
+    const was = flag(prev.value, prev.refLow, prev.refHigh, prev.valueText);
+    if (flag(last.value, last.refLow, last.refHigh, last.valueText) === 'ok' && (was === 'high' || was === 'low')) {
       out.push({ id: `lab:${key}:${last.date}`, kind: 'labNormal', date: last.date, key, short: markerShort(key, language), was });
     }
   }
@@ -47,8 +47,8 @@ export async function goodNews(userId, tz = DEFAULT_TZ) {
     pool.query(`select id, date::text as date, kind, tone, title from milestones where user_id = $1 and tone = 'positive' and date >= $2::date order by date desc limit 5`, [userId, since]),
     // the last two results of each key marker, against the ranges in force (lab_results_eff)
     pool.query(
-      `select key, collected_at, value_numeric, ref_low, ref_high from (
-         select t.canonical_key as key, r.collected_at, r.value_numeric, r.ref_low, r.ref_high,
+      `select key, collected_at, value_numeric, value_text, ref_low, ref_high from (
+         select t.canonical_key as key, r.collected_at, r.value_numeric, r.value_text, r.ref_low, r.ref_high,
                 row_number() over (partition by t.canonical_key order by r.collected_at desc) as n
          from lab_results_eff r join lab_tests t on t.id = r.test_id
          where r.user_id = $1 and t.canonical_key = any($2::text[]) and r.value_numeric is not null) x
@@ -59,7 +59,7 @@ export async function goodNews(userId, tz = DEFAULT_TZ) {
   return goodNewsFrom({
     language: await userLanguage(userId),
     milestones: ms.rows,
-    labs: labs.rows.map((r) => ({ key: r.key, date: dayKey(r.collected_at, tz), value: Number(r.value_numeric), refLow: r.ref_low, refHigh: r.ref_high })),
+    labs: labs.rows.map((r) => ({ key: r.key, date: dayKey(r.collected_at, tz), value: Number(r.value_numeric), valueText: r.value_text, refLow: r.ref_low, refHigh: r.ref_high })),
     today,
   });
 }

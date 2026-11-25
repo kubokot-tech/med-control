@@ -95,3 +95,32 @@ test('without a stored copy nothing raises the flag', async () => {
     assert.equal(globalThis.__MC_RESTORE_FAILED, undefined);
   } finally { await p.end(); }
 });
+
+test('iPad startup restores the previous generation after a damaged newest snapshot', async () => {
+  const { readDatabaseCopy } = await import('../../ipad/web/container.js');
+  const source = await createPglitePool({ dataDir: 'memory://' });
+  let previous;
+  try {
+    await source.query('create table users (id int primary key)');
+    await source.query('insert into users values (42)');
+    previous = new Uint8Array(await (await source.db.dumpDataDir()).arrayBuffer());
+  } finally { await source.end(); }
+  const read = async (name) => name.endsWith('.prev') ? previous : new Uint8Array(2048);
+  let opened = false;
+  globalThis.__MC_RECOVER_DB = async (validate) => {
+    const recovered = await readDatabaseCopy(validate, read);
+    assert.equal(recovered.generation, 'pgdata.tar.prev');
+    return { blob: recovered.blob, opened() { opened = true; } };
+  };
+  try {
+    const restored = await createPglitePool({ dataDir: 'memory://' });
+    assert.equal(opened, true);
+    try { assert.deepEqual((await restored.query('select id from users')).rows, [{ id: 42 }]); }
+    finally { await restored.end(); }
+  } finally { delete globalThis.__MC_RECOVER_DB; }
+});
+
+test('unreadable iPad snapshots do not start a fresh database', async () => {
+  const { readDatabaseCopy } = await import('../../ipad/web/container.js');
+  await assert.rejects(readDatabaseCopy(() => {}, async () => new Uint8Array(2048)), /No readable/);
+});

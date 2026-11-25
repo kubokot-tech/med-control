@@ -234,7 +234,12 @@ def parse_text(text: str) -> dict:
                 vidx = j
                 break
 
-        if vidx is None:
+        # A section title can end in a separate number, e.g. «Интерлейкин 6».
+        numbered_title = (
+            len(parts) > 1 and vidx == len(parts) - 1
+            and re.fullmatch(r"[0-9]+", parts[-1]) is not None and ln[0].isalpha()
+        )
+        if vidx is None or numbered_title:
             # not a row: a new analyte title (digits allowed, «Тироксин (Т4) свободный») or a wrapped name
             if len(ln) > 2 and low not in _GENERIC_LABELS:
                 current_section = ln
@@ -242,7 +247,6 @@ def parse_text(text: str) -> dict:
                 pending_name = ln
             continue
 
-        # the unit sits right after the value; a number without a unit is not a measurement row
         if vidx + 1 >= len(parts) or not _looks_unit(parts[vidx + 1]):
             continue
         unit = parts[vidx + 1]

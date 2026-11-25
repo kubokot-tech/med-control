@@ -10,6 +10,7 @@
     "pdf": "текстовый слой PDF"
   },
   "extractWithSummary": "КРАТКО: {summary}\n\nПОЛНЫЙ ТЕКСТ: {text}",
+  "unreadPages": "[Страницы без извлечённого текста: {count} из {total}. Проверьте исходный документ.]",
   "extractTruncated": "\n\n[текст обрезан по длине ответа модели]",
   "documentText": "ТЕКСТ ДОКУМЕНТА",
   "fileText": "Текст документа «{file}»:",
@@ -55,6 +56,7 @@
     "targets": "Целевые очаги: {list}.",
     "therapy": "Терапия: {name} {dose} {unit} {schedule} с {date}.",
     "supportList": "Поддерживающие препараты: {list}.",
+    "otherMedications": "Другие препараты: {list}.",
     "supportItem": "{name}{dose}{times}{instructions} с {date}",
     "timesPerDay": " {n} р/сут",
     "doseChanges": "Изменения дозы: {list}.",

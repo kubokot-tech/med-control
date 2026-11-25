@@ -10,6 +10,7 @@
     "pdf": "PDF text layer"
   },
   "extractWithSummary": "SUMMARY: {summary}\n\nFULL TEXT: {text}",
+  "unreadPages": "[Pages without extracted text: {count} of {total}. Check the original document.]",
   "extractTruncated": "\n\n[text cut off at the length of the model's answer]",
   "documentText": "DOCUMENT TEXT",
   "fileText": "Text of the document \"{file}\":",
@@ -55,6 +56,7 @@
     "targets": "Target lesions: {list}.",
     "therapy": "Therapy: {name} {dose} {unit} {schedule} since {date}.",
     "supportList": "Supportive medications: {list}.",
+    "otherMedications": "Other medications: {list}.",
     "supportItem": "{name}{dose}{times}{instructions} since {date}",
     "timesPerDay": " {n} times a day",
     "doseChanges": "Dose changes: {list}.",

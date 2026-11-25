@@ -1,8 +1,8 @@
 {
   "name": "medcontrol-gateway",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "license": "AGPL-3.0-only",
-  "author": "Авторы MedControl",
+  "author": "\u0410\u0432\u0442\u043e\u0440\u044b MedControl",
   "private": true,
   "type": "module",
   "scripts": {
@@ -41,5 +41,11 @@
   },
   "devDependencies": {
     "@formatjs/icu-messageformat-parser": "3.5.18"
+  },
+  "overrides": {
+    "glob@^10 || ^13": "14.0.6",
+    "exceljs": {
+      "uuid": "11.1.1"
+    }
   }
 }

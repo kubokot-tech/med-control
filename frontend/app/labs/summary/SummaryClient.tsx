@@ -13,7 +13,7 @@ import { useFormat } from '../../ui/format';
 import { activeLanguage } from '../../i18n/messages';
 import { labDocumentHref } from '../../ui/recordLink';
 
-type SummaryCell = { valueNum?: number | null; valueText?: string | null; collectedAt?: string | null; documentId?: string | null; n?: number };
+type SummaryCell = { unit: string | null; refLow: number | null; refHigh: number | null; valueNum?: number | null; valueText?: string | null; collectedAt?: string | null; documentId?: string | null; n?: number };
 type SummaryRow = {
   test: string;
   name?: string | null;
@@ -122,9 +122,9 @@ function Inner() {
     if (!sheetRow) return null;
     const lastYm = [...months].reverse().find((m) => sheetRow.cells[m]);
     const c = lastYm ? sheetRow.cells[lastYm] : null;
-    return c ? { valueNum: c.valueNum ?? null, valueText: c.valueText ?? null, unit: sheetRow.unit, refLow: sheetRow.refLow, refHigh: sheetRow.refHigh, date: c.collectedAt ?? null } : null;
+    return c ? { valueNum: c.valueNum ?? null, valueText: c.valueText ?? null, unit: c.unit, refLow: c.refLow, refHigh: c.refHigh, date: c.collectedAt ?? null } : null;
   }, [sheetRow, months]);
-  const sheetPoints = useMemo(() => sheetRow ? months.map((m) => ({ valueNum: sheetRow.cells[m]?.valueNum ?? null })) : [], [sheetRow, months]);
+  const sheetPoints = useMemo(() => sheetRow ? months.map((m) => ({ ...sheetRow.cells[m], valueNum: sheetRow.cells[m]?.valueNum ?? null })) : [], [sheetRow, months]);
 
   return (
     <>
@@ -167,7 +167,10 @@ function Inner() {
             </thead>
             <tbody>
               {rows.map((r) => {
-                const ref = refText(f, r.refLow, r.refHigh);
+                const cells = Object.values(r.cells);
+                const sameUnit = cells.every((cell) => cell.unit === r.unit);
+                const ref = sameUnit && cells.every((cell) => cell.refLow === r.refLow && cell.refHigh === r.refHigh)
+                  ? refText(f, r.refLow, r.refHigh) : '';
                 const seriesHref = r.isCanonical ? `/labs/series?key=${encodeURIComponent(r.test)}` : `/labs/series-raw?test=${encodeURIComponent(r.test)}`;
                 return (
                   <tr key={r.test}>
@@ -178,15 +181,15 @@ function Inner() {
                           : <Link href={seriesHref} className="pivot__name-plain">{r.name || r.test}</Link>}
                         <div className="pivot__code">
                           {r.isCanonical ? <Link href={seriesHref} className="muted">{r.test}</Link> : null}
-                          {r.isCanonical && (ref || r.unit) ? ' · ' : ''}{ref}{r.unit ? ` ${r.unit}` : ''}
+                          {r.isCanonical && (ref || (sameUnit && r.unit)) ? ' · ' : ''}{ref}{sameUnit && r.unit ? ` ${r.unit}` : ''}
                         </div>
                       </div>
                     </td>
                     {months.map((m) => {
                       const c = r.cells?.[m];
                       if (!c) return <td key={m}><span className="muted">—</span></td>;
-                      const text = labValueText(f, c.valueNum, c.valueText);
-                      const flag = flagFor(c.valueNum ?? null, r.refLow ?? null, r.refHigh ?? null);
+                      const text = labValueText(f, c.valueNum, c.valueText) + (!sameUnit && c.unit ? ` ${c.unit}` : '');
+                      const flag = flagFor(c.valueNum, c.refLow, c.refHigh, c.valueText);
                       const cls = `pivot__cell ${flag ? `pivot__cell--${flag}` : ''}`;
                       const many = (c.n ?? 1) > 1;
                       const tip = many ? t('summary.cellTip', { n: c.n ?? 1, pick, date: c.collectedAt ? f.date(c.collectedAt) : '' }) : undefined;

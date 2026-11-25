@@ -1,4 +1,5 @@
 {
+  "invalidNumber": "Enter a complete number, for example 0.5.",
   "app": {
     "name": "MedControl",
     "short": "MC",

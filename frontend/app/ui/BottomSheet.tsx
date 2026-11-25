@@ -12,11 +12,13 @@ export default function BottomSheet({
   open,
   onClose,
   title,
+  error,
   children,
 }: {
   open: boolean;
   onClose: () => void;
   title?: string;
+  error?: string | null;
   children: React.ReactNode;
 }) {
   const t = useTranslations('ui');
@@ -43,6 +45,7 @@ export default function BottomSheet({
             {title ? <div id="sheet-title" className="sheet__title">{title}</div> : <span />}
             <button type="button" className="sheet__close" onClick={onClose} aria-label={t('bottomSheet.close')}><Icon name="close" /></button>
         </div>
+        {error && <div role="alert" className="msg msg--error">{error}</div>}
         {children}
       </div>
     </dialog>

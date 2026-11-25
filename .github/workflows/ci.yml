@@ -19,7 +19,7 @@ concurrency:
 jobs:
   gateway:
     name: gateway (unit + integration on Postgres and PGlite)
-    runs-on: [self-hosted, macOS, ARM64]
+    runs-on: ${{ fromJSON(github.repository == 'kubokot-tech/medcontrol' && '["self-hosted","macOS","ARM64"]' || '["ubuntu-latest"]') }}
     timeout-minutes: 30
     defaults:
       run:
@@ -33,11 +33,29 @@ jobs:
           cache-dependency-path: gateway/package-lock.json
       - run: npm ci
       - run: npm test
+      - name: Start Docker Desktop if needed on the Mac runner
+        if: runner.os == 'macOS'
+        timeout-minutes: 3
+        run: |
+          if ! docker info >/dev/null 2>&1; then
+            open -gja Docker
+            for i in $(seq 1 60); do
+              docker info >/dev/null 2>&1 && exit 0
+              sleep 2
+            done
+            docker info
+          fi
       - name: Postgres in docker (service containers are Linux-only)
+        id: postgres
         run: |
           docker rm -f mc-ci-pg >/dev/null 2>&1 || true
-          docker run -d --name mc-ci-pg -e POSTGRES_USER=dtc -e POSTGRES_PASSWORD=dtc -e POSTGRES_DB=dtc -p 5433:5432 postgres:16
-          for i in $(seq 1 30); do docker exec mc-ci-pg pg_isready -U dtc -d dtc >/dev/null 2>&1 && break; sleep 2; done
+          docker run -d --name mc-ci-pg -e POSTGRES_USER=dtc -e POSTGRES_PASSWORD=dtc -e POSTGRES_DB=dtc -p 127.0.0.1:5433:5432 postgres:16
+          echo 'created=true' >> "$GITHUB_OUTPUT"
+          for i in $(seq 1 30); do
+            docker exec mc-ci-pg pg_isready -h 127.0.0.1 -U dtc -d dtc && exit 0
+            sleep 2
+          done
+          exit 1
       - run: npm run test:integration
         env:
           TEST_DATABASE_URL: postgres://dtc:dtc@localhost:5433/dtc
@@ -46,12 +64,12 @@ jobs:
         env:
           TEST_DB: pglite
       - name: Stop Postgres
-        if: always()
+        if: always() && steps.postgres.outputs.created == 'true'
         run: docker rm -f mc-ci-pg
 
   frontend:
     name: frontend (typecheck + build)
-    runs-on: [self-hosted, macOS, ARM64]
+    runs-on: ${{ fromJSON(github.repository == 'kubokot-tech/medcontrol' && '["self-hosted","macOS","ARM64"]' || '["ubuntu-latest"]') }}
     timeout-minutes: 20
     defaults:
       run:
@@ -71,7 +89,7 @@ jobs:
 
   ipad:
     name: ipad (page tests)
-    runs-on: [self-hosted, macOS, ARM64]
+    runs-on: ${{ fromJSON(github.repository == 'kubokot-tech/medcontrol' && '["self-hosted","macOS","ARM64"]' || '["ubuntu-latest"]') }}
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
@@ -91,7 +109,7 @@ jobs:
 
   ingestion:
     name: ingestion (import check + parser tests)
-    runs-on: [self-hosted, macOS, ARM64]
+    runs-on: ${{ fromJSON(github.repository == 'kubokot-tech/medcontrol' && '["self-hosted","macOS","ARM64"]' || '["ubuntu-latest"]') }}
     timeout-minutes: 15
     defaults:
       run:

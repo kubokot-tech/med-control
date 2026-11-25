@@ -52,19 +52,30 @@ export async function answerCallback(id, text) {
 }
 
 const seenChats = new Map();
+let seenToken;
+function selectChatCache(token) {
+  if (token !== seenToken) {
+    seenChats.clear();
+    seenToken = token;
+  }
+}
 function chatEntry(chat) {
   return { id: String(chat.id), name: [chat.first_name, chat.last_name, chat.title, chat.username && `@${chat.username}`].filter(Boolean).join(' ') };
 }
 /** Remember chats seen by the polling bot (it consumes updates, so getUpdates here would be empty). */
-export function noteChats(chats) {
+export function noteChats(chats, token = telegramConfig().token) {
+  if (token !== telegramConfig().token) return;
+  selectChatCache(token);
   for (const c of chats) if (c) seenChats.set(String(c.id), chatEntry(c));
 }
 
 /** Chats that wrote to the bot recently (to find your chat id during setup). */
 export async function discoverChats() {
+  const { token } = telegramConfig();
+  selectChatCache(token);
   if (!telegramReady()) {
     const updates = await call('getUpdates', { limit: 50 });
-    for (const u of updates) noteChats([u.message?.chat || u.edited_message?.chat || u.my_chat_member?.chat]);
+    for (const u of updates) noteChats([u.message?.chat || u.edited_message?.chat || u.my_chat_member?.chat], token);
   }
   return Array.from(seenChats.values());
 }

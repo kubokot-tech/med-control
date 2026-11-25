@@ -37,7 +37,11 @@ test('studies mirror a milestone; lesions and measurements give RECIST against b
   assert.deepEqual(o.recist.map((r) => [r.date, r.sum, r.response, r.changeFromBaselinePct]), [['2026-01-10', 50, 'baseline', 0], ['2026-04-10', 32, 'PR', -36]]);
   assert.ok(o.responses.PR);
 
+  await im.saveMeasurements(USER_ID, next.id, [{ lesionId: l2.id, sizeMm: 19 }]);
+  assert.equal((await im.imagingOverview(USER_ID)).studies[0].measurements[l2.id].note, 'уменьшился');
   await im.saveMeasurements(USER_ID, next.id, [{ lesionId: l2.id, sizeMm: null }]);
+  assert.deepEqual((await im.imagingOverview(USER_ID)).studies[0].measurements[l2.id], { sizeMm: null, note: 'уменьшился' });
+  await im.saveMeasurements(USER_ID, next.id, [{ lesionId: l2.id, sizeMm: null, note: null }]);
   assert.equal((await im.imagingOverview(USER_ID)).studies[0].measurements[l2.id], undefined, 'empty entry removes the measurement');
 
   await im.deleteLesion(USER_ID, l2.id);

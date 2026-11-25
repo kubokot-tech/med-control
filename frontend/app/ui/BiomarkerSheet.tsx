@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'use-intl';
 import BottomSheet from './BottomSheet';
+import { comparatorOf } from '../../../shared/labBounds.js';
 import Sparkline from './Sparkline';
 import { BIOMARKER_DB } from './BiomarkerInfo';
 import { flagFor, refText, labValueText } from './labUtils';
@@ -31,7 +32,7 @@ export default function BiomarkerSheet({
   testKey: string | null;
   title: string;
   last?: SheetValue | null;
-  points?: { valueNum: number | null }[];
+  points?: { valueNum: number | null; unit?: string | null; valueText?: string | null }[];
 }) {
   const f = useFormat();
   const t = useTranslations('labs');
@@ -48,7 +49,7 @@ export default function BiomarkerSheet({
   const v = last?.valueNum ?? null;
   const lo = last?.refLow ?? null;
   const hi = last?.refHigh ?? null;
-  const flag = flagFor(v, lo, hi);
+  const flag = flagFor(v, lo, hi, last?.valueText);
   const tone = flag === 'ok' ? 'ok' : flag ? 'warn' : 'muted';
 
   return (
@@ -60,7 +61,7 @@ export default function BiomarkerSheet({
           <div className="value-card__num">{labValueText(f, v, last.valueText)}</div>
           <div>
             <div className="value-card__title">
-              {v != null && lo != null && hi != null ? deviation(v, lo, hi) : t('biomarkerSheet.last')}
+              {v != null && lo != null && hi != null && !comparatorOf(last.valueText) ? deviation(v, lo, hi) : t('biomarkerSheet.last')}
             </div>
             <div className="value-card__sub">
               {refText(f, lo, hi) ? t('biomarkerSheet.range', { range: refText(f, lo, hi) }) : t('biomarkerSheet.noRange')}
@@ -73,7 +74,7 @@ export default function BiomarkerSheet({
 
       {points && points.length > 1 && (
         <div style={{ padding: '4px 0' }}>
-          <Sparkline points={points} width={360} height={56} stroke={flag && flag !== 'ok' ? 'var(--warn)' : 'var(--accent)'} refLow={lo} refHigh={hi} />
+          <Sparkline points={points.map((p) => ({ valueNum: p.unit === last?.unit && !comparatorOf(p.valueText) ? p.valueNum : null }))} width={360} height={56} stroke={flag && flag !== 'ok' ? 'var(--warn)' : 'var(--accent)'} refLow={lo} refHigh={hi} />
         </div>
       )}
 

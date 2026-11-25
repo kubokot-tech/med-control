@@ -15,7 +15,7 @@ import { parseLabsPdf, pdfEngine } from './pdfEngine.js';
 import { llmConfig } from './llm.js';
 import { addEvent } from './feed.js';
 import { traceStep } from './traceStep.js';
-import { DEFAULT_TZ, todayKey } from './dates.js';
+import { DEFAULT_TZ, todayKey, noonIn } from './dates.js';
 import { invalid } from './errors.js';
 import { userFormat, userLanguage } from './userLocale.js';
 import { t } from './i18n.js';
@@ -75,7 +75,7 @@ const PENDING_AREA = 'uploads/pending';
 export function flaggedResults(rows, language) {
   const out = [];
   for (const r of rows) {
-    const dir = flag(r.value, r.refLow, r.refHigh);
+    const dir = flag(r.value, r.refLow, r.refHigh, r.valueText);
     if (dir === 'high' || dir === 'low') out.push({ name: markerName(r.key || r.code, language) || r.code, value: r.value, unit: r.unit || '', dir });
   }
   return out;
@@ -156,6 +156,14 @@ function keyOf(o, code) {
   return classify(code);
 }
 
+// A date-only report also appears in UTC-month exports. Keep its placeholder
+// timestamp inside both the patient's calendar day and the UTC day.
+function dateOnlyInstant(day, timeZone) {
+  const noon = noonIn(day, timeZone);
+  if (noon.slice(0, 10) === day) return noon;
+  return day + (noon.slice(0, 10) < day ? 'T00:00:00Z' : 'T23:59:59Z');
+}
+
 export async function commitParsed({ userId, buf, filename, parsed, manual = false }) {
   // manual entry (commitManual) has no file: no PDF check, no stored file, no attachment
   if (!manual && (!buf || buf.subarray(0, 5).toString('latin1') !== '%PDF-')) { const e = new Error('not a PDF'); e.code = 'not_pdf'; throw e; }
@@ -173,7 +181,7 @@ export async function commitParsed({ userId, buf, filename, parsed, manual = fal
   const format = await userFormat(userId); // numbers in alert texts; read before the transaction holds the connection
 
   return transaction(async (client) => {
-    const occurredAt = (j.doc_date && /^\d{4}-\d{2}-\d{2}$/.test(j.doc_date) ? `${j.doc_date}T00:00:00Z` : new Date().toISOString());
+    const occurredAt = (j.doc_date && /^\d{4}-\d{2}-\d{2}$/.test(j.doc_date) ? dateOnlyInstant(j.doc_date, format.timeZone) : new Date().toISOString());
     if (j.doc_date && !/^\d{4}-\d{2}-\d{2}$/.test(j.doc_date)) j.doc_date = null;
 
     const eventId = await addEvent(client, userId, { type: 'LAB_RESULT', occurredAt, title: t(format.language, manual ? 'feedTitles.labsManual' : 'feedTitles.labsPdf'), notes: j.lab_name || null, meta: { lab: j.lab_name || null, source: j.source || 'unknown' }, source: `ingestion:${j.source || 'unknown'}` });
@@ -236,10 +244,10 @@ export async function commitParsed({ userId, buf, filename, parsed, manual = fal
       // Alert rules and the out-of-range list on the committed values, against the ranges in force (lab_results_eff:
       // the user's own, the built-in one or the lab's), read back inside this transaction.
       committed = (await client.query(
-        `select t.canonical_key as key, t.code, r.value_numeric, r.unit_canonical, r.ref_low, r.ref_high
+        `select t.canonical_key as key, t.code, r.value_numeric, r.value_text, r.unit_canonical, r.ref_low, r.ref_high
          from lab_results_eff r join lab_tests t on t.id = r.test_id where r.document_id = $1 order by r.id`,
         [ingestDocId]
-      )).rows.map((x) => ({ key: x.key, code: x.code, value: x.value_numeric != null ? Number(x.value_numeric) : null, unit: x.unit_canonical, refLow: x.ref_low != null ? Number(x.ref_low) : null, refHigh: x.ref_high != null ? Number(x.ref_high) : null }));
+      )).rows.map((x) => ({ key: x.key, code: x.code, value: x.value_numeric != null ? Number(x.value_numeric) : null, valueText: x.value_text, unit: x.unit_canonical, refLow: x.ref_low != null ? Number(x.ref_low) : null, refHigh: x.ref_high != null ? Number(x.ref_high) : null }));
       alertsRaised = await raiseAlerts(client, userId, labFindings(committed, { eventId, format }), new Date(occurredAt));
     }
 

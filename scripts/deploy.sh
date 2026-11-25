@@ -13,15 +13,19 @@ cd "$(dirname "$0")/.."
 # shell environment, and a shell variable beats the .env file for docker compose.
 # A missing line is not an error: grep finds nothing, the caller falls back to the default.
 envval() { grep -E "^$1=" .env | tail -n1 | cut -d= -f2- || true; }
-POSTGRES_USER=$(envval POSTGRES_USER); POSTGRES_DB=$(envval POSTGRES_DB)
-TAG=${1:-$(date +%Y%m%d-%H%M%S)}
+gateway_id=$(docker compose ps -q gateway)
+[ -n "$gateway_id" ] || { echo "deploy: start the installed gateway before backing it up" >&2; exit 1; }
+project=$(docker inspect -f '{{index .Config.Labels "com.docker.compose.project"}}' "$gateway_id")
+[ -n "$project" ] || { echo "deploy: could not identify the running project" >&2; exit 1; }
+namespace="mc.$project."
+TAG=${1:-$namespace${DEPLOY_REVISION:+$DEPLOY_REVISION-}$(date +%Y%m%d-%H%M%S)}
+obsolete=$(cat .deploy/previous 2>/dev/null || true)
 CURRENT=$(envval IMAGE_TAG); CURRENT=${CURRENT:-dev}
 mkdir -p .deploy backups/predeploy
 
 echo "deploy: current tag $CURRENT -> new tag $TAG"
-echo "deploy: database dump before the switch"
-docker compose exec -T postgres pg_dump -U "${POSTGRES_USER:-dtc}" -Fc "${POSTGRES_DB:-dtc}" > "backups/predeploy/$TAG.dump"
-ls -t backups/predeploy/*.dump 2>/dev/null | tail -n +6 | xargs -r rm -f
+echo "deploy: backing up database and uploads before the switch"
+sh scripts/backup.sh --predeploy "$TAG"
 
 echo "deploy: building images"
 IMAGE_TAG=$TAG docker compose build
@@ -38,12 +42,23 @@ IMAGE_TAG=$TAG docker compose up -d --force-recreate --no-deps edge
 
 echo -n "deploy: waiting for gateway"
 for i in $(seq 1 40); do
-  if docker compose exec -T gateway wget -qO- http://127.0.0.1:3000/health 2>/dev/null | grep -q '"ok":true'; then echo " ok"; break; fi
+  if docker compose exec -T gateway wget -Y off -qO- http://127.0.0.1:3000/health 2>/dev/null | grep -q '"ok":true'; then echo " ok"; break; fi
   echo -n "."; sleep 3
   if [ "$i" = 40 ]; then echo; echo "deploy: gateway is not healthy, check: docker compose logs gateway; roll back with scripts/rollback.sh" >&2; exit 2; fi
 done
-docker compose exec -T gateway wget -qO- 'http://127.0.0.1:3000/health?deep=1' || true; echo
-# Keep only the images for the current and previous tags (rollback needs the previous one).
-docker images 'dtc/*' --format '{{.Repository}}:{{.Tag}}' | grep -vE ":($TAG|$CURRENT)$" | xargs -r docker rmi >/dev/null 2>&1 || true
-docker image prune -f >/dev/null 2>&1 || true
+docker compose exec -T gateway wget -Y off -qO- 'http://127.0.0.1:3000/health?deep=1' || true; echo
+# Only the retired tag generated for this installation is eligible. Old unscoped
+# tags may be rollback targets of another project on the same daemon.
+case "$obsolete" in
+  "$namespace"*)
+    if [ "$obsolete" != "$TAG" ] && [ "$obsolete" != "$CURRENT" ]; then
+      IMAGE_TAG="$obsolete" docker compose config --images | while IFS= read -r image; do
+        case "$image" in
+          dtc/*:"$obsolete")
+            owner=$(docker image inspect -f '{{index .Config.Labels "com.docker.compose.project"}}' "$image" 2>/dev/null || true)
+            if [ "$owner" = "$project" ]; then docker image rm "$image" || echo "deploy: retained $image"; fi ;;
+        esac
+      done
+    fi ;;
+esac
 echo "deploy: done, tag $TAG (previous $CURRENT)"

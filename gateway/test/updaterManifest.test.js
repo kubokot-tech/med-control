@@ -71,7 +71,10 @@ test('latest.json lists every package with its signature', () => {
   const notes = JSON.parse(m.notes);
   assert.match(notes.ru, /^Обновления внутри приложения/);
   assert.match(notes.en, /^Updates inside the app/);
-  fs.rmSync(path.join(dist, `${PACKAGES['darwin-x86_64']}.sig`));
+  const intelSignature = path.join(dist, `${PACKAGES['darwin-x86_64']}.sig`);
+  fs.writeFileSync(intelSignature, '\n');
+  assert.throws(() => manifest({ version: '0.4.0', repo: 'o/r', dist, changelog: CHANGELOG }), /empty package or signature/);
+  fs.rmSync(intelSignature);
   assert.throws(() => manifest({ version: '0.4.0', repo: 'o/r', dist, changelog: CHANGELOG }), /MedControl-macOS-Intel/);
   fs.rmSync(dist, { recursive: true });
 });

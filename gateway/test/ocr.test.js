@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import PDFDocument from 'pdfkit';
-import { toPnm, pdfPageImages, ocrFile } from '../src/lib/ocr.js';
+import { toPnm, pdfPageImages, ocrFile, needsPageOcr, pdfLayers } from '../src/lib/ocr.js';
 
 // A picture of test/makeLayoutPdfs.js «rows» (invented data) at a low resolution, like a phone photo of a lab blank.
 const SCAN = fs.readFileSync(fileURLToPath(new URL('./fixtures/scan-rows.jpg', import.meta.url)));
@@ -44,4 +44,26 @@ test('a photo and a scanned PDF are recognised on this machine, pages marked', a
 
 test('a file that is not an image fails with a clear code', async () => {
   await assert.rejects(ocrFile({ mimeType: 'application/pdf', data: Buffer.from('not a pdf') }), (e) => e.code === 'ocr_failed');
+});
+
+test('mixed documents retain their text layers and OCR a scan beyond page 20', async () => {
+  const doc = new PDFDocument({ autoFirstPage: false });
+  const chunks = [];
+  doc.on('data', (chunk) => chunks.push(chunk));
+  const done = new Promise((resolve) => doc.on('end', resolve));
+  const layer = 'Original text layer. '.repeat(5);
+  for (let i = 0; i < 20; i++) doc.addPage().text(layer);
+  doc.addPage().image(SCAN, 0, 0, { width: 595 });
+  doc.addPage(); // An empty final page is reflected in the completeness warning.
+  doc.end();
+  await done;
+  const layers = Array(20).fill(layer).concat('', '');
+  assert.equal(needsPageOcr({ pages: layers }), true);
+  assert.deepEqual(pdfLayers({ pages: 3, text: '<!-- страница 1 -->\nhello\n\n<!-- страница 3 -->\nworld' }), ['hello', '', 'world']);
+  const result = await ocrFile({ data: Buffer.concat(chunks), mimeType: 'application/pdf', layers, language: 'en' });
+  assert.equal(result.pages, 22);
+  assert.equal(result.unreadPages, 1);
+  assert.match(result.text, /<!-- страница 1 -->\nOriginal text layer/);
+  assert.match(result.text, /<!-- страница 21 -->[\s\S]*Гемоглобин 132/);
+  assert.match(result.text, /1 of 22/);
 });

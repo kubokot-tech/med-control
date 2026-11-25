@@ -96,6 +96,10 @@ NEW_TREE=$(git -C "$WORK/pub" write-tree)
 ok "tree $(git rev-parse --short 'HEAD^{tree}') from $(git rev-parse --short HEAD)"
 
 echo "Scan"
+if pgit ls-files | grep -E '(^|/)(rclone\.conf|CRYPT-KEY\.txt)$' >/dev/null; then
+  echo "Stopped: release tree contains local backup credentials." >&2
+  exit 1
+fi
 # Generic secrets and personal traces. Test fixtures use short or obviously fake values that these do not match.
 SECRETS='sk-ant-[a-z0-9]+-[A-Za-z0-9_-]{30,}|sk-proj-[A-Za-z0-9_-]{30,}|sk-or-v1-[a-f0-9]{40,}|gh[pousr]_[A-Za-z0-9]{36}|github_pat_[A-Za-z0-9_]{40,}|xox[abprs]-[0-9]+-[A-Za-z0-9-]{10,}|AKIA[0-9A-Z]{16}|[0-9]{8,10}:AA[A-Za-z0-9_-]{33}|-----BEGIN [A-Z ]*PRIVATE KEY-----|/Users/[a-z][a-z0-9._-]+/'
 EMAILS_OK='@(example\.(com|org|net)|med-control\.app|users\.noreply\.github\.com|anthropic\.com)$|^git@github\.com$|@[0-9]x(-[0-9]+)?\.(png|jpg|webp)$'

@@ -81,6 +81,7 @@ async function authenticateMfa(req, reply) {
   try {
     await req.jwtVerify();
     if (req.user.scope !== 'mfa') throw new Error('scope');
+    if ((req.user.tv || 0) !== tokenVersion()) throw new Error('revoked');
   } catch {
     reply.code(401).send({ error: 'unauthorized' });
   }
@@ -204,7 +205,7 @@ export default async function authRoutes(app) {
 
     const tz = await userTz();
     if (MFA_ENABLED && available('passkeys') && (await countPasskeys(HARDCODED_USER_ID)) > 0) {
-      const preToken = await reply.jwtSign({ sub: HARDCODED_USER_ID, tz, scope: 'mfa', jti: randomUUID() }, { expiresIn: '5m' });
+      const preToken = await reply.jwtSign({ sub: HARDCODED_USER_ID, tz, scope: 'mfa', tv: tokenVersion(), jti: randomUUID() }, { expiresIn: '5m' });
       return { mfa: 'passkey', preToken };
     }
     const token = await reply.jwtSign(sessionClaims(HARDCODED_USER_ID, tz, { passwordAt: nowS() }), { expiresIn: TOKEN_TTL });
@@ -326,9 +327,6 @@ export default async function authRoutes(app) {
     }
     g.succeed();
     req.log.warn({ ip: req.ip }, 'password reset with the recovery code');
-    const { setSetting } = await import('./settings.js');
-    await setSetting('token_version', String(tokenVersion() + 1));
-    await revokeLongLived(HARDCODED_USER_ID);
     notifyUser(HARDCODED_USER_ID, 'passwordReset');
     const tz = await userTz();
     const token = await reply.jwtSign(sessionClaims(HARDCODED_USER_ID, tz, { passwordAt: nowS() }), { expiresIn: TOKEN_TTL });

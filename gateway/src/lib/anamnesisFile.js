@@ -4,10 +4,9 @@
  * the person reads it, and only what they save becomes the anamnesis.
  */
 import { pdfPlainText } from './pdfEngine.js';
-import { ocrFile } from './ocr.js';
+import { ocrFile, pdfLayers, needsPageOcr } from './ocr.js';
 
 export const ANAMNESIS_MAX = 20000;
-const MIN_PDF_CHARS = 80; // below this the PDF is most likely a scan
 
 const fail = (code) => Object.assign(new Error(code), { code });
 const isPdf = (b) => b.subarray(0, 5).toString('latin1') === '%PDF-';
@@ -22,14 +21,15 @@ const isPlainText = (filename) => /\.(txt|md)$/i.test(filename || '');
 export const cleanExtract = (text) => String(text || '').replace(/<!--[^>]*-->\n?/g, '').replace(/\n{3,}/g, '\n\n').trim();
 
 /** { text, method: 'text' | 'ocr', truncated }. Throws { code }: unsupported_file, no_text_in_file, ocr_failed. */
-export async function anamnesisFromFile(buf, filename, { pdfText = pdfPlainText, ocr = ocrFile } = {}) {
+export async function anamnesisFromFile(buf, filename, { pdfText = pdfPlainText, ocr = ocrFile, language } = {}) {
   let text = '';
   let method = 'text';
   if (isPdf(buf)) {
-    text = cleanExtract((await pdfText(buf, filename)).text);
-    if (text.length < MIN_PDF_CHARS) {
+    const layer = await pdfText(buf, filename);
+    text = cleanExtract(layer.text);
+    if (needsPageOcr(layer)) {
       method = 'ocr';
-      text = cleanExtract((await ocr({ mimeType: 'application/pdf', data: buf })).text);
+      text = cleanExtract((await ocr({ mimeType: 'application/pdf', data: buf, layers: pdfLayers(layer) || [], language })).text);
     }
   } else if (imageType(buf)) {
     method = 'ocr';

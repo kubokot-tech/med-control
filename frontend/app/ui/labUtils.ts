@@ -1,3 +1,5 @@
+import { comparatorOf } from '../../../shared/labBounds.js';
+export { rangeFlag as flagFor } from '../../../shared/labBounds.js';
 import type { Format } from '../../../shared/format.js';
 
 /** Shared flag and request utilities for the Labs module (dates and numbers: useFormat() in ui/format.tsx) */
@@ -6,18 +8,6 @@ import type { Format } from '../../../shared/format.js';
 export function fmtDelta(f: Format, d: number | null): string {
   if (d === null || Number.isNaN(d)) return '—';
   return f.number(d, { maximumFractionDigits: 2, signDisplay: 'exceptZero' });
-}
-
-/** 'high' | 'low' | 'ok' against a range that may be open on one side ("up to 5" is (null, 5)); '' without a value or a range. */
-export function flagFor(
-  val: number | null | undefined,
-  lo: number | null | undefined,
-  hi: number | null | undefined,
-): 'ok' | 'high' | 'low' | '' {
-  if (val == null || (lo == null && hi == null)) return '';
-  if (hi != null && val > hi) return 'high';
-  if (lo != null && val < lo) return 'low';
-  return 'ok';
 }
 
 /** A range as text in the user's number format: «3,4–20,5», «≤ 5», «≥ 1»; '' without one. */
@@ -35,7 +25,7 @@ export function refText(f: Format, lo: number | null | undefined, hi: number | n
  */
 export function labValueText(f: Format, valueNum: number | string | null | undefined, valueText?: string | null): string {
   if (valueNum == null || valueNum === '') return f.numText(valueText ?? null) || '—';
-  const cmp = /^\s*([<>≤≥]=?)/.exec(valueText || '')?.[1] || '';
+  const cmp = comparatorOf(valueText);
   return `${cmp}${f.number(Number(valueNum), { maximumFractionDigits: 4 })}`;
 }
 

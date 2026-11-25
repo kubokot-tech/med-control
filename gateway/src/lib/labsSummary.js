@@ -58,7 +58,9 @@ export async function buildSummary(q) {
       l.collected_at,
       l.value_numeric,
       l.value_text,
-      coalesce(p.pref_unit, l.unit_canonical) as unit_canonical,
+      l.unit_canonical,
+      l.ref_low as cell_ref_low,
+      l.ref_high as cell_ref_high,
       coalesce(p.pref_ref_low, l.ref_low) as ref_low,
       coalesce(p.pref_ref_high, l.ref_high) as ref_high,
       coalesce(p.pref_source, l.ref_source) as ref_source,
@@ -66,7 +68,7 @@ export async function buildSummary(q) {
       l.document_id,
       l.n
     from last_in_month l
-    left join preferred_refs p on p.test_key = l.test_key
+    left join preferred_refs p on p.test_key = l.test_key and p.pref_unit is not distinct from l.unit_canonical
     order by l.test_key asc, ym asc;
   `;
 
@@ -80,8 +82,11 @@ export async function buildSummary(q) {
   const byTest = new Map();
   for (const row of r.rows) {
     const key = row.test;
+    const ce = catalogEntry(key);
+    const unit = (u && ce ? u.unit(key, row.unit_canonical) : displayUnit(row.unit_canonical, u?.language)) || null;
+    const refLow = row.ref_low != null ? show(key, Number(row.ref_low), row.unit_canonical) : null;
+    const refHigh = row.ref_high != null ? show(key, Number(row.ref_high), row.unit_canonical) : null;
     if (!byTest.has(key)) {
-      const ce = catalogEntry(key);
       byTest.set(key, {
         test: row.test,
         name: ce ? markerName(key, u?.language) : row.test_name,
@@ -89,15 +94,16 @@ export async function buildSummary(q) {
         sortOrder: ce ? ce.sortOrder : 1000,
         category: ce ? ce.category : (row.category || 'blood'),
         isCanonical: Boolean(ce),
-        unit: (u && ce ? u.unit(key, row.unit_canonical) : displayUnit(row.unit_canonical, u?.language)) || null,
-        refLow: row.ref_low != null ? show(key, Number(row.ref_low), row.unit_canonical) : null,
-        refHigh: row.ref_high != null ? show(key, Number(row.ref_high), row.unit_canonical) : null,
+        unit, refLow, refHigh,
         refSource: row.ref_source ?? null,
         cells: {},
       });
     }
     const v = row.value_numeric != null ? Number(row.value_numeric) : null;
     byTest.get(key).cells[row.ym] = {
+      unit,
+      refLow: row.cell_ref_low != null ? show(key, Number(row.cell_ref_low), row.unit_canonical) : null,
+      refHigh: row.cell_ref_high != null ? show(key, Number(row.cell_ref_high), row.unit_canonical) : null,
       valueNum: v != null && catalogEntry(key) ? show(key, v, row.unit_canonical) : v,
       valueText: row.value_text ?? (v !== null ? String(v) : null),
       collectedAt: row.collected_at,

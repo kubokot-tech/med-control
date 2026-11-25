@@ -24,6 +24,7 @@
     "lastReview": "## 11. Latest lab assessment by another model (AI answer, not fact)"
   },
   "support": "- Supportive medications: {list}.",
+  "otherMedications": "- Other medications: {list}.",
   "supportItem": "{name}{dose}{times}{instructions}, since {date}",
   "current": "- Current regimen: {name} {dose}, {schedule}, since {date}.",
   "doseHistory": "- Dose history: {list}.",

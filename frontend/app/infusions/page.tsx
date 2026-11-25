@@ -1,5 +1,7 @@
 'use client';
 
+import { parseDecimal } from '../ui/decimal';
+
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslations } from 'use-intl';
 import Icon from '../ui/icons';
@@ -21,9 +23,10 @@ type IForm = { agentId: string; courseId: string; route: string; date: string; t
 type AForm = { name: string; shortName: string; defaultDose: string; doseUnit: string; route: string; notes: string };
 
 const today = () => todayKey();
-const num = (s: string) => { const v = parseFloat(s.replace(',', '.')); return Number.isFinite(v) ? v : null; };
 
 export default function InfusionsPage() {
+  const common = useTranslations('common');
+  const num = (value: string) => parseDecimal(value, common('invalidNumber'));
   const t = useTranslations('infusions');
   const f = useFormat();
   const ed = useEdition();
@@ -75,7 +78,7 @@ export default function InfusionsPage() {
     if (!form?.agentId || !form.date) { setErr(t('required')); return; }
     setBusy(true); setErr(null);
     try {
-      const body = JSON.stringify({ agentId: form.agentId, courseId: form.courseId || null, route: form.route || null, date: form.date, time: form.time || null, doseValue: num(form.dose), doseUnit: form.unit || null, durationMin: form.durationMin ? Number(form.durationMin) : null, place: form.place || null, notes: form.notes || null, reaction: form.reaction || null });
+      const body = JSON.stringify({ agentId: form.agentId, courseId: form.courseId || null, route: form.route || null, date: form.date, time: form.time || null, doseValue: num(form.dose), doseUnit: form.unit || null, durationMin: num(form.durationMin), place: form.place || null, notes: form.notes || null, reaction: form.reaction || null });
       const r = editing === 'new'
         ? await apiFetch('/api/gateway/infusions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body })
         : await apiFetch(`/api/gateway/infusions/${(editing as Infusion).id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body });
@@ -123,7 +126,7 @@ export default function InfusionsPage() {
   async function saveCourse(patch?: Partial<{ status: Course['status'] }>, target?: Course) {
     setBusy(true); setErr(null);
     try {
-      const body = JSON.stringify(patch || { agentId: cform.agentId, title: cform.title || null, plannedCount: cform.plannedCount ? Number(cform.plannedCount) : null, cadenceDays: cform.cadenceDays ? Number(cform.cadenceDays) : null, startDate: cform.startDate, remind: cform.remind, notes: cform.notes || null });
+      const body = JSON.stringify(patch || { agentId: cform.agentId, title: cform.title || null, plannedCount: num(cform.plannedCount), cadenceDays: num(cform.cadenceDays), startDate: cform.startDate, remind: cform.remind, notes: cform.notes || null });
       const existing = target || (courseEdit !== 'new' ? courseEdit : null);
       const r = existing
         ? await apiFetch(`/api/gateway/infusions/courses/${existing.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body })
@@ -235,7 +238,7 @@ export default function InfusionsPage() {
         </div>
       ))}
 
-      <BottomSheet open={editing !== null} onClose={() => setEditing(null)} title={editing === 'new' ? t('record.titleNew') : t('record.title')}>
+      <BottomSheet error={err} open={editing !== null} onClose={() => setEditing(null)} title={editing === 'new' ? t('record.titleNew') : t('record.title')}>
         {form && (<>
           <label className="field"><span>{t('record.agent')}</span>
             <select value={form.agentId} onChange={(e) => pickAgent(e.target.value)}>{agents.filter((a) => a.active || a.id === form.agentId).map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}</select>
@@ -268,7 +271,7 @@ export default function InfusionsPage() {
         </>)}
       </BottomSheet>
 
-      <BottomSheet open={agentEdit !== null} onClose={() => setAgentEdit(null)} title={agentEdit === 'new' ? t('agent.titleNew') : t('agent.title')}>
+      <BottomSheet error={err} open={agentEdit !== null} onClose={() => setAgentEdit(null)} title={agentEdit === 'new' ? t('agent.titleNew') : t('agent.title')}>
         <label className="field"><span>{t('agent.name')}</span><input value={aform.name} onChange={(e) => setAform({ ...aform, name: e.target.value })} placeholder={t('agent.namePlaceholder')} /></label>
         <label className="field"><span>{t('agent.shortName')}</span><input value={aform.shortName} onChange={(e) => setAform({ ...aform, shortName: e.target.value })} placeholder="IVC" maxLength={40} /></label>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1.6fr', gap: 8 }}>
@@ -281,7 +284,7 @@ export default function InfusionsPage() {
         {agentEdit !== 'new' && agentEdit && <button type="button" className="btn btn--ghost" onClick={() => removeAgent(agentEdit)}>{t('agent.remove')}</button>}
       </BottomSheet>
 
-      <BottomSheet open={courseEdit !== null} onClose={() => setCourseEdit(null)} title={courseEdit === 'new' ? t('course.titleNew') : t('course.title')}>
+      <BottomSheet error={err} open={courseEdit !== null} onClose={() => setCourseEdit(null)} title={courseEdit === 'new' ? t('course.titleNew') : t('course.title')}>
         <div className="muted" style={{ fontSize: 14, lineHeight: 1.5 }}>{t(ed.available('telegram') ? 'course.intro' : 'course.introDevice')}</div>
         <label className="field"><span>{t('course.agent')}</span>
           <select value={cform.agentId} onChange={(e) => setCform({ ...cform, agentId: e.target.value })}>{agents.filter((a) => a.active || a.id === cform.agentId).map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}</select>

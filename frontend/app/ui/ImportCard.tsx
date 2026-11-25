@@ -33,7 +33,7 @@ export default function ImportCard() {
       // the password first: the gateway checks it before taking the file
       const fd = new FormData();
       fd.append('password', password);
-      fd.append('archive', file, file.name);
+      fd.append('archive', file);
       const r = await apiFetch('/api/gateway/import/archive', { method: 'POST', body: fd });
       const j = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(errorRu(j, t('importCard.failed', { status: r.status })));

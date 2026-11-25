@@ -27,24 +27,47 @@ if (typeof location !== 'undefined') {
   };
 }
 // If iPad wiped the browser database and the app folder still has a copy, load that copy before PGlite opens.
-globalThis.__MC_BEFORE_DB = (async () => {
+globalThis.__MC_RECOVER_DB = async (validate) => {
+  if (!globalThis.__TAURI_INTERNALS__ || typeof indexedDB === 'undefined') return null;
+  const words = (await globalThis.mcWords?.load())?.recovery;
   try {
-    if (!globalThis.__TAURI_INTERNALS__ || typeof indexedDB === 'undefined') return;
-    // databases() arrived in Safari 17.4; the app requires 17.4 for exactly this reason.
-    if (!indexedDB.databases) { console.warn('[medcontrol] database restore unavailable: indexedDB.databases() is missing (needs iPadOS 17.4)'); return; }
     const names = (await indexedDB.databases()).map((d) => d.name);
-    // PGlite opens IndexedDB as the mount point "/pglite/medcontrol", not the short name.
-    if (names.includes('/pglite/medcontrol') || names.includes('medcontrol')) return;
+    const liveName = '/pglite/medcontrol';
+    const marker = 'mc_db_restore_pending';
+    const retry = localStorage.getItem(marker) === liveName;
+    if (!retry && (names.includes(liveName) || names.includes('medcontrol'))) return null;
     const { readDatabaseCopy } = await import('./container.js');
-    const tar = await readDatabaseCopy();
-    if (tar && tar.byteLength > 1024) globalThis.__MC_PGLITE_LOAD = new Blob([tar]);
-  } catch (e) {
-    // A copy may exist but be unreadable. Starting empty and snapshotting over it would destroy the history:
-    // the flag holds all snapshots until the owner resolves the situation (gateway-entry.js, pglite.js).
+    const recovered = await readDatabaseCopy(validate);
+    if (!recovered) {
+      if (retry) throw new Error('Interrupted restoration has no readable snapshot');
+      return null;
+    }
+    // The marker is set only if no live database existed. A failed attempt can leave
+    // an empty IDB name behind. Retry from a validated snapshot before exposing it.
+    localStorage.setItem(marker, liveName);
+    if (retry && names.includes(liveName)) {
+      await new Promise((resolve, reject) => {
+        const request = indexedDB.deleteDatabase(liveName);
+        request.onsuccess = resolve;
+        request.onerror = () => reject(request.error);
+        request.onblocked = () => reject(new Error('Close other views to restore the database'));
+      });
+    }
+    return {
+      blob: recovered.blob,
+      opened() {
+        localStorage.removeItem(marker);
+        if (recovered.generation !== 'pgdata.tar') {
+          globalThis.alert?.(words?.previous || 'Restored an alternate database snapshot.');
+        }
+      },
+    };
+  } catch (err) {
     globalThis.__MC_RESTORE_FAILED = true;
-    console.warn('[medcontrol] database restore skipped', e);
+    globalThis.alert?.(words?.failed || 'Unable to restore the database. The saved snapshots have been preserved.');
+    throw err;
   }
-})();
+};
 if (!globalThis.setImmediate) {
   const ch = new MessageChannel();
   const queue = new Map();

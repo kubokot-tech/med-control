@@ -87,6 +87,25 @@ def _is_noise(line: str) -> bool:
     return False
 
 
+def _numbered_title_before_header(lines: list[str], header_index: int) -> str | None:
+    """Read the mini-table title across optional specimen and method lines."""
+    for i in range(header_index - 1, -1, -1):
+        line = lines[i]
+        low = line.lower()
+        if low.startswith(("метод", "образец", "вид материала", "валидация")) or ("№" in line and "валидация" in low):
+            continue
+        # A standalone number can end a title («Интерлейкин 6»); a value followed by units is a row.
+        if not re.search(r"\d", line) or not line[0].isalpha() or not all(
+            ch.isalnum() or ch.isspace() or ch in "()-" for ch in line
+        ) or _is_noise(line):
+            return None
+        words = line.split()
+        if any(_NUM.fullmatch(word) and _UNIT.search(unit) for word, unit in zip(words, words[1:])):
+            return None
+        return line
+    return None
+
+
 def _extract_ref_from_text(t: str) -> str | None:
     if not t:
         return None
@@ -168,6 +187,7 @@ def parse_text(text: str) -> dict:
 
         # start of table block
         if low.startswith("название/показатель"):
+            current_section = _numbered_title_before_header(lines, i) or current_section
             in_table = True
             pending_name = None
             continue

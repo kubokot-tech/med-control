@@ -36,3 +36,14 @@ test('export.xml lines: correlation blood pressure and single records', async ()
   assert.deepEqual(out.map((x) => x.kind), ['blood_pressure', 'weight_body_mass', 'step_count']);
   assert.deepEqual(out[0].value, { systolic: 142, diastolic: 91, units: 'mmHg' });
 });
+
+test('XML and JSON convert body temperature identically and discard unknown units', async () => {
+  const date = '2025-01-01T12:00:00Z';
+  for (const [units, qty, expected] of [['degF', 98.6, 37], ['°C', 36.5, 36.5], ['unknown', 100, null]]) {
+    const json = parseHealthAutoExport({ metrics: [{ name: 'body_temperature', units, data: [{ date, qty }] }] });
+    const xml = [];
+    for await (const s of parseHealthXml([`<Record type="HKQuantityTypeIdentifierBodyTemperature" unit="${units}" value="${qty}" startDate="${date}"/>`])) xml.push(s);
+    assert.deepEqual(xml, json);
+    assert.deepEqual(json.map((s) => s.value), expected == null ? [] : [{ units: 'degC', qty: expected }]);
+  }
+});

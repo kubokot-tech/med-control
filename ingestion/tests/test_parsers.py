@@ -136,7 +136,9 @@ def test_helix_v2_ddimer_ref_on_the_row_and_comment():
 
 def test_helix_v2_plain_layout_without_markers():
     doc = helix_pdf_v2.parse_text(HELIX_V2_PLAIN)
-    assert len(doc["observations"]) == 2
+    assert len(doc["observations"]) == 3
+    il6 = obs(doc, "Интерлейкин 6")
+    assert (il6["result_num"], il6["units"]) == (8, "пг/мл")
     assert obs(doc, "Глюкоза")["result_num"] == 4.1
     crea = obs(doc, "Креатинин")
     assert (crea["result_num"], crea["ref_low"], crea["ref_high"]) == (88.0, 62.0, 106.0)

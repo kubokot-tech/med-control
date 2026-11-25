@@ -4,7 +4,6 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
-import stdlibDirs from 'node-stdlib-browser';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, '..');
@@ -12,8 +11,18 @@ const OUT = path.join(HERE, 'web/dist');
 const GW_MODULES = path.join(ROOT, 'gateway/node_modules');
 const shim = (f) => path.join(HERE, 'web/shims', f);
 const own = createRequire(import.meta.url);
-// node-stdlib-browser lists package folders; esbuild wants the entry file
-const stdlib = Object.fromEntries(Object.entries(stdlibDirs).map(([k, v]) => [k, v ? own.resolve(v) : null]));
+// Resolve package entries explicitly so Node built-ins use the browser implementations.
+const stdlib = {
+  assert: own.resolve('assert/'),
+  constants: own.resolve('constants-browserify/'),
+  events: own.resolve('events/'),
+  https: own.resolve('https-browserify/'),
+  path: own.resolve('path-browserify/'),
+  stream: own.resolve('stream-browserify/'),
+  string_decoder: own.resolve('string_decoder/'),
+  util: own.resolve('util/'),
+  zlib: own.resolve('browserify-zlib/'),
+};
 
 const OWN = {
   crypto: shim('crypto.js'), fs: shim('fs-cjs.cjs'), 'fs/promises': shim('fs-promises.js'), os: shim('os.js'), url: shim('url.js'),
@@ -115,7 +124,7 @@ const result = await esbuild.build({
   outfile: path.join(OUT, 'gateway.js'),
   bundle: true, format: 'esm', platform: 'browser', target: ['safari16'], mainFields: ['browser', 'module', 'main'],
   nodePaths: [GW_MODULES, path.join(HERE, 'node_modules')],
-  inject: [own.resolve('node-stdlib-browser/helpers/esbuild/shim')],
+  inject: [shim('globals.js')],
   define: { global: 'globalThis' },
   plugins: [nodePlugin],
   logLevel: 'warning', metafile: true, minify: false, sourcemap: false,

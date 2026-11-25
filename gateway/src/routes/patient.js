@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { patientCard, savePatientCard } from '../lib/patientCard.js';
 import { todayKey, DEFAULT_TZ } from '../lib/dates.js';
 import { invalidateProfileCache } from '../lib/patientProfile.js';
+import { userLanguage } from '../lib/userLocale.js';
 import { anamnesisFromFile } from '../lib/anamnesisFile.js';
 
 /** Settings → «Анамнез» → «Пациент»: name, date of birth, diagnosis for the doctor report header, how the home screen addresses the patient (lib/patientCard.js). */
@@ -14,7 +15,7 @@ export default async function patientRoutes(app) {
     const buf = await part.toBuffer();
     if (!buf?.length) return reply.code(400).send({ error: 'empty_file' });
     try {
-      return await anamnesisFromFile(buf, part.filename);
+      return await anamnesisFromFile(buf, part.filename, { language: await userLanguage(req.user.sub) });
     } catch (e) {
       if (['unsupported_file', 'no_text_in_file', 'ocr_failed', 'ingestion_failed'].includes(e.code)) return reply.code(422).send({ error: e.code });
       throw e;

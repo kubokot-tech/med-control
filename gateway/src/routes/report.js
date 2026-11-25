@@ -64,7 +64,13 @@ export default async function reportRoutes(app) {
     const from = DAY_RX.test(req.query?.from || '') ? req.query.from : addDays(to, -90);
 
     const q0 = req.query || {};
-    const on = (() => { const list = String(q0.sections || '').split(',').map((x) => x.trim()).filter(Boolean); const set = new Set(list.length ? list : SECTIONS.filter((x) => x !== 'documents')); if (q0.questions === '0') set.delete('questions'); return (name) => set.has(name); })();
+    const selected = q0.sections === undefined
+      ? SECTIONS.filter((name) => name !== 'documents')
+      : String(q0.sections).split(',').map((name) => name.trim()).filter((name) => SECTIONS.includes(name));
+    const sections = new Set(selected);
+    if (q0.questions === '0') sections.delete('questions');
+    if (!sections.size) return reply.code(400).send({ error: 'report_sections_required' });
+    const on = (name) => sections.has(name);
     const withQuestions = on('questions');
     const allMilestones = q0.milestones === 'all';
     const allLabs = q0.labs === 'all';
@@ -74,12 +80,11 @@ export default async function reportRoutes(app) {
       order by (status = 'planned' and date >= $2) desc, date desc limit 1`, [userId, today]) : { rows: [] };
     // ---- data ----
     const infusions = await pool.query(`select i.date::text as date, i.time, i.dose_value, i.dose_unit, i.place, i.reaction, coalesce(i.route, a.route) as route, a.short_name, a.name from infusion_sessions i join infusion_agents a on a.id = i.agent_id where i.user_id = $1 and i.date between $2 and $3 order by i.date`, [userId, from, to]).catch(() => ({ rows: [] }));
-    const [regimen, doses, admins, milestones, studies, lesions, meas, labs, sym, alerts, docs] = await Promise.all([
+    const [regimen, doses, milestones, studies, lesions, meas, labs, sym, alerts, docs] = await Promise.all([
       pool.query(`select r.start_date::text as start_date, m.id as med_id, m.name, m.role, m.instructions, ri.id as item_id, ri.dose_value, ri.dose_unit, ri.frequency_rule, ri.schedule_days, ri.interval_days, ri.time_windows, ri.times_per_day
                   from regimens r join regimen_items ri on ri.regimen_id = r.id join medications m on m.id = ri.medication_id
                   where r.user_id = $1 and (r.end_date is null or r.end_date > now()) order by (m.role = 'systemic') desc, m.sort_order, r.start_date desc`, [userId]),
       pool.query(`select regimen_item_id, effective_from::text as effective_from, dose_value, dose_unit, reason from dose_changes where user_id = $1 order by effective_from`, [userId]),
-      dayStatuses(userId, { from, to }).then((rows) => ({ rows })),
       allMilestones ? pool.query(`select date::text as date, kind, tone, title, notes from milestones where user_id = $1 and kind <> 'ai_review' order by date`, [userId]) : pool.query(`select date::text as date, kind, tone, title, notes from milestones where user_id = $1 and date between $2 and $3 and kind <> 'ai_review' order by date`, [userId, from, to]),
       pool.query(`select id, study_date::text as date, modality, body_region, response, impression_text from imaging_studies where user_id = $1 order by study_date`, [userId]),
       pool.query(`select id, name, location, is_target, retired from lesions where user_id = $1`, [userId]),
@@ -94,12 +99,13 @@ export default async function reportRoutes(app) {
 
     // adherence
     const reg = regimen.rows.find((x) => x.role === 'systemic') || regimen.rows[0] || null;
-    const supportMeds = regimen.rows.filter((x) => x !== reg);
+    const otherMeds = regimen.rows.filter((x) => x !== reg);
     let adherence = null;
     if (reg) {
+      const admins = await dayStatuses(userId, { medicationId: reg.med_id, from, to });
       const start = reg.start_date > from ? reg.start_date : from;
       const end = to > today ? today : to;
-      const byDay = new Map(admins.rows.map((a) => [a.day, a.status]));
+      const byDay = new Map(admins.map((a) => [a.day, a.status]));
       const sch = { ...scheduleFromRow(reg), startDate: reg.start_date };
       const days = start <= end ? dayRange(start, end).filter((d) => isDoseDay(sch, d) || byDay.has(d)) : [];
       const taken = days.filter((d) => byDay.get(d) === 'TAKEN').length;
@@ -121,7 +127,7 @@ export default async function reportRoutes(app) {
       const ce = catalogEntry(key);
       const last = arr[0];
       const prev = arr[1] || null;
-      const f = flag(last.value_numeric, last.ref_low, last.ref_high);
+      const f = flag(last.value_numeric, last.ref_low, last.ref_high, last.value_text);
       const isKey = keyOrder.includes(key);
       if (!allLabs && !isKey && f !== 'high' && f !== 'low') continue;
       if (ce?.category === 'urine' && f === '') continue;
@@ -130,7 +136,8 @@ export default async function reportRoutes(app) {
         key, name: markerShort(key, u.language), isKey,
         last: last.value_numeric != null ? comparatorOf(last.value_text) + fmtNum(show(last, last.value_numeric)) : (last.value_text || '—'),
         lastDate: dayOf(last.collected_at, tz),
-        prev: prev ? (prev.value_numeric != null ? comparatorOf(prev.value_text) + fmtNum(show(prev, prev.value_numeric)) : (prev.value_text || '—')) : '—',
+        prev: prev ? (prev.value_numeric != null ? comparatorOf(prev.value_text) + fmtNum(show(prev, prev.value_numeric)) : (prev.value_text || '—')) +
+          (prev.unit_canonical !== last.unit_canonical ? ' ' + (u.unit(key, prev.unit_canonical) || '—') : '') : '—',
         prevDate: prev ? dayOf(prev.collected_at, tz) : '',
         unit: u.unit(key, last.unit_canonical) || '',
         ref: refText(last.ref_low != null ? show(last, last.ref_low) : null, last.ref_high != null ? show(last, last.ref_high) : null, fmtNum) || '—',
@@ -263,9 +270,10 @@ export default async function reportRoutes(app) {
         para(say('therapy.adherence', { taken: a.taken, days: a.days, pct: a.pct, partial: a.partial ? say('therapy.partial', { n: a.partial }) : '', skipped: a.skipped, missed: a.missed }), { continued: false });
         muted(say('therapy.notMarked'));
       }
-      if (supportMeds.length) {
+      if (otherMeds.length) {
         doc.moveDown(0.3);
-        table([say('col.support'), say('col.dose'), say('col.how'), say('col.from')], supportMeds.map((x) => [{ text: x.name, bold: true }, x.dose_value != null ? `${fmtNum(x.dose_value)} ${doseUnit(x.dose_unit, language)}${Number(x.times_per_day) > 1 ? say('therapy.timesPerDay', { n: x.times_per_day }) : ''}` : '', x.instructions || '', fmtShort(x.start_date)]), [150, 110, W - 330, 70]);
+        const otherHeading = otherMeds.every((x) => x.role === 'support') ? 'col.support' : 'col.otherMedication';
+        table([say(otherHeading), say('col.dose'), say('col.how'), say('col.from')], otherMeds.map((x) => [{ text: x.name, bold: true }, x.dose_value != null ? `${fmtNum(x.dose_value)} ${doseUnit(x.dose_unit, language)}${Number(x.times_per_day) > 1 ? say('therapy.timesPerDay', { n: x.times_per_day }) : ''}` : '', x.instructions || '', fmtShort(x.start_date)]), [150, 110, W - 330, 70]);
       }
     } else {
       para(say('therapy.none'));
@@ -295,7 +303,7 @@ export default async function reportRoutes(app) {
       if (last.impression) { doc.moveDown(0.2); para(last.impression); }
       if (recist.length) {
         doc.moveDown(0.3);
-        table([say('col.date'), say('col.lesions'), say('col.sum'), say('col.fromBaseline'), 'RECIST 1.1'], recist.slice(-8).map((r) => [fmtShort(r.date), String(r.lesionCount), String(r.sum), r.response === 'baseline' ? '—' : `${r.changeFromBaselinePct > 0 ? '+' : ''}${r.changeFromBaselinePct}%`, { text: responseLabel(r.response, language), color: r.response === 'PD' ? C.danger : r.response === 'PR' || r.response === 'CR' ? C.accent : C.fg, bold: true }]), [80, 70, 90, 100, W - 340]);
+        table([say('col.date'), say('col.lesions'), say('col.sum'), say('col.fromBaseline'), 'RECIST 1.1'], recist.slice(-8).map((r) => [fmtShort(r.date), String(r.lesionCount), r.sum == null ? '—' : String(r.sum), r.changeFromBaselinePct == null || r.response === 'baseline' ? '—' : `${r.changeFromBaselinePct > 0 ? '+' : ''}${r.changeFromBaselinePct}%`, { text: responseLabel(r.response, language), color: r.response === 'PD' ? C.danger : r.response === 'PR' || r.response === 'CR' ? C.accent : C.fg, bold: true }]), [80, 70, 90, 100, W - 340]);
         const targets = lesions.rows.filter((l) => l.is_target && !l.retired);
         if (targets.length) {
           const recent = studyList.slice(-5);

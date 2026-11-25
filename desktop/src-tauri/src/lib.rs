@@ -111,6 +111,27 @@ fn free_port() -> std::io::Result<u16> {
     Ok(TcpListener::bind(("127.0.0.1", 0))?.local_addr()?.port())
 }
 
+/// MCP clients save the frontend URL. Choose a port once for this data directory.
+fn web_listener(data: &Path) -> Result<TcpListener, String> {
+    let file = data.join("web-port");
+    match fs::read_to_string(&file) {
+        Ok(value) => {
+            let port = value.trim().parse::<u16>().ok().filter(|p| *p != 0)
+                .ok_or_else(|| format!("{}: {}", file.display(), tr("некорректный порт", "invalid port")))?;
+            TcpListener::bind(("127.0.0.1", port)).map_err(|e| format!("127.0.0.1:{port}: {e}"))
+        }
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
+            let listener = TcpListener::bind(("127.0.0.1", 0)).map_err(|e| e.to_string())?;
+            let port = listener.local_addr().map_err(|e| e.to_string())?.port();
+            let mut port_file = OpenOptions::new().write(true).create_new(true).open(&file)
+                .map_err(|e| format!("{}: {e}", file.display()))?;
+            writeln!(port_file, "{port}").map_err(|e| e.to_string())?;
+            Ok(listener)
+        }
+        Err(e) => Err(format!("{}: {e}", file.display())),
+    }
+}
+
 /// The sidecar Node sits next to the app executable (Tauri strips the target suffix from externalBin).
 fn node_path() -> Result<PathBuf, String> {
     let exe = std::env::current_exe().map_err(|e| e.to_string())?;
@@ -186,8 +207,9 @@ fn start(app: &AppHandle) -> Result<Url, String> {
     let logs = data.join("logs");
     fs::create_dir_all(&logs).map_err(|e| format!("{}: {e}", logs.display()))?;
 
+    let reserved_web = web_listener(&data)?;
+    let web_port = reserved_web.local_addr().map_err(|e| e.to_string())?.port();
     let gw_port = free_port().map_err(|e| e.to_string())?;
-    let web_port = free_port().map_err(|e| e.to_string())?;
     let app_url = format!("http://127.0.0.1:{web_port}");
     WEB_PORT.store(web_port, Ordering::Relaxed);
     let deadline = Instant::now() + START_TIMEOUT;
@@ -211,6 +233,7 @@ fn start(app: &AppHandle) -> Result<Url, String> {
     servers.0.lock().unwrap().push(gateway);
     waited?;
 
+    drop(reserved_web);
     let mut web = spawn(
         &node,
         "desktop-launcher.cjs",
@@ -474,6 +497,20 @@ pub fn run() {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn mcp_port_survives_restart_and_reports_conflicts() {
+        let data = std::env::temp_dir().join(format!("mc-port-test-{}", std::process::id()));
+        fs::create_dir_all(&data).unwrap();
+        let first = web_listener(&data).unwrap();
+        let addr = first.local_addr().unwrap();
+        assert!(web_listener(&data).is_err());
+        drop(first);
+        let second = web_listener(&data).unwrap();
+        assert_eq!(second.local_addr().unwrap(), addr);
+        assert!(TcpStream::connect(addr).is_ok());
+        fs::remove_dir_all(data).unwrap();
+    }
 
     #[test]
     fn routes() {

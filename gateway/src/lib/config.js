@@ -35,9 +35,9 @@ export function secretSource(name) {
   const [env, key] = SECRETS[name];
   return process.env[env] ? 'env' : getSetting(key) ? 'settings' : '';
 }
-export async function storeSecret(name, value) {
+export async function storeSecret(name, value, set = setSetting) {
   const [, key] = SECRETS[name];
-  await setSetting(key, String(value || '').trim());
+  await set(key, String(value || '').trim());
 }
 
 const WEAK_JWT = /^(change_me|changeme|secret|dev)$/i;

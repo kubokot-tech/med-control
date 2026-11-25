@@ -126,7 +126,7 @@ export const CATALOG_SEED = [
   { key: 'TSH', name: 'Тиреотропный гормон (ТТГ)', short: 'ТТГ', category: 'blood', unit: 'мМЕ/л', sortOrder: 130, isKey: true,
     aliases: ['thyroid-stimulating hormone (tsh)', 'tsh', 'ттг', 'tsh'], pattern: '(^|[^а-я])ттг([^а-я]|$)|тиреотропн|(^|[^a-z])tsh([^a-z]|$)' },
   { key: 'FT4', name: 'Тироксин (Т4) свободный', short: 'Т4 свободный', category: 'blood', unit: 'пмоль/л', sortOrder: 131,
-    aliases: ['free thyroxine (ft4)', 'ft4', 'т4 свободный'], pattern: 'тироксин.*свободн|свободн.*тироксин|(^|[^a-z])ft4([^a-z]|$)|(^|[^а-я])т4([^а-я]|$)' },
+    aliases: ['free thyroxine (ft4)', 'ft4', 'т4 свободный'], pattern: 'тироксин.*свободн|свободн.*тироксин|(^|[^a-z])ft4([^a-z]|$)|(^|[^а-я])т4[ -]+свободн|свободн[а-я]*[ -]+т4([^а-я0-9]|$)' },
 
   // --- drug levels ---
   { key: 'TAC', name: 'Такролимус (концентрация)', short: 'Такролимус', category: 'blood', unit: 'нг/мл', sortOrder: 140,

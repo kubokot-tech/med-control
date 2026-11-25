@@ -5,6 +5,7 @@
  * (г/дл → г/л, мг/дл → мкмоль/л) use molar factors per marker; incompatible pairs (PDW % vs fL)
  * are left as they are and reported.
  */
+import { comparatorOf } from '../../../shared/labBounds.js';
 import { entry } from './canonical.js';
 
 /** Unit family: a normalized token so that spelling variants compare equal. */
@@ -72,7 +73,7 @@ export function toCanonical(key, value, unit, refLow = null, refHigh = null) {
 }
 
 /** «<», «>», «≤», «≥» (and «<=», «>=») at the start of a result as printed («<0,6»), or ''. */
-export const comparatorOf = (text) => /^\s*([<>≤≥]=?)/.exec(String(text ?? ''))?.[1] || '';
+export { comparatorOf };
 
 /** Numeric text in the app's format (comma decimal), for value_text after a conversion. */
 export function formatValueText(v) {
@@ -82,7 +83,7 @@ export function formatValueText(v) {
 /** One-off pass over stored results: convert values written before unit normalization existed. Idempotent. */
 export async function renormalizeUnits(pool, log = console) {
   const r = await pool.query(
-    `select r.id, t.canonical_key as key, r.value_numeric, r.unit_original, r.unit_canonical, r.ref_low, r.ref_high
+    `select r.id, t.canonical_key as key, r.value_numeric, r.value_text, r.unit_original, r.unit_canonical, r.ref_low, r.ref_high
        from lab_results r join lab_tests t on t.id = r.test_id where t.canonical_key is not null`
   );
   let converted = 0, relabeled = 0, incompatible = 0;
@@ -91,8 +92,10 @@ export async function renormalizeUnits(pool, log = console) {
     if (!target || row.unit_canonical === target) continue; // already canonical
     const c = toCanonical(row.key, row.value_numeric != null ? Number(row.value_numeric) : null, row.unit_original, row.ref_low, row.ref_high);
     if (c.status === 'converted') {
-      await pool.query('update lab_results set value_numeric=$2, ref_low=$3, ref_high=$4, unit_canonical=$5, value_text = case when value_text ~ $6 then $7 else value_text end where id=$1',
-        [row.id, c.value, c.refLow, c.refHigh, c.unit, '^\\s*[<>]?\\s*[0-9]+([.,][0-9]+)?\\s*$', formatValueText(c.value)]);
+      const numericText = /^\s*([<>]=?|[≤≥])?\s*[+-]?\d+([.,]\d+)?\s*$/.test(row.value_text || '');
+      const text = numericText && c.value != null ? comparatorOf(row.value_text) + formatValueText(c.value) : row.value_text;
+      await pool.query('update lab_results set value_numeric=$2, ref_low=$3, ref_high=$4, unit_canonical=$5, value_text=$6 where id=$1',
+        [row.id, c.value, c.refLow, c.refHigh, c.unit, text]);
       converted++;
     } else if (c.status === 'same') {
       await pool.query('update lab_results set unit_canonical=$2 where id=$1', [row.id, c.unit]);

@@ -69,7 +69,7 @@ async function buildPatientProfileUncached(userId, { tz, language }) {
   const unitRu = (u) => doseUnit(u, language);
   const mm = (v) => t(language, 'aiContext.mm', { v });
   const sep = raw(language, 'aiContext.noteSeparator');
-  const [ms, st, le, me, regimen, doses, admins, sym, alerts] = await Promise.all([
+  const [ms, st, le, me, regimen, doses, sym, alerts] = await Promise.all([
     pool.query(`select date::text as date, kind, tone, title, notes from milestones where user_id = $1 and kind <> 'ai_review' order by date`, [userId]),
     pool.query('select id, study_date::text as date, modality, body_region, response, impression_text, created_at from imaging_studies where user_id = $1 order by study_date, created_at', [userId]),
     pool.query('select id, name, location, is_target, retired from lesions where user_id = $1', [userId]),
@@ -78,7 +78,6 @@ async function buildPatientProfileUncached(userId, { tz, language }) {
                   from regimens r join regimen_items ri on ri.regimen_id = r.id join medications m on m.id = ri.medication_id
                  where r.user_id = $1 and (r.end_date is null or r.end_date > now()) order by (m.role = 'systemic') desc, m.sort_order, r.start_date desc`, [userId]),
     pool.query('select regimen_item_id, effective_from::text as effective_from, dose_value, dose_unit, reason from dose_changes where user_id = $1 order by effective_from', [userId]),
-    dayStatuses(userId, { from: addDays(today, -29), to: today }).then((rows) => ({ rows })),
     pool.query('select * from symptom_entries where user_id = $1 and date >= $2::date order by date', [userId, addDays(today, -13)]),
     pool.query(`select triggered_at, context from alerts where user_id = $1 and status = 'OPEN' order by triggered_at desc limit 10`, [userId]),
   ]);
@@ -112,7 +111,7 @@ async function buildPatientProfileUncached(userId, { tz, language }) {
     const lastR = recist.find((r) => r.studyId === last.id);
     lines.push(say('studies', { n: st.rows.length, date: dateRu(last.date), study: `${modalityLabel(last.modality, language) || ''} ${last.body_region || ''}` }).replace(/\s+/g, ' ') +
       (last.response ? say('studyResponse', { response: responseLabel(last.response, language) }) : '') +
-      (lastR ? say('studyRecist', { sum: fmt(lastR.sum), response: responseLabel(lastR.response, language), change: `${lastR.changeFromBaselinePct > 0 ? '+' : ''}${lastR.changeFromBaselinePct}` }) : '') + '.');
+      (lastR?.sum != null ? say('studyRecist', { sum: fmt(lastR.sum), response: responseLabel(lastR.response, language), change: `${lastR.changeFromBaselinePct > 0 ? '+' : ''}${lastR.changeFromBaselinePct}` }) : '') + '.');
     if (last.impression_text) lines.push(say('lastImpression', { text: last.impression_text.replace(/\s+/g, ' ').slice(0, 600) }));
     const targets = lesions.filter((l) => l.isTarget && !l.retired);
     if (targets.length) {
@@ -127,14 +126,15 @@ async function buildPatientProfileUncached(userId, { tz, language }) {
   const reg = regimen.rows.find((x) => x.role === 'systemic') || regimen.rows[0];
   const support = regimen.rows.filter((x) => x !== reg);
   if (reg) {
+    const admins = await dayStatuses(userId, { medicationId: reg.med_id, from: addDays(today, -29), to: today });
     lines.push(say('therapy', { name: reg.name, dose: fmt(reg.dose_value), unit: unitRu(reg.dose_unit), schedule: describeSchedule({ ...scheduleFromRow(reg), startDate: reg.start_date }, language), date: dateRu(reg.start_date) }).replace(/\s+/g, ' '));
-    if (support.length) lines.push(say('supportList', { list: support.map((x) => say('supportItem', { name: x.name, dose: x.dose_value != null ? ` ${fmt(x.dose_value)} ${unitRu(x.dose_unit)}` : '', times: Number(x.times_per_day) > 1 ? say('timesPerDay', { n: x.times_per_day }) : '', instructions: x.instructions ? ` (${x.instructions})` : '', date: dateRu(x.start_date) })).join('; ') }));
+    if (support.length) lines.push(say(support.every((x) => x.role === 'support') ? 'supportList' : 'otherMedications', { list: support.map((x) => say('supportItem', { name: x.name, dose: x.dose_value != null ? ` ${fmt(x.dose_value)} ${unitRu(x.dose_unit)}` : '', times: Number(x.times_per_day) > 1 ? say('timesPerDay', { n: x.times_per_day }) : '', instructions: x.instructions ? ` (${x.instructions})` : '', date: dateRu(x.start_date) })).join('; ') }));
     const regDoses = doses.rows.filter((x) => x.regimen_item_id === reg.item_id); // the main drug's own history
     if (regDoses.length > 1) lines.push(say('doseChanges', { list: regDoses.map((x) => `${dateRu(x.effective_from)} → ${fmt(x.dose_value)} ${unitRu(x.dose_unit)}${x.reason ? ` (${doseNote(x.reason, language)})` : ''}`).join('; ') }));
-    const taken = admins.rows.filter((a) => a.status === 'TAKEN').length;
-    const skipped = admins.rows.filter((a) => a.status === 'SKIPPED').length;
-    const paused = admins.rows.filter((a) => a.status === 'PAUSED').length;
-    const partial = admins.rows.filter((a) => a.status === 'PARTIAL').length;
+    const taken = admins.filter((a) => a.status === 'TAKEN').length;
+    const skipped = admins.filter((a) => a.status === 'SKIPPED').length;
+    const paused = admins.filter((a) => a.status === 'PAUSED').length;
+    const partial = admins.filter((a) => a.status === 'PARTIAL').length;
     const sch = { ...scheduleFromRow(reg), startDate: reg.start_date };
     const doseDays = Array.from({ length: 30 }, (_, i) => addDays(today, -i)).filter((d) => isDoseDay(sch, d)).length;
     lines.push(say('adherence', { doseDays, taken, partial: partial ? say('adherencePartial', { n: partial }) : '', skipped, paused: paused ? say('adherencePaused', { n: paused }) : '', none: Math.max(0, doseDays - taken - partial - skipped - paused) }));

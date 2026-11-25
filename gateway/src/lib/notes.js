@@ -35,10 +35,10 @@ export async function getNote(userId, id) {
 }
 const norm = (x, language) => ({ title: String(x.title || '').trim().slice(0, 200) || t(language, 'feedTitles.noteDefault'), body: String(x.body || ''), tags: [...new Set((x.tags || []).map((t) => String(t).trim().replace(/^#/, '').toLowerCase()).filter(Boolean))].slice(0, 20), url: x.url && /^https?:\/\//i.test(String(x.url).trim()) ? String(x.url).trim().slice(0, 1000) : null });
 
-export async function createNote(userId, x, { tz = DEFAULT_TZ, source = 'manual', sourceName = null, date } = {}) {
+export async function createNote(userId, x, { tz = DEFAULT_TZ, source = 'manual', sourceName = null, date, transact = transaction } = {}) {
   const language = await userLanguage(userId);
   const v = norm(x, language);
-  return transaction(async (client) => {
+  return transact(async (client) => {
     const eventId = await addEvent(client, userId, { type: 'NOTE', date: date || todayKey(tz), time: '12:00', tz, title: t(language, 'feedTitles.note', { title: v.title }), notes: excerptOf(v.body, 160) || null, meta: { source }, source: 'notes' });
     const r = await client.query('insert into notes (user_id, event_id, title, body, tags, url, source, source_name, pinned) values ($1,$2,$3,$4,$5,$6,$7,$8,$9) returning *',
       [userId, eventId, v.title, v.body, v.tags, v.url, source, sourceName, Boolean(x.pinned)]);

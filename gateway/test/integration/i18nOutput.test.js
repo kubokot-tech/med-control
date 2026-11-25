@@ -62,6 +62,12 @@ test('the doctor report PDF in English: headers, footer, dates, file name', { sk
   assert.ok(text.includes('Резекция'), 'what the patient typed stays');
 });
 
+test('explicitly empty doctor report selection cannot export patient data', { skip: SKIP }, async () => {
+  const r = await get('/report/doctor.pdf?sections=');
+  assert.equal(r.statusCode, 400);
+  assert.equal(r.json().error, 'report_sections_required');
+});
+
 test('the doctor report in Russian keeps its words and its file name', { skip: SKIP }, async () => {
   await setLanguage('ru');
   const { text, name } = await pdfText('/report/doctor.pdf?sections=therapy');

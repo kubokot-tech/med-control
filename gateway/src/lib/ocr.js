@@ -11,10 +11,26 @@ import os from 'node:os';
 import path from 'node:path';
 import { createRequire } from 'node:module';
 import { lib as pdfjsLib } from './pdfText.js';
+import { t } from './i18n.js';
 
 const require = createRequire(import.meta.url);
 const LANGS = ['rus', 'eng'];
-export const OCR_MAX_PAGES = 20;
+const MIN_TEXT_CHARS = 80;
+
+/** Both ingestion engines mark page boundaries in plain-text responses. */
+export function pdfLayers(result) {
+  if (Array.isArray(result.pages)) return result.pages;
+  const marked = [...String(result.text || '').matchAll(/<!-- страница (\d+) -->\n([\s\S]*?)(?=<!-- страница \d+ -->|$)/g)];
+  if (!marked.length) return null;
+  const pages = Array(result.pages || Number(marked.at(-1)[1])).fill('');
+  for (const [, n, text] of marked) if (Number(n) > 0 && Number(n) <= pages.length) pages[Number(n) - 1] = text.trim();
+  return pages;
+}
+export function needsPageOcr(result) {
+  const layers = pdfLayers(result);
+  return layers ? !layers.length || layers.some((s) => s.trim().length < MIN_TEXT_CHARS)
+    : (result.chars ?? result.text?.length ?? 0) < MIN_TEXT_CHARS * (result.pages || 1);
+}
 
 let langDir;
 /**
@@ -48,14 +64,14 @@ export function toPnm({ width: w, height: h, kind, data }) {
   return Buffer.concat([Buffer.from(`P6\n${w} ${h}\n255\n`), out]);
 }
 
-/** The largest picture of each page (a scan is one picture per page), at most maxPages pages: [Buffer | null]. */
-export async function pdfPageImages(buf, { maxPages = OCR_MAX_PAGES } = {}) {
+// Decode one page at a time; long documents never hold all of their scan bitmaps in memory.
+async function* pageImages(buf, { layers = [], maxPages = Infinity } = {}) {
   const { getDocument, OPS } = await pdfjsLib();
   const task = getDocument({ data: new Uint8Array(buf), isEvalSupported: false, isOffscreenCanvasSupported: false, isImageDecoderSupported: false, verbosity: 0 });
   const doc = await task.promise;
   try {
-    const out = [];
     for (let n = 1; n <= Math.min(doc.numPages, maxPages); n++) {
+      if (layers[n - 1]?.trim().length >= MIN_TEXT_CHARS) { yield null; continue; }
       const page = await doc.getPage(n);
       const ops = await page.getOperatorList();
       let best = null;
@@ -68,13 +84,18 @@ export async function pdfPageImages(buf, { maxPages = OCR_MAX_PAGES } = {}) {
         } else if (ops.fnArray[i] === OPS.paintInlineImageXObject) img = ops.argsArray[i][0];
         if (img?.data && (!best || img.width * img.height > best.width * best.height)) best = img;
       }
-      out.push(best ? toPnm(best) : null);
+      yield best ? toPnm(best) : null;
       page.cleanup();
     }
-    return out;
   } finally {
     await task.destroy();
   }
+}
+
+export async function pdfPageImages(buf, options) {
+  const out = [];
+  for await (const image of pageImages(buf, options)) out.push(image);
+  return out;
 }
 
 let queue = Promise.resolve();
@@ -113,7 +134,7 @@ export function recognize(images) {
       creating.then((w) => { if (creationTimedOut) w.terminate().catch(() => {}); }, () => {});
       worker = await limit(creating, 45000, local, () => { creationTimedOut = true; });
       const texts = [];
-      for (const img of images) texts.push(img ? (await limit(worker.recognize(img), 60000, local)).data.text.trim() : '');
+      for await (const img of images) texts.push(img ? (await limit(worker.recognize(img), 60000, local)).data.text.trim() : '');
       return texts;
     } finally {
       if (worker) {
@@ -130,14 +151,17 @@ export function recognize(images) {
  * Text of a scanned PDF or a photo: { text, pages, chars }. Pages are marked like pdfPlainText() does, so the rest of
  * the code reads both the same way. Throws { code: 'ocr_failed' } when the file cannot be decoded.
  */
-export async function ocrFile({ mimeType, data }) {
-  let images;
-  try {
-    images = mimeType === 'application/pdf' ? await pdfPageImages(data) : [Buffer.from(data)];
-  } catch (e) {
-    throw Object.assign(new Error(`cannot read the file for recognition: ${e.message}`), { code: 'ocr_failed' });
-  }
-  const pages = await recognize(images).catch((e) => { throw Object.assign(new Error(`recognition failed: ${e?.message || e}`), { code: 'ocr_failed' }); });
-  const text = pages.length === 1 ? pages[0] : pages.map((t, i) => (t ? `<!-- страница ${i + 1} -->\n${t}` : null)).filter(Boolean).join('\n\n');
-  return { text, pages: pages.length, chars: pages.reduce((n, t) => n + t.length, 0) };
+export async function ocrFile({ mimeType, data, layers = [], language }) {
+  const images = mimeType === 'application/pdf' ? pageImages(data, { layers }) : [Buffer.from(data)];
+  const recognized = await recognize(images).catch((e) => { throw Object.assign(new Error(`recognition failed: ${e?.message || e}`), { code: 'ocr_failed' }); });
+  const pages = recognized.map((text, i) => {
+    const original = layers[i]?.trim() || '';
+    if (!original || text.includes(original)) return text;
+    if (!text || original.includes(text)) return original;
+    return `${original}\n${text}`;
+  });
+  const missing = pages.filter((text) => !text).length;
+  const text = pages.length === 1 ? pages[0] : pages.map((s, i) => (s ? `<!-- страница ${i + 1} -->\n${s}` : null)).filter(Boolean).join('\n\n');
+  const warning = text && missing ? '\n\n' + t(language, 'aiContext.unreadPages', { count: missing, total: pages.length }) : '';
+  return { text: text + warning, pages: pages.length, chars: pages.reduce((n, s) => n + s.length, 0), unreadPages: missing };
 }

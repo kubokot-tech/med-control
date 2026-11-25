@@ -41,18 +41,21 @@ function excludeFlags(script) {
 test('backups: the archive of the data folder has no session secret and no first-run code', () => {
   const data = mkdtempSync(path.join(tmpdir(), 'backup-data-'));
   mkdirSync(path.join(data, 'uploads', 'labs'), { recursive: true });
+  mkdirSync(path.join(data, '.medcontrol-restore'));
+  writeFileSync(path.join(data, '.medcontrol-restore', 'staged.pdf'), '%PDF');
   writeFileSync(path.join(data, 'jwt.secret'), 'secret\n');
   writeFileSync(path.join(data, 'setup-code.txt'), 'AAAA-BBBB\n');
   writeFileSync(path.join(data, 'uploads', 'labs', 'abc.pdf'), '%PDF');
   writeFileSync(path.join(data, 'uploads', 'jwt.secret.pdf'), 'a document that only looks alike');
   for (const script of ['backup/backup-loop.sh', 'scripts/backup.sh']) {
     const flags = excludeFlags(script);
-    assert.deepEqual(flags.sort(), ['--exclude=./jwt.secret', '--exclude=./setup-code.txt'], script);
+    assert.deepEqual(flags.sort(), ['--exclude=./.medcontrol-restore', '--exclude=./jwt.secret', '--exclude=./setup-code.txt'], script);
     // the same tar call as in the script: flags first, then the folder
-    assert.match(read(script), /tar czf \S+ (?:"\$\{DATA_EXCLUDE\[@\]\}"|--exclude=\.\/jwt\.secret --exclude=\.\/setup-code\.txt) -C \/data \./, script);
+    assert.match(read(script), /tar czf \S+ (?:"\$\{DATA_EXCLUDE\[@\]\}"|--exclude=\.\/jwt\.secret --exclude=\.\/setup-code\.txt --exclude=\.\/\.medcontrol-restore) -C \/data \./, script);
     const out = path.join(mkdtempSync(path.join(tmpdir(), 'backup-out-')), 'uploads.tar.gz');
     execFileSync('tar', ['czf', out, ...flags, '-C', data, '.']);
     const names = execFileSync('tar', ['tzf', out], { encoding: 'utf8' }).split('\n').filter(Boolean);
+    assert.ok(!names.some((n) => n.startsWith('./.medcontrol-restore/')), script);
     assert.ok(names.includes('./uploads/labs/abc.pdf'), `${script}: the uploads are there`);
     assert.ok(names.includes('./uploads/jwt.secret.pdf'), `${script}: a file that only looks alike stays`);
     assert.ok(!names.some((n) => /(^|\/)jwt\.secret$/.test(n)), `${script}: jwt.secret is out`);

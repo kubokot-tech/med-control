@@ -89,3 +89,55 @@ test('«принял» lands on today of the user\'s own time zone, not Moscow\'
     await db.pool.query(`update users set timezone = 'Europe/Moscow' where id = $1`, [USER_ID]);
   }
 });
+
+test('rotating the chat invalidates the previous handler before it can use the transport or write a dose', { skip: SKIP }, async () => {
+  const before = await db.pool.query('select count(*) as n from administrations');
+  const sent = out.sent.length;
+  const answered = out.answered.length;
+  const previousChat = process.env.TELEGRAM_CHAT_ID;
+  try {
+    process.env.TELEGRAM_CHAT_ID = '222';
+    await bot.handle(msg('принял'));
+    await bot.handleCallback({ id: 'stale', data: 'dose:SKIPPED:2026-03-03', message: { chat: { id: CHAT }, message_id: 1 } });
+    assert.equal(out.sent.length, sent);
+    assert.equal(out.answered.length, answered);
+    assert.deepEqual((await db.pool.query('select count(*) as n from administrations')).rows, before.rows);
+  } finally {
+    process.env.TELEGRAM_CHAT_ID = previousChat;
+  }
+});
+
+test('switching Telegram credentials aborts the old poll and starts a new poll with its bot offset', { skip: SKIP }, async () => {
+  const { startTelegramBot, ensureTelegramBot } = await import('../../src/lib/telegramBot.js');
+  const { setSetting } = await import('../../src/lib/settings.js');
+  const oldToken = process.env.TELEGRAM_BOT_TOKEN;
+  const oldChat = process.env.TELEGRAM_CHAT_ID;
+  const polls = [];
+  const fetchImpl = async (url, init) => {
+    polls.push({ url, signal: init.signal, offset: JSON.parse(init.body).offset });
+    await new Promise((resolve) => init.signal.addEventListener('abort', resolve, { once: true }));
+    return { ok: true, json: async () => ({ ok: true, result: [] }) };
+  };
+  process.env.TELEGRAM_BOT_TOKEN = '10001:synthetic';
+  process.env.TELEGRAM_CHAT_ID = '100';
+  await setSetting('tg_offset_10001', '17');
+  const stop = startTelegramBot({ userId: USER_ID, log: db.quiet, fetchImpl });
+  try {
+    assert.equal(polls[0].offset, 17);
+    process.env.TELEGRAM_BOT_TOKEN = '10002:synthetic';
+    process.env.TELEGRAM_CHAT_ID = '200';
+    await ensureTelegramBot();
+    assert.equal(polls.length, 2);
+    assert.equal(polls[0].signal.aborted, true);
+    assert.match(polls[1].url, /bot10002:/);
+    assert.equal(polls[1].offset, 0);
+    process.env.TELEGRAM_CHAT_ID = '';
+    await ensureTelegramBot();
+    assert.equal(polls[1].signal.aborted, true);
+    assert.equal(polls.length, 2);
+  } finally {
+    await stop();
+    process.env.TELEGRAM_CHAT_ID = oldChat;
+    process.env.TELEGRAM_BOT_TOKEN = oldToken;
+  }
+});

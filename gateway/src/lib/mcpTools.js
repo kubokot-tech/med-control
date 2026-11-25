@@ -133,8 +133,8 @@ export const TOOLS = [
     scope: 'write',
     inputSchema: { type: 'object', additionalProperties: false, required: ['title', 'body'], properties: { title: { type: 'string', maxLength: 200 }, body: { type: 'string', maxLength: 20000 } } },
     args: z.object({ title: z.string().min(1).max(200), body: z.string().min(1).max(20000) }).strict(),
-    run: async (userId, a, { tz, language, tokenName }) => {
-      const n = await createNote(userId, { title: a.title, body: a.body, tags: [raw(language, 'mcp.noteTag')] }, { tz, sourceName: `MCP: ${tokenName}` });
+    run: async (userId, a, { tz, language, tokenName, transact }) => {
+      const n = await createNote(userId, { title: a.title, body: a.body, tags: [raw(language, 'mcp.noteTag')] }, { tz, sourceName: `MCP: ${tokenName}`, transact });
       return { ok: true, noteId: n.id };
     },
   },
@@ -152,10 +152,10 @@ export const TOOLS = [
       date: DAY, wellbeing: z.number().int().min(1).max(5).optional(), bpSys: z.number().int().min(60).max(260).optional(), bpDia: z.number().int().min(30).max(160).optional(),
       pulse: z.number().int().min(25).max(250).optional(), weightKg: z.number().min(20).max(300).optional(), tempC: z.number().min(34).max(43).optional(), notes: z.string().max(2000).optional(),
     }).strict(),
-    run: async (userId, a, { tz }) => {
+    run: async (userId, a, { tz, transact }) => {
       const { date, ...e } = a;
       if (date > todayKey(tz)) return { ok: false, error: 'future_date' };
-      const { entry } = await saveSymptoms(userId, date, e, tz, { appendNotes: true });
+      const { entry } = await saveSymptoms(userId, date, e, tz, { appendNotes: true, transact });
       return { ok: true, entry };
     },
   },

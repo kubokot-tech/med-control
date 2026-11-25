@@ -97,7 +97,7 @@ export default function ConsultsPage() {
     try {
       const fd = new FormData();
       fd.set('summary', summary);
-      for (const f of files) fd.append('file', f, f.name);
+      for (const f of files) fd.append('file', f);
       const r = await apiFetch(`/api/gateway/appointments/${reportFor.id}/report`, { method: 'POST', body: fd });
       if (!r.ok) throw new Error(await r.text());
       setReportFor(null); setSummary(''); setFiles([]);

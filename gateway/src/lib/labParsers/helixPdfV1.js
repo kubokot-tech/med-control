@@ -24,6 +24,22 @@ function parseRef(ref) {
 
 const lines = (text) => splitlines(String(text).replace(/ /g, ' ')).map(strip).filter(Boolean);
 
+// Read the title of this mini-table across the optional specimen and method lines.
+// A standalone number can end a title («Интерлейкин 6»); a value followed by units is a row.
+function numberedTitleBeforeHeader(ls, headerIndex) {
+  for (let i = headerIndex - 1; i >= 0; i--) {
+    const line = ls[i];
+    const low = line.toLowerCase();
+    if (low.startsWith('метод') || low.startsWith('образец') || low.startsWith('вид материала') ||
+        low.startsWith('валидация') || (line.includes('№') && low.includes('валидация'))) continue;
+    if (!/\d/.test(line) || !/^\p{L}[\p{L}\d\s()-]*$/u.test(line) || isNoise(line)) return null;
+    const words = split(line);
+    if (words.some((word, j) => NUM.test(word) && UNIT.test(words[j + 1] ?? ''))) return null;
+    return line;
+  }
+  return null;
+}
+
 function isNoise(line) {
   const low = strip(line.toLowerCase());
   if (PERSON.test(strip(line))) return true;
@@ -79,7 +95,12 @@ export function parseText(text) {
     if (inTable && !isMethod(low) && !low.startsWith('название/показатель') && !low.startsWith('комментарий')) {
       if (!hasDigit && pyLen(ln) > 2 && !GENERIC_LABELS.has(low)) { section = ln; continue; }
     }
-    if (low.startsWith('название/показатель')) { inTable = true; pendingName = null; continue; }
+    if (low.startsWith('название/показатель')) {
+      section = numberedTitleBeforeHeader(ls, i) ?? section;
+      inTable = true;
+      pendingName = null;
+      continue;
+    }
     if (!inTable) continue;
     if (ln.startsWith('*') || low.startsWith('отчет создан')) { inTable = false; pendingName = null; continue; }
     if (isMethod(low)) continue;

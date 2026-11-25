@@ -23,8 +23,15 @@ fi
 tg() {
   [ -n "$TELEGRAM_BOT_TOKEN" ] && [ -n "$TELEGRAM_CHAT_ID" ] || { echo "tg (not configured): $1"; return 0; }
   url="https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage"
-  if [ -n "$EGRESS_PROXY" ] && curl -sS -m 15 -x "$EGRESS_PROXY" -X POST "$url" --data-urlencode "chat_id=$TELEGRAM_CHAT_ID" --data-urlencode "text=$1" -o /dev/null 2>/dev/null; then return 0; fi
-  curl -sS -m 15 -X POST "$url" --data-urlencode "chat_id=$TELEGRAM_CHAT_ID" --data-urlencode "text=$1" -o /dev/null || echo "telegram send failed (proxy and direct)"
+  text=$1
+  send() {
+    curl -fsS -m 15 "$@" -X POST "$url" --data-urlencode "chat_id=$TELEGRAM_CHAT_ID" --data-urlencode "text=$text" |
+      jq -e '.ok == true' >/dev/null
+  }
+  if [ -n "$EGRESS_PROXY" ] && send -x "$EGRESS_PROXY" 2>/dev/null; then return 0; fi
+  if send 2>/dev/null; then return 0; fi
+  echo "telegram send failed (proxy and direct)" >&2
+  return 1
 }
 sleep 30
 while :; do
@@ -33,11 +40,11 @@ while :; do
   ok=$(printf '%s' "$json" | jq -r '.ok // false' 2>/dev/null)
   if [ "$code" = "200" ] && [ "$ok" = "true" ]; then
     fails=0
-    if [ "$state" = "fail" ]; then tg "$(say_up)"; state=ok; fi
+    if [ "$state" = "fail" ]; then tg "$(say_up)" && state=ok; fi
     degraded=$(printf '%s' "$json" | jq -r '.degraded | join("; ")' 2>/dev/null)
     now=$(date +%s)
     if [ -n "$degraded" ] && { [ "$degraded" != "$last_degraded" ] || [ $((now - last_degraded_at)) -gt 86400 ]; }; then
-      tg "$(say_degraded "$degraded")"; last_degraded="$degraded"; last_degraded_at=$now
+      if tg "$(say_degraded "$degraded")"; then last_degraded="$degraded"; last_degraded_at=$now; fi
     fi
     [ -z "$degraded" ] && last_degraded=""
     [ -n "$HEALTHCHECKS_URL" ] && curl -sS -m 10 -o /dev/null "$HEALTHCHECKS_URL" || true
@@ -46,8 +53,7 @@ while :; do
     fails=$((fails + 1))
     echo "$(date '+%F %T') FAIL #$fails http=$code $(printf '%s' "$json" | head -c 200)"
     if [ "$fails" -ge 2 ] && [ "$state" != "fail" ]; then
-      tg "$(say_down "$code" "$(printf '%s' "$json" | jq -r '.degraded | join("; ")' 2>/dev/null | head -c 300)")"
-      state=fail
+      tg "$(say_down "$code" "$(printf '%s' "$json" | jq -r '.degraded | join("; ")' 2>/dev/null | head -c 300)")" && state=fail
     fi
   fi
   echo "$state $fails" > "$STATE"

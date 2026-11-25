@@ -1,3 +1,5 @@
+import { comparatorOf } from '../../../shared/labBounds.js';
+import { unitFamily } from './units.js';
 /** Shared query helpers for the labs routes (summary, series, exports). */
 
 export const UUID_RX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -57,6 +59,13 @@ export function readLabsQuery(req) {
   };
 }
 
+// SQL equivalents of the conclusive lower/upper range checks, for lab_results_eff (r).
+const definitelyLow = `(coalesce(r.value_text, '') !~ '^[[:space:]]*[>≥]' and
+  (r.value_numeric < r.ref_low or (r.value_numeric = r.ref_low and r.value_text ~ '^[[:space:]]*<[0-9+., -]')))`;
+const definitelyHigh = `(coalesce(r.value_text, '') !~ '^[[:space:]]*[<≤]' and
+  (r.value_numeric > r.ref_high or (r.value_numeric = r.ref_high and r.value_text ~ '^[[:space:]]*>[0-9+., -]')))`;
+export const outOfRangeSql = `(${definitelyLow} or ${definitelyHigh}) is true`;
+
 /**
  * ORDER BY tail that picks one result per (test, month) for the pivot:
  * worst = the value farthest outside its own reference (relative), then the highest; latest = most recent; max = highest.
@@ -65,7 +74,10 @@ export function monthPickOrder(pick) {
   if (pick === 'latest') return 'r.collected_at desc';
   if (pick === 'max') return '(r.value_numeric is null), r.value_numeric desc nulls last, r.collected_at desc';
   return `(r.value_numeric is null),
-          greatest(coalesce((r.value_numeric - r.ref_high) / nullif(abs(r.ref_high), 0), 0), coalesce((r.ref_low - r.value_numeric) / nullif(abs(r.ref_low), 0), 0)) desc nulls last,
+          (${outOfRangeSql}) desc,
+          case when ${definitelyHigh} then (r.value_numeric - r.ref_high) / nullif(abs(r.ref_high), 0)
+               when ${definitelyLow} then (r.ref_low - r.value_numeric) / nullif(abs(r.ref_low), 0)
+               else 0 end desc nulls last,
           r.value_numeric desc nulls last, r.collected_at desc`;
 }
 
@@ -87,16 +99,7 @@ export function refText(low, high, fmt = String) {
 }
 
 /** 'high' | 'low' | 'ok' against a range that may be open on one side («< 5» is (null, 5)); '' without a value or a range. */
-export function flag(valNum, refLow, refHigh) {
-  if (valNum == null || (refLow == null && refHigh == null)) return '';
-  const v = Number(valNum);
-  const lo = refLow == null ? null : Number(refLow);
-  const hi = refHigh == null ? null : Number(refHigh);
-  if (Number.isNaN(v)) return '';
-  if (hi != null && v > hi) return 'high';
-  if (lo != null && v < lo) return 'low';
-  return 'ok';
-}
+export { rangeFlag as flag } from '../../../shared/labBounds.js';
 
 /** Correlated subquery resolving the ingest document for a lab_results row (alias r). */
 export const DOCUMENT_ID_SUBQUERY = `(
@@ -110,10 +113,14 @@ export const DOCUMENT_ID_SUBQUERY = `(
 /** Map ordered lab_results rows to series points with delta to the previous numeric value. */
 export function mapSeriesPoints(rows) {
   let prevNum = null;
+  let prevUnit = null;
   return rows.map((row) => {
     const num = row.value_numeric !== null ? Number(row.value_numeric) : null;
-    const delta = (num !== null && prevNum !== null) ? (num - prevNum) : null;
-    if (num !== null) prevNum = num;
+    const unit = unitFamily(row.unit_canonical);
+    const exact = num !== null && !comparatorOf(row.value_text);
+    const delta = exact && prevNum !== null && unit && unit === prevUnit ? num - prevNum : null;
+    prevNum = exact ? num : null;
+    prevUnit = unit;
     return {
       date: row.collected_at,
       valueNum: num,

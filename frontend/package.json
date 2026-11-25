@@ -1,6 +1,6 @@
 {
   "name": "medcontrol-frontend",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "license": "AGPL-3.0-only",
   "author": "Авторы MedControl",
   "private": true,
@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@simplewebauthn/browser": "^14.0.0",
-    "next": "15.5.28",
+    "next": "15.5.29",
     "react": "19.2.9",
     "react-dom": "19.2.9",
     "react-markdown": "^9.1.0",

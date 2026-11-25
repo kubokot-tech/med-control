@@ -126,14 +126,15 @@ export function parseText(text) {
     if (!parts.length) continue;
     const vidx = parts.findIndex((tok) => VALUE.test(tok));
 
-    if (vidx === -1) {
+    // A section title can end in a separate number, e.g. «Интерлейкин 6».
+    const numberedTitle = vidx > 0 && vidx === parts.length - 1 && /^[0-9]+$/.test(parts[vidx]) && /^\p{L}/u.test(ln);
+    if (vidx === -1 || numberedTitle) {
       // not a row: a new analyte title (digits allowed, «Тироксин (Т4) свободный») or a wrapped name
       if (pyLen(ln) > 2 && !GENERIC_LABELS.has(low)) section = ln;
       else pendingName = ln;
       continue;
     }
 
-    // the unit sits right after the value; a number without a unit is not a measurement row
     if (vidx + 1 >= parts.length || !looksUnit(parts[vidx + 1])) continue;
     const unit = parts[vidx + 1];
 

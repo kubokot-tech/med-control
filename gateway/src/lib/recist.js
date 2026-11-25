@@ -19,29 +19,36 @@ export function computeRecist(studies, lesions, measurements) {
   const byStudy = new Map();
   for (const m of measurements) {
     if (!targets.has(m.lesionId) || m.sizeMm == null) continue;
-    if (!byStudy.has(m.studyId)) byStudy.set(m.studyId, []);
-    byStudy.get(m.studyId).push(Number(m.sizeMm));
+    if (!byStudy.has(m.studyId)) byStudy.set(m.studyId, new Map());
+    byStudy.get(m.studyId).set(m.lesionId, Number(m.sizeMm));
   }
   const ordered = studies.slice().sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : String(a.createdAt || '') < String(b.createdAt || '') ? -1 : 1));
   const out = [];
   const state = new Map(); // group -> { baseline, nadir }
   for (const s of ordered) {
     const sizes = byStudy.get(s.id);
-    if (!sizes || !sizes.length) continue;
+    if (!sizes || !sizes.size) continue;
     const group = modalityGroup(s.modality);
     const st = state.get(group) || { baseline: null, nadir: null };
-    const sum = Math.round(sizes.reduce((a, b) => a + b, 0) * 10) / 10;
+    // Compare the same targets within a modality. A missing measurement differs from zero.
+    if (st.targets && (st.targets.size !== sizes.size || [...st.targets].some((id) => !sizes.has(id)))) {
+      out.push({ studyId: s.id, date: s.date, group, sum: null, lesionCount: sizes.size,
+        baseline: st.baseline, nadir: st.nadir, changeFromBaselinePct: null, changeFromNadirPct: null, response: 'NA' });
+      continue;
+    }
+    const sum = Math.round([...sizes.values()].reduce((a, b) => a + b, 0) * 10) / 10;
     let response;
     if (st.baseline == null) {
       response = 'baseline';
+      st.targets = new Set(sizes.keys());
       st.baseline = sum;
       st.nadir = sum;
     } else if (sum === 0) {
       response = 'CR';
-    } else if (sum <= 0.7 * st.baseline) {
-      response = 'PR';
     } else if (sum >= 1.2 * st.nadir && sum - st.nadir >= 5) {
       response = 'PD';
+    } else if (sum <= 0.7 * st.baseline) {
+      response = 'PR';
     } else {
       response = 'SD';
     }
@@ -50,7 +57,7 @@ export function computeRecist(studies, lesions, measurements) {
       date: s.date,
       group,
       sum,
-      lesionCount: sizes.length,
+      lesionCount: sizes.size,
       baseline: st.baseline,
       nadir: st.nadir,
       changeFromBaselinePct: st.baseline ? Math.round(((sum - st.baseline) / st.baseline) * 100) : 0,

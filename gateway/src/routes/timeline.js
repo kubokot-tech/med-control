@@ -7,7 +7,7 @@ import { bodyUnits } from '../../../shared/units.js';
 import { DEFAULT_LANGUAGE } from '../../../shared/format.js';
 import { t } from '../lib/i18n.js';
 import { DEFAULT_TZ } from '../lib/dates.js';
-import { UUID_RX } from '../lib/labsQuery.js';
+import { UUID_RX, outOfRangeSql } from '../lib/labsQuery.js';
 
 function encodeCursor(occurredAt, id) {
   return Buffer.from(`${new Date(occurredAt).toISOString()}|${id}`, 'utf8').toString('base64url');
@@ -55,20 +55,18 @@ export default async function timelineRoutes(app) {
 
     const r = await pool.query(
       `select e.id, e.type, e.occurred_at, e.title, e.notes, e.tags, e.meta, e.source, (select n.id from notes n where n.event_id = e.id limit 1) as note_id,
-              to_char(e.occurred_at at time zone $2, 'YYYY-MM-DD') as day,
+              coalesce(d.doc_date::text, to_char(e.occurred_at at time zone $2, 'YYYY-MM-DD')) as day,
               d.id as document_id, d.lab_name, lr.total, lr.flagged
        from events e
        left join lateral (
-         select d.id, d.lab_name from ingest_documents d where d.event_id = e.id
+         select d.id, d.lab_name, d.doc_date from ingest_documents d where d.event_id = e.id
          union all
-         select d.id, d.lab_name from attachments a join ingest_documents d on d.user_id = a.user_id and d.sha256 = a.sha256 where a.event_id = e.id and d.event_id is null
+         select d.id, d.lab_name, d.doc_date from attachments a join ingest_documents d on d.user_id = a.user_id and d.sha256 = a.sha256 where a.event_id = e.id and d.event_id is null
          limit 1
        ) d on e.type = 'LAB_RESULT'
        left join lateral (
          select count(*)::int as total,
-                count(*) filter (
-                  where r.value_numeric < r.ref_low or r.value_numeric > r.ref_high
-                )::int as flagged
+                count(*) filter (where ${outOfRangeSql})::int as flagged
          from lab_results_eff r
          where r.source_event_id = e.id
        ) lr on e.type = 'LAB_RESULT'

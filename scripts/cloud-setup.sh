@@ -1,26 +1,40 @@
 #!/usr/bin/env bash
-# One-time cloud backup setup on the server (run from the app directory with the stack up; needs .env, an empty one will do):
-#   YC_ACCESS_KEY=... YC_SECRET_KEY=... YC_BUCKET=medcontrol-backup bash scripts/cloud-setup.sh
-# An example for one S3-compatible provider: the endpoint and region default to Yandex Object Storage, set YC_ENDPOINT
-# and YC_REGION for another. The backup service itself takes any rclone remote named in CLOUD_REMOTE (docs/OPERATIONS.md).
-# Writes $RCLONE_DIR/rclone.conf with an S3 remote and a crypt remote on top of it,
-# generates the encryption key, prints it ONCE and stores a copy in $RCLONE_DIR/CRYPT-KEY.txt (move it to a password manager).
-# Nothing is typed into this script by the assistant: keys come from your shell environment.
+# Prepare or verify the encrypted cloud backup remote. See docs/OPERATIONS.md.
 set -euo pipefail
+umask 077
 cd "$(dirname "$0")/.."
-set -a; . ./.env; set +a
-: "${YC_ACCESS_KEY:?set YC_ACCESS_KEY}" "${YC_SECRET_KEY:?set YC_SECRET_KEY}" "${YC_BUCKET:?set YC_BUCKET}"
-: "${YC_ENDPOINT:=storage.yandexcloud.net}" "${YC_REGION:=ru-central1}" "${RCLONE_DIR:=./rclone}"
+if [ -f .env ]; then set -a; . ./.env; set +a; fi
+if [ -z "${RCLONE_DIR:-}" ] && [ -f ./rclone/rclone.conf ]; then RCLONE_DIR=./rclone; fi
+: "${RCLONE_DIR:=../medcontrol-rclone}"
 mkdir -p "$RCLONE_DIR"
-obscure() { docker compose run --rm -T --entrypoint rclone backup obscure "$1"; }
-if [ -f "$RCLONE_DIR/CRYPT-KEY.txt" ]; then
-  KEY=$(sed -n 's/^password=//p' "$RCLONE_DIR/CRYPT-KEY.txt"); SALT=$(sed -n 's/^salt=//p' "$RCLONE_DIR/CRYPT-KEY.txt")
-  echo "cloud-setup: reusing existing crypt key from $RCLONE_DIR/CRYPT-KEY.txt"
+config_dir=$(cd "$RCLONE_DIR" && pwd)
+mkdir "$config_dir/.setup-lock" || { echo "Another setup may be running; inspect $config_dir/.setup-lock" >&2; exit 1; }
+temp=$(mktemp -d "$config_dir/.setup.XXXXXX")
+trap 'rm -rf "$temp"; rmdir "$config_dir/.setup-lock"' EXIT
+rclone_run() { docker compose run --rm --no-deps -T -v "$config_dir:/cloud-setup:ro" --entrypoint rclone backup "$@"; }
+verify() {
+  local config="/cloud-setup/$1"
+  rclone_run --config "$config" listremotes --long | awk '$1 == "yc-crypt:" && $2 == "crypt" {ok=1} END {exit !ok}'
+  rclone_run --config "$config" lsf --max-depth 1 yc-crypt: > /dev/null
+}
+if [ -e "$config_dir/rclone.conf" ]; then
+  verify rclone.conf
+  echo "Existing yc-crypt configuration verified."
 else
-  KEY=$(openssl rand -base64 33 | tr -d '\n'); SALT=$(openssl rand -base64 24 | tr -d '\n')
-  printf 'password=%s\nsalt=%s\n' "$KEY" "$SALT" > "$RCLONE_DIR/CRYPT-KEY.txt"; chmod 600 "$RCLONE_DIR/CRYPT-KEY.txt"
-fi
-cat > "$RCLONE_DIR/rclone.conf" <<CONF
+  : "${YC_ACCESS_KEY:?set YC_ACCESS_KEY}" "${YC_SECRET_KEY:?set YC_SECRET_KEY}" "${YC_BUCKET:?set YC_BUCKET}"
+  : "${YC_ENDPOINT:=storage.yandexcloud.net}" "${YC_REGION:=ru-central1}"
+  keys="$config_dir/CRYPT-KEY.txt"
+  if [ -f "$keys" ]; then
+    key=$(sed -n 's/^password=//p' "$keys"); salt=$(sed -n 's/^salt=//p' "$keys")
+    [ -n "$key" ] && [ -n "$salt" ] || { echo "Invalid saved crypt key" >&2; exit 1; }
+  else
+    key=$(openssl rand -base64 33); salt=$(openssl rand -base64 24)
+    printf 'password=%s\nsalt=%s\n' "$key" "$salt" > "$temp/key"
+    mv "$temp/key" "$keys"
+  fi
+  obscured_key=$(printf '%s' "$key" | rclone_run obscure -)
+  obscured_salt=$(printf '%s' "$salt" | rclone_run obscure -)
+  cat > "$temp/rclone.conf" <<CONF
 [yc]
 type = s3
 provider = Other
@@ -36,17 +50,12 @@ type = crypt
 remote = yc:$YC_BUCKET
 filename_encryption = standard
 directory_name_encryption = true
-password = $(obscure "$KEY")
-password2 = $(obscure "$SALT")
+password = $obscured_key
+password2 = $obscured_salt
 CONF
-chmod 600 "$RCLONE_DIR/rclone.conf"
-echo "cloud-setup: checking access to bucket $YC_BUCKET ..."
-docker compose run --rm -T --entrypoint rclone backup lsd yc: >/dev/null && echo "cloud-setup: bucket reachable"
-grep -q '^CLOUD_REMOTE=' .env || echo 'CLOUD_REMOTE=yc-crypt:' >> .env
-grep -q '^RCLONE_DIR=' .env || echo "RCLONE_DIR=$RCLONE_DIR" >> .env
-cat <<MSG
-
-Готово. Ключ шифрования (без него облачная копия бесполезна) сохранён в $RCLONE_DIR/CRYPT-KEY.txt.
-Скопируйте обе строки из этого файла в менеджер паролей, затем можно удалить файл: rm $RCLONE_DIR/CRYPT-KEY.txt
-Первая выгрузка: docker compose up -d backup && docker compose exec backup bash /backup-loop.sh once
-MSG
+  verify "$(basename "$temp")/rclone.conf"
+  mv "$temp/rclone.conf" "$config_dir/rclone.conf"
+fi
+if [ -z "${CLOUD_REMOTE:-}" ]; then printf '\nCLOUD_REMOTE=yc-crypt:\n' >> .env; fi
+if ! grep -q '^RCLONE_DIR=.' .env; then printf '\nRCLONE_DIR=%q\n' "$RCLONE_DIR" >> .env; fi
+echo "Cloud backup configuration verified. Store the crypt key and salt in your password manager."

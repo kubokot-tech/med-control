@@ -124,3 +124,16 @@ test('in US lab units: series, summary and own ranges convert; the database stay
   assert.ok(Math.abs(o.rows[0].hi - 5.495) < 0.01);
   await setUserLocale(USER_ID, { prefs: { labUnits: 'auto' } });
 });
+
+test('the monthly pivot keeps each measurement in its own units and reference range', { skip: SKIP }, async () => {
+  const { commitParsed } = await import('../../src/lib/labsCommit.js');
+  const { buildSummary } = await import('../../src/lib/labsSummary.js');
+  await commitParsed({ userId: USER_ID, buf: Buffer.concat([PDF, Buffer.from('mixed-hgb')]), filename: 'mixed.pdf', parsed: {
+    source: 'mknc_pdf_v1', lab_name: 'Fixture', doc_date: '2026-06-01',
+    observations: [{ test_name_raw: 'Гемоглобин', result_text: '9', result_num: 9, unit_raw: 'ммоль/л', ref_low: 8, ref_high: 11 }],
+  } });
+  const summary = await buildSummary({ userId: USER_ID, pick: 'last', range: 'all' });
+  const cells = summary.rows.find((r) => r.test === 'HGB').cells;
+  assert.equal(cells['2026-02'].unit, 'г/л');
+  assert.deepEqual([cells['2026-06'].unit, cells['2026-06'].valueNum, cells['2026-06'].refLow, cells['2026-06'].refHigh], ['ммоль/л', 9, 8, 11]);
+});

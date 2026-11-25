@@ -35,7 +35,7 @@ export default async function alertsRoutes(app) {
     const userId = req.user.sub;
     const tz = req.user.tz || DEFAULT_TZ;
     const labs = await pool.query(
-      `select distinct on (t.canonical_key) t.canonical_key as key, t.code, r.value_numeric, r.unit_canonical, r.ref_low, r.ref_high, r.source_event_id, r.collected_at
+      `select distinct on (t.canonical_key) t.canonical_key as key, t.code, r.value_numeric, r.value_text, r.unit_canonical, r.ref_low, r.ref_high, r.source_event_id, r.collected_at
        from lab_results_eff r join lab_tests t on t.id = r.test_id
        where r.user_id = $1 and t.canonical_key is not null and r.value_numeric is not null
        order by t.canonical_key, r.collected_at desc`,
@@ -43,7 +43,7 @@ export default async function alertsRoutes(app) {
     );
     const format = await userFormat(userId);
     const findings = labFindings(
-      labs.rows.map((x) => ({ key: x.key, code: x.code, value: x.value_numeric, unit: x.unit_canonical, refLow: x.ref_low, refHigh: x.ref_high, eventId: x.source_event_id })),
+      labs.rows.map((x) => ({ key: x.key, code: x.code, value: x.value_numeric, valueText: x.value_text, unit: x.unit_canonical, refLow: x.ref_low, refHigh: x.ref_high, eventId: x.source_event_id })),
       { format },
     ).map((f, i) => ({ ...f, dedup: `lab:${f.key}:${labs.rows.find((x) => x.key === f.key)?.source_event_id || 'x'}` }));
 

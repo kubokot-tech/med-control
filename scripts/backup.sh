@@ -1,36 +1,33 @@
-#!/usr/bin/env bash
-# Backup Postgres (pg_dump -Fc) and the uploads volume (dtcdata) into $BACKUP_DIR/<stamp>/ (as the backup service:
-# ../medcontrol-backups by default, next to the code folder).
-# Keeps the 14 newest backups. Requires Docker (compose stack running); ./.env is optional.
-# Like the backup service, the archive leaves out jwt.secret (the key that signs sessions) and setup-code.txt: a copy
-# of the backup must not be enough to forge a session; a restored install makes a new secret.
-set -euo pipefail
+#!/bin/sh
+# Create a restorable database + uploads backup of the active Compose project.
+set -eu
+umask 077
 cd "$(dirname "$0")/.."
-
-# .env is optional (a default install has none); the defaults below are the ones docker-compose.yml uses
-if [ -f ./.env ]; then set -a; . ./.env; set +a; fi
-POSTGRES_USER=${POSTGRES_USER:-dtc}
-POSTGRES_DB=${POSTGRES_DB:-dtc}
-
-STAMP=$(date +%F_%H%M)
-ROOT=${BACKUP_DIR:-../medcontrol-backups}
-DEST=$ROOT/$STAMP
-mkdir -p "$DEST"
-
-echo "backup: dumping database $POSTGRES_DB -> $DEST/db.dump"
-docker compose exec -T postgres pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Fc > "$DEST/db.dump"
-
-# this project's volume only: the demo and test stacks have a dtcdata volume too
-VOL=$(docker volume ls -q --filter "label=com.docker.compose.project=${COMPOSE_PROJECT_NAME:-medcontrol}" --filter "label=com.docker.compose.volume=dtcdata" | head -n1)
-if [ -z "$VOL" ]; then
-  echo "backup: docker volume for 'dtcdata' not found (is the compose stack created?)" >&2
-  exit 1
+. ./backup/rotation.sh
+if [ -f .env ]; then set -a; . ./.env; set +a; fi
+root=${BACKUP_DIR:-../medcontrol-backups}
+keep=${BACKUP_KEEP:-14}
+stamp=$(date +%F_%H%M%S)
+if [ "$#" -gt 0 ]; then
+  [ "$#" = 2 ] && [ "$1" = --predeploy ] || exit 2
+  case "$2" in ''|.*|*[!A-Za-z0-9_.-]*) echo "Invalid deployment tag" >&2; exit 2 ;; esac
+  root=backups/predeploy; stamp=$2; keep=5
 fi
-echo "backup: archiving uploads volume $VOL -> $DEST/uploads.tar.gz"
-docker run --rm -v "$VOL:/data:ro" -v "$(cd "$DEST" && pwd):/backup" alpine tar czf /backup/uploads.tar.gz --exclude=./jwt.secret --exclude=./setup-code.txt -C /data .
-
-# Retention: keep the 14 newest backup dirs.
-ls -1dt "$ROOT"/*/ | tail -n +15 | xargs -r rm -rf
-
-echo "backup: done ($DEST)"
-ls -lh "$DEST/db.dump" "$DEST/uploads.tar.gz"
+mkdir -p "$root"
+dest="$root/$stamp"
+lock="$root/.lock-$stamp"
+mkdir "$lock" || { echo "Backup already running for $stamp" >&2; exit 1; }
+trap 'rmdir "$lock"' EXIT
+[ ! -e "$dest" ] || { echo "Backup already exists: $dest" >&2; exit 1; }
+stage=$(mktemp -d "$root/.partial.XXXXXX")
+trap 'rm -rf "$stage"; rmdir "$lock"' EXIT
+docker compose exec -T postgres pg_dump -U "${POSTGRES_USER:-dtc}" -d "${POSTGRES_DB:-dtc}" -Fc > "$stage/db.dump"
+# Run inside the active gateway: /data is its actual mount, including bind mounts.
+docker compose exec -T gateway tar czf - --exclude=./jwt.secret --exclude=./setup-code.txt --exclude=./.medcontrol-restore -C /data . > "$stage/uploads.tar.gz"
+[ -s "$stage/db.dump" ] && [ -s "$stage/uploads.tar.gz" ] || exit 1
+docker compose exec -T postgres pg_restore --list < "$stage/db.dump" >/dev/null
+tar tzf "$stage/uploads.tar.gz" >/dev/null
+printf '%s\n' "$stamp" > "$stage/.medcontrol-complete"
+mv "$stage" "$dest"
+rotate_copies "$root" "$keep"
+echo "backup: done ($dest)"

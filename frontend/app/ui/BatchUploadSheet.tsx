@@ -48,7 +48,7 @@ export default function BatchUploadSheet({ files, defaultKind = 'document', onCl
     try {
       const fd = new FormData();
       fd.set('meta', JSON.stringify(rows.map((r) => ({ date: r.date, kind: r.kind, title: r.title.trim(), ...(r.kind === 'imaging' ? { modality: r.modality } : {}) }))));
-      for (const r of rows) fd.append('file', r.file, r.file.name);
+      for (const r of rows) fd.append('file', r.file);
       const res = await apiFetch('/api/gateway/milestones/batch', { method: 'POST', body: fd });
       const j = await res.json();
       if (!res.ok) throw new Error(errorRu(j));

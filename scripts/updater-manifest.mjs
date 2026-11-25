@@ -60,8 +60,10 @@ export function manifest({ version, repo, dist, changelog, releaseBody = '', now
   for (const [key, file] of Object.entries(PACKAGES)) {
     const sig = path.join(dist, `${file}.sig`);
     if (!fs.existsSync(path.join(dist, file)) || !fs.existsSync(sig)) throw new Error(`missing ${file} or its .sig in ${dist}`);
+    const signature = fs.readFileSync(sig, 'utf8').trim();
+    if (!signature || !fs.statSync(path.join(dist, file)).size) throw new Error(`empty package or signature for ${file}`);
     platforms[key] = {
-      signature: fs.readFileSync(sig, 'utf8').trim(),
+      signature,
       url: `https://github.com/${repo}/releases/download/v${version}/${file}`,
     };
   }

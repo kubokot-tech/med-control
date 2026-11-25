@@ -94,7 +94,7 @@ export default function NotePage() {
     setBusy(true); setErr(null);
     try {
       const fd = new FormData();
-      for (const f of Array.from(files)) fd.append('file', f, f.name);
+      for (const f of Array.from(files)) fd.append('file', f);
       const r = await apiFetch(`/api/gateway/notes/${id}/files`, { method: 'POST', body: fd });
       const j = await r.json();
       if (!r.ok) throw new Error(errorRu(j));

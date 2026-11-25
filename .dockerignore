@@ -8,3 +8,6 @@
 frontend/.next
 gateway/test
 **/*.tsbuildinfo
+
+!db
+!db/migrations

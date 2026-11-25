@@ -38,11 +38,10 @@ export async function buildDossierMarkdown(userId, { tz = DEFAULT_TZ, from, to, 
   const today = todayKey(tz);
   to = to || today;
   from = from || addDays(to, -365);
-  const [regimen, doses, admins, labs, studies, lesions, meas, sym, alerts, appts, infusions, courses] = await Promise.all([
-    pool.query(`select r.start_date::text as start_date, ri.id as item_id, m.name, m.role, m.instructions, ri.dose_value, ri.dose_unit, ri.frequency_rule, ri.schedule_days, ri.interval_days, ri.times_per_day from regimens r join regimen_items ri on ri.regimen_id = r.id join medications m on m.id = ri.medication_id
+  const [regimen, doses, labs, studies, lesions, meas, sym, alerts, appts, infusions, courses] = await Promise.all([
+    pool.query(`select r.start_date::text as start_date, ri.id as item_id, m.id as med_id, m.name, m.role, m.instructions, ri.dose_value, ri.dose_unit, ri.frequency_rule, ri.schedule_days, ri.interval_days, ri.times_per_day from regimens r join regimen_items ri on ri.regimen_id = r.id join medications m on m.id = ri.medication_id
                 where r.user_id = $1 and (r.end_date is null or r.end_date > now()) order by (m.role = 'systemic') desc, m.sort_order, r.start_date desc`, [userId]),
     pool.query(`select regimen_item_id, effective_from::text as effective_from, dose_value, dose_unit, reason from dose_changes where user_id = $1 order by effective_from`, [userId]),
-    dayStatuses(userId, { from, to }).then((rows) => ({ rows })),
     pool.query(`select t.canonical_key as key, t.code, t.category, r.collected_at, r.value_numeric, r.value_text, r.unit_canonical, r.ref_low, r.ref_high, r.lab_name
                   from lab_results_eff r join lab_tests t on t.id = r.test_id where r.user_id = $1 ${allLabs ? '' : 'and r.collected_at::date between $2 and $3'} order by r.collected_at, t.category, t.code`, allLabs ? [userId] : [userId, from, to]),
     pool.query(`select id, study_date::text as date, modality, body_region, response, impression_text from imaging_studies where user_id = $1 order by study_date`, [userId]),
@@ -72,11 +71,12 @@ export async function buildDossierMarkdown(userId, { tz = DEFAULT_TZ, from, to, 
   const reg = regimen.rows.find((x) => x.role === 'systemic') || regimen.rows[0];
   const supportMeds = regimen.rows.filter((x) => x !== reg);
   if (reg) {
-    if (supportMeds.length) L.push(say('support', { list: supportMeds.map((x) => say('supportItem', { name: x.name, dose: x.dose_value != null ? ` ${fmt(x.dose_value)} ${unitRu(x.dose_unit)}` : '', times: Number(x.times_per_day) > 1 ? profile('timesPerDay', { n: x.times_per_day }) : '', instructions: x.instructions ? ` (${x.instructions})` : '', date: dateRu(x.start_date) })).join('; ') }));
+    const admins = await dayStatuses(userId, { medicationId: reg.med_id, from, to });
+    if (supportMeds.length) L.push(say(supportMeds.every((x) => x.role === 'support') ? 'support' : 'otherMedications', { list: supportMeds.map((x) => say('supportItem', { name: x.name, dose: x.dose_value != null ? ` ${fmt(x.dose_value)} ${unitRu(x.dose_unit)}` : '', times: Number(x.times_per_day) > 1 ? profile('timesPerDay', { n: x.times_per_day }) : '', instructions: x.instructions ? ` (${x.instructions})` : '', date: dateRu(x.start_date) })).join('; ') }));
     L.push(say('current', { name: reg.name, dose: reg.dose_value ? `${fmt(reg.dose_value)} ${unitRu(reg.dose_unit)}` : '', schedule: describeSchedule({ ...scheduleFromRow(reg), startDate: reg.start_date }, language), date: dateRu(reg.start_date) }));
     const regDoses = doses.rows.filter((d) => d.regimen_item_id === reg.item_id); // the main drug's own history
     if (regDoses.length) L.push(say('doseHistory', { list: regDoses.map((d) => `${dateRu(d.effective_from)} ${fmt(d.dose_value)} ${unitRu(d.dose_unit)}${d.reason ? ` (${doseNote(d.reason, language)})` : ''}`).join('; ') }));
-    const byDay = new Map(admins.rows.map((a) => [a.day, a.status]));
+    const byDay = new Map(admins.map((a) => [a.day, a.status]));
     const start = reg.start_date > from ? reg.start_date : from;
     const end = to > today ? today : to;
     const sch = { ...scheduleFromRow(reg), startDate: reg.start_date };
@@ -110,7 +110,7 @@ export async function buildDossierMarkdown(userId, { tz = DEFAULT_TZ, from, to, 
   for (const s of studyList) {
     const sizes = meas.rows.filter((m) => m.study_id === s.id).map((m) => { const l = lesions.rows.find((x) => x.id === m.lesion_id); return `${l?.name || '?'}${l?.location ? ` (${l.location})` : ''}: ${m.size_mm != null ? t(language, 'aiContext.mm', { v: fmt(m.size_mm) }) : say('noSize')}${m.note ? `, ${m.note}` : ''}`; });
     const r = recist.find((x) => x.studyId === s.id);
-    L.push(`- **${dateRu(s.date)} ${modalityLabel(s.modality, language)}${s.region ? ` ${s.region}` : ''}**${s.response ? t(language, 'aiContext.profile.studyResponse', { response: responseLabel(s.response, language) }) : ''}${r && r.response !== 'baseline' ? say('recist', { sum: fmt(r.sum), response: responseLabel(r.response, language), change: `${r.changeFromBaselinePct > 0 ? '+' : ''}${r.changeFromBaselinePct}` }) : ''}`);
+    L.push(`- **${dateRu(s.date)} ${modalityLabel(s.modality, language)}${s.region ? ` ${s.region}` : ''}**${s.response ? t(language, 'aiContext.profile.studyResponse', { response: responseLabel(s.response, language) }) : ''}${r?.sum != null && r.response !== 'baseline' ? say('recist', { sum: fmt(r.sum), response: responseLabel(r.response, language), change: `${r.changeFromBaselinePct > 0 ? '+' : ''}${r.changeFromBaselinePct}` }) : ''}`);
     if (sizes.length) L.push(say('lesions', { list: sizes.join('; ') }));
     if (s.impression) L.push(say('impression', { text: String(s.impression).replace(/\s+/g, ' ') }));
   }

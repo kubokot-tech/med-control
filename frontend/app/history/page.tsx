@@ -103,7 +103,7 @@ export default function HistoryPage() {
     try {
       for (const f of files) {
         const fd = new FormData();
-        fd.set('file', f, f.name);
+        fd.set('file', f);
         const r = await apiFetch(`/api/gateway/milestones/${id}/attachments`, { method: 'POST', body: fd });
         if (!r.ok) throw new Error(errorRu(await r.json().catch(() => ({})), `HTTP ${r.status}`));
       }

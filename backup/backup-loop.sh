@@ -10,6 +10,7 @@
 # Every step writes its result into /backups/status.json for the gateway (Telegram morning line, alerts).
 # `bash /backup-loop.sh once` runs one cycle now and exits (used for tests and first cloud upload).
 set -uo pipefail
+source "$(dirname "$0")/rotation.sh"
 umask 077   # backups hold medical data and .env: owner-only
 : "${BACKUP_AT:=03:30}" "${BACKUP_KEEP:=14}" "${MIRROR_KEEP:=30}" "${RESTORE_TEST_DOW:=Sun}" "${CLOUD_REMOTE:=}"
 STATUS=/backups/status.json
@@ -21,28 +22,33 @@ now_iso() { date -Iseconds; }
 dump_ok=false dump_bytes=0 uploads_bytes=0 dest="" err_dump=""
 mirror_state=skipped mirror_err="" cloud_state=skipped cloud_err="" cloud_crypt=null test_state=skipped test_detail=""
 # Never in the archive of /data: see step 1 above.
-DATA_EXCLUDE=(--exclude=./jwt.secret --exclude=./setup-code.txt)
+DATA_EXCLUDE=(--exclude=./jwt.secret --exclude=./setup-code.txt --exclude=./.medcontrol-restore)
 
 write_status() {
-  cat > "$STATUS.tmp" <<JSON
+  cat > "$STATUS.tmp" <<JSON || return 1
 {"ran_at":"$(now_iso)","backup_at":"$BACKUP_AT","dir":"$(j "$dest")","dump_ok":$dump_ok,"dump_bytes":$dump_bytes,"uploads_bytes":$uploads_bytes,"dump_error":"$(j "$err_dump")",
  "mirror":{"state":"$mirror_state","error":"$(j "$mirror_err")","enabled":$(mirror_on && echo true || echo false)},
  "cloud":{"state":"$cloud_state","error":"$(j "$cloud_err")","remote":"$(j "$CLOUD_REMOTE")","enabled":$(cloud_on && echo true || echo false),"crypt":$cloud_crypt},
  "restore_test":{"state":"$test_state","detail":"$(j "$test_detail")"}}
 JSON
-  mv "$STATUS.tmp" "$STATUS"; chmod 644 "$STATUS"; chmod 711 /backups   # gateway (non-root) reads only status.json; dumps stay 600/700   # readable by the unprivileged gateway
+  chmod 644 "$STATUS.tmp" && mv "$STATUS.tmp" "$STATUS" && chmod 711 /backups   # gateway (non-root) reads only status.json; dumps stay 600/700   # readable by the unprivileged gateway
 }
 
 step_dump() {
-  dest="/backups/$(date +%F_%H%M)"
-  mkdir -p "$dest"
-  if err_dump=$( { pg_dump -Fc > "$dest/db.dump" && tar czf "$dest/uploads.tar.gz" "${DATA_EXCLUDE[@]}" -C /data . ; } 2>&1 ); then
-    [ -f /env/.env ] && cp /env/.env "$dest/env" && chmod 600 "$dest/env"
+  local stage
+  stage=$(mktemp -d /backups/.partial.XXXXXX) || { dump_ok=false; err_dump="cannot create staging directory"; return 1; }
+  dest="/backups/$(date +%F_%H%M%S)_${stage##*.}"
+  if err_dump=$( {
+    pg_dump -Fc > "$stage/db.dump" &&
+    tar czf "$stage/uploads.tar.gz" "${DATA_EXCLUDE[@]}" -C /data . &&
+    { [ ! -f /env/.env ] || cp /env/.env "$stage/env"; } &&
+    printf '%s\n' "${dest##*/}" > "$stage/.medcontrol-complete" && mv -T "$stage" "$dest"
+  } 2>&1 ); then
     dump_ok=true; dump_bytes=$(stat -c %s "$dest/db.dump"); uploads_bytes=$(stat -c %s "$dest/uploads.tar.gz")
     echo "backup: ok $dest (dump ${dump_bytes}B, uploads ${uploads_bytes}B)"
-    ls -1dt /backups/*/ 2>/dev/null | grep -v migrate-from | tail -n +$((BACKUP_KEEP + 1)) | xargs -r rm -rf
+    rotate_copies /backups "$BACKUP_KEEP" || { dump_ok=false; err_dump="retention failed"; return 1; }
   else
-    dump_ok=false; echo "backup: FAILED: $err_dump" >&2; rm -rf "$dest"
+    dump_ok=false; echo "backup: FAILED: $err_dump" >&2; rm -rf "$stage"
   fi
 }
 
@@ -51,7 +57,7 @@ mirror_on() { [ -d /mirror ] && [ "${MIRROR_CONFIGURED:-}" = yes ]; }
 
 step_mirror() {
   mirror_on || { mirror_state=skipped; return; }
-  if out=$( { rsync -a --delete --exclude status.json /backups/ /mirror/backups/ && { [ -d /dicom ] && rsync -a /dicom/ /mirror/dicom/ || true; } ; } 2>&1 ); then
+  if out=$( { rsync -a --delete --exclude '/.partial.*' --exclude '/.lock-*' --exclude status.json /backups/ /mirror/backups/ && { [ ! -d /dicom ] || rsync -a /dicom/ /mirror/dicom/; } ; } 2>&1 ); then
     mirror_state=ok; echo "mirror: ok ($(du -sh /mirror 2>/dev/null | cut -f1))"
   else mirror_state=failed; mirror_err="$out"; echo "mirror: FAILED: $out" >&2; fi
 }
@@ -83,37 +89,49 @@ cloud_check() {
 
 step_cloud() {
   cloud_check
-  cloud_on || { cloud_state=skipped; return; }
+  if [ -z "$CLOUD_REMOTE" ]; then cloud_state=skipped; return; fi
+  if [ ! -f "$RCLONE_CONFIG" ]; then cloud_state=failed; cloud_err="rclone configuration missing"; return 1; fi
   local out
-  if out=$( { rclone sync /backups "$CLOUD_REMOTE/backups" --exclude status.json --transfers 4 --checkers 8 --stats 0 2>&1 && { [ -d /dicom ] && rclone sync /dicom "$CLOUD_REMOTE/dicom" --transfers 2 --checkers 4 --stats 0 2>&1 || true; }; } ); then
+  if out=$( { rclone sync /backups "$CLOUD_REMOTE/backups" --exclude '/.partial.*/**' --exclude '/.lock-*/**' --exclude status.json --transfers 4 --checkers 8 --stats 0 2>&1 && { [ ! -d /dicom ] || rclone sync /dicom "$CLOUD_REMOTE/dicom" --transfers 2 --checkers 4 --stats 0 2>&1; }; } ); then
     cloud_state=ok; echo "cloud: ok ($CLOUD_REMOTE)"
   else cloud_state=failed; cloud_err="$out"; echo "cloud: FAILED: $out" >&2; fi
 }
 
 step_restore_test() {
   [ "$dump_ok" = true ] || { test_state=skipped; return; }
-  local db="${PGDATABASE}_restore_test" out
-  if out=$( {
-      dropdb --if-exists "$db" 2>/dev/null && createdb "$db" && pg_restore --no-owner -d "$db" "$dest/db.dump" 2>/dev/null
-      live=$(psql -Atc "select (select count(*) from lab_results)||'/'||(select count(*) from milestones)||'/'||(select count(*) from administrations)||'/'||(select count(*) from ai_comments)")
-      rest=$(psql -Atc "select (select count(*) from lab_results)||'/'||(select count(*) from milestones)||'/'||(select count(*) from administrations)||'/'||(select count(*) from ai_comments)" -d "$db")
-      dropdb "$db"
-      echo "lab_results/milestones/administrations/ai_comments live $live restored $rest"
-      [ "$live" = "$rest" ]
-    } 2>&1 ); then
-    test_state=ok; test_detail="$out"; echo "restore-test: ok ($out)"
-  else test_state=failed; test_detail="$out"; echo "restore-test: FAILED: $out" >&2; fi
+  local db="mc_restore_test_${BASHPID}_$(date +%s)" out
+  local counts="select (select count(*) from lab_results)||'/'||(select count(*) from milestones)||'/'||(select count(*) from administrations)||'/'||(select count(*) from ai_comments)"
+  local live restored
+  if ! createdb "$db"; then test_state=failed; test_detail="cannot create scratch database"; return 1; fi
+  if out=$(pg_restore --exit-on-error --no-owner -d "$db" "$dest/db.dump" 2>&1) &&
+     live=$(psql -v ON_ERROR_STOP=1 -Atc "$counts") &&
+     restored=$(psql -v ON_ERROR_STOP=1 -d "$db" -Atc "$counts"); then
+    test_detail="lab_results/milestones/administrations/ai_comments live $live restored $restored"
+    if [ "$live" = "$restored" ]; then test_state=ok; else test_state=failed; fi
+  else
+    test_state=failed; test_detail="$out"
+  fi
+  if ! dropdb "$db"; then test_state=failed; test_detail+="; cleanup failed"; fi
+  echo "restore-test: $test_state ($test_detail)"
 }
 
-cycle() {
+cycle() (
+  exec 9>/backups/.medcontrol-backup.lock || return 1
+  flock -n 9 || { echo "backup: another cycle is running" >&2; return 1; }
   local force_test="${1:-}"
-  step_dump; write_status
-  step_mirror; write_status
-  step_cloud; write_status
-  if [ "$force_test" = force ] || [ "$(date +%a)" = "$RESTORE_TEST_DOW" ]; then step_restore_test; write_status; fi
-}
+  step_dump; write_status || return 1
+  [ "$dump_ok" = true ] || return 1
+  step_mirror; write_status || return 1
+  step_cloud; write_status || return 1
+  if [ "$force_test" = force ] || [ "$(date +%a)" = "$RESTORE_TEST_DOW" ]; then step_restore_test; write_status || return 1; fi
+  [[ "$dump_ok" == true && "$mirror_state" != failed && "$cloud_state" != failed ]] || return 1
+  [ "$force_test" != force ] || [ "$test_state" = ok ]
+)
 
-if [ "${1:-}" = once ]; then cycle force; exit 0; fi
+if [ "${1:-}" = once ]; then
+  cycle force
+  exit $?
+fi
 echo "backup-loop: daily at $BACKUP_AT, keep $BACKUP_KEEP; mirror $(mirror_on && echo on || echo off); cloud ${CLOUD_REMOTE:-off}; restore test on $RESTORE_TEST_DOW"
 cloud_check   # the warning about an unencrypted remote is in the log from the start, not only after the first night
 last=""

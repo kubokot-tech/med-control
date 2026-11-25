@@ -15,7 +15,7 @@ export const SAMPLE_MIN_CHARS_PER_PAGE = 80; // below this the PDF is a scan: no
 export const SAMPLE_MAX_CHARS = 200_000;
 
 const norm = (w) => w.toLowerCase().replace(/ё/g, 'е');
-const WORD = /[A-Za-zА-Яа-яЁё][A-Za-zА-Яа-яЁё0-9]*/g;
+const WORD = /[\p{L}\p{M}][\p{L}\p{M}\p{N}]*/gu;
 
 const allowed = new Set(SAMPLE_WORDS.map(norm));
 for (const e of CATALOG_SEED) {
@@ -56,7 +56,7 @@ function anonymizeLine(raw, randomDigit) {
   const line = raw.replace(/\u0001/g, ' ').replace(DATE, (d) => (d.includes('-') ? FIXED_ISO : FIXED_DATE)).replace(TIME, FIXED_TIME);
   const safe = hide(hide(line, /01\.02\.2026|2026-02-01|12:00/g), POWER);
   return maskWords(safe)
-    .replace(/\u0001\d+\u0001|\d/g, (m) => (m.length > 1 ? m : randomDigit()))
+    .replace(/\u0001\d+\u0001|\p{N}/gu, (m) => (m.startsWith('\u0001') ? m : randomDigit()))
     .replace(/\u0001(\d+)\u0001/g, (_, i) => held[Number(i)]);
 }
 

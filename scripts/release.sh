@@ -13,4 +13,4 @@ TOP=$(git rev-parse --show-toplevel)
 git -C "$TOP" fetch -q origin
 echo "release: $REF ($(git -C "$TOP" rev-parse --short "$REF")) -> $HOST:$DIR"
 git -C "$TOP" archive --format=tar "$REF" | "${SSH[@]}" "$HOST" "mkdir -p $DIR && cd $DIR && (tar -x --warning=no-timestamp 2>/dev/null || tar -x)"
-"${SSH[@]}" "$HOST" "cd $DIR && sh scripts/deploy.sh $(git -C "$TOP" rev-parse --short "$REF")-$(date +%Y%m%d%H%M)" 2>&1 | tee -a "$TOP/.release.log"
+"${SSH[@]}" "$HOST" "cd $DIR && DEPLOY_REVISION=$(git -C "$TOP" rev-parse --short "$REF") sh scripts/deploy.sh" 2>&1 | tee -a "$TOP/.release.log"

@@ -12,6 +12,7 @@ import { getSetting } from './settings.js';
 import { secret } from './config.js';
 import { buildPatientProfile, PROMPT_VERSION, languageOf } from './patientProfile.js';
 import { prompt } from './aiPrompts.js';
+import { needsPageOcr } from './ocr.js';
 import { t as tr } from './i18n.js';
 import { createHash, randomUUID } from 'node:crypto';
 
@@ -120,7 +121,7 @@ function plainMessages(messages) {
  */
 async function filesForModel(files, caps, { ocrImages = false, language } = {}) {
   const pdfs = []; const imgs = []; const texts = [];
-  const recognised = async (f) => (await (await import('./ocr.js')).ocrFile(f).catch(() => ({ text: '' }))).text.trim();
+  const recognised = async (f) => (await (await import('./ocr.js')).ocrFile({ ...f, language })).text.trim();
   for (const f of files) {
     if (f.mimeType === 'application/pdf') {
       if (caps.pdf) { pdfs.push(f); continue; }
@@ -128,7 +129,7 @@ async function filesForModel(files, caps, { ocrImages = false, language } = {}) 
       const layer = await pdfTextPages(f.data).catch(() => ({ pages: [], text: '' }));
       let t = layer.text.trim();
       // a scan, maybe with a printed stamp or header (the same rule as extracts.js)
-      if (t.length < 80 * Math.max(1, layer.pages.length)) { const o = await recognised(f); if (o.length > t.length) t = o; }
+      if (needsPageOcr(layer)) t = await recognised({ ...f, layers: layer.pages });
       if (!t) throw invalid('model_no_files');
       texts.push(`${tr(language, 'aiContext.fileText', { file: f.name || 'document.pdf' })}\n${t}`);
     } else if (IMAGE_TYPES.includes(f.mimeType)) {

@@ -3,6 +3,7 @@
  * configured chat into MedControl through the same pipeline as the web upload.
  * Only TELEGRAM_CHAT_ID is served; anything else is ignored and logged.
  */
+import { createHash } from 'node:crypto';
 import { telegramConfig, telegramReady, sendTelegram, noteChats, editTelegram, answerCallback, keyboard } from './telegram.js';
 import { activeDailyItem, recordDose, dayStatus, doseOn } from './medsRecord.js';
 import { todayKey, addDays, noonIn } from './dates.js';
@@ -39,14 +40,25 @@ const dayText = (d, language) => {
 const doseText = (value, unit, language) => (value ? ` ${value} ${doseUnit(unit, language)}` : '');
 
 /** Bot core with injectable transport: { handle, handleCallback, start, stop }. `tg` = { send, edit, answer }. */
-export function createTelegramBot({ userId, log = console, fetchImpl = telegramFetch, tg = { send: sendTelegram, edit: editTelegram, answer: answerCallback } } = {}) {
+export function createTelegramBot({ userId, log = console, fetchImpl = telegramFetch, tg: transport = { send: sendTelegram, edit: editTelegram, answer: answerCallback } } = {}) {
   const { token, chatId, appUrl } = telegramConfig();
-  let offset = Number(getSetting('tg_offset') || 0);
+  const botId = /^([0-9]+):/.exec(token)?.[1] ?? createHash('sha256').update(token).digest('hex');
+  const offsetKey = `tg_offset_${botId}`;
+  let offset = Number(getSetting(offsetKey) || 0);
   let stopped = false;
+  const lifetime = new AbortController();
+  const jobs = new Set();
+  const current = () => {
+    const config = telegramConfig();
+    return !stopped && token === config.token && chatId === config.chatId;
+  };
+  const guarded = (method) => (...args) => current() ? method(...args) : Promise.resolve();
+  const tg = { send: guarded(transport.send), edit: guarded(transport.edit), answer: guarded(transport.answer) };
+
 
   async function api(method, body) {
     const r = await fetchImpl(`https://api.telegram.org/bot${token}/${method}`, {
-      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body || {}), signal: AbortSignal.timeout(60_000),
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body || {}), signal: AbortSignal.any([lifetime.signal, AbortSignal.timeout(60_000)]),
     });
     const j = await r.json().catch(() => ({}));
     if (!r.ok || !j.ok) throw new Error(j.description || `telegram ${method} failed (${r.status})`);
@@ -56,7 +68,7 @@ export function createTelegramBot({ userId, log = console, fetchImpl = telegramF
   async function download(fileId) {
     const f = await api('getFile', { file_id: fileId });
     if (f.file_size && f.file_size > MAX_FILE) throw Object.assign(new Error('too big'), { code: 'too_big' });
-    const r = await fetchImpl(`https://api.telegram.org/file/bot${token}/${f.file_path}`);
+    const r = await fetchImpl(`https://api.telegram.org/file/bot${token}/${f.file_path}`, { signal: lifetime.signal });
     if (!r.ok) throw new Error(`download failed (${r.status})`);
     return Buffer.from(await r.arrayBuffer());
   }
@@ -72,6 +84,7 @@ export function createTelegramBot({ userId, log = console, fetchImpl = telegramF
     const today = todayKey(tz);
     const takenAt = day === today ? new Date().toISOString() : noonIn(day, tz);
     const d = await doseOn(item.regimenItemId, day); // the dose that was in effect that day, not today's
+    if (!current()) return;
     const r = await recordDose(userId, { medicationId: item.medicationId, regimenItemId: item.regimenItemId, status, takenAt, doseValue: status === 'TAKEN' ? d.doseValue : null, doseUnit: status === 'TAKEN' ? d.doseUnit : null, notes: viaText ? 'telegram' : 'telegram, кнопка', tz, source: 'telegram' });
     const when = day === today ? say('today') : day;
     if (r.already) return say('already', { name: item.name, when, state: dayText(r.already, language), url: `${appUrl}/meds` });
@@ -101,6 +114,7 @@ export function createTelegramBot({ userId, log = console, fetchImpl = telegramF
     const chat = String(cq.message?.chat?.id);
     const f = await userFormat(userId);
     const say = (key, args) => t(f.language, `bot.callback.${key}`, args);
+    if (!current()) return;
     if (chat !== String(chatId)) { await tg.answer(cq.id, say('notYourChat')); return; }
     const lm0 = /^labs:(save|drop):([a-f0-9]{16,64})$/.exec(cq.data || '');
     const lm = lm0 ? [lm0[0], lm0[1], await resolvePending(lm0[2])] : null;
@@ -108,6 +122,7 @@ export function createTelegramBot({ userId, log = console, fetchImpl = telegramF
     if (lm) {
       try {
         const pending = await loadPending(lm[2]);
+        if (!current()) return;
         if (!pending) { await tg.answer(cq.id, say('draftDone')); return; }
         if (lm[1] === 'drop') {
           await dropPending(lm[2]);
@@ -130,6 +145,7 @@ export function createTelegramBot({ userId, log = console, fetchImpl = telegramF
     const am = /^appt:done:([0-9a-f-]{36})$/.exec(cq.data || '');
     if (am) {
       try {
+        if (!current()) return;
         const a = await updateAppointment(userId, am[1], { status: 'done' });
         await tg.answer(cq.id, say(a ? 'marked' : 'notFound'));
         if (a) await tg.edit(chat, cq.message.message_id, `${cq.message.text}\n\n${say('apptDone')}`);
@@ -150,6 +166,7 @@ export function createTelegramBot({ userId, log = console, fetchImpl = telegramF
   }
   async function handle(msg) {
     const chat = String(msg.chat?.id);
+    if (!current()) return;
     if (chat !== String(chatId)) {
       log.warn({ chat, from: msg.from?.username }, 'telegram bot: message from unknown chat ignored');
       return;
@@ -162,6 +179,7 @@ export function createTelegramBot({ userId, log = console, fetchImpl = telegramF
     if (isPdf) {
       try {
         const buf = await download(doc.file_id);
+        if (!current()) return;
         const r = await commitLabsPdf({ userId, buf, filename: doc.file_name || 'telegram.pdf' });
         if (r.needsReview) {
           const d = r.draft;
@@ -201,6 +219,7 @@ export function createTelegramBot({ userId, log = console, fetchImpl = telegramF
       if (diary) {
         const date = diary.yesterday ? addDays(today, -1) : today;
         try {
+          if (!current()) return;
           const r = await saveSymptoms(userId, date, diary.entry, tz, { appendNotes: true });
           const body = bodyUnits({ temperature: f.temperature, weight: f.weight, language });
           const lines = [say('diary.saved', { when: say(diary.yesterday ? 'diary.yesterday' : 'dose.today'), summary: summarize(r.entry, language, { body }) })];
@@ -221,17 +240,28 @@ export function createTelegramBot({ userId, log = console, fetchImpl = telegramF
   async function loop() {
     log.info('telegram bot: polling started');
     let backoff = 10_000;
-    while (!stopped) {
+    const legacyOffset = getSetting('tg_offset');
+    if (legacyOffset && !getSetting(offsetKey)) {
+      offset = Number(legacyOffset);
+      await setSetting(offsetKey, String(offset));
+    }
+    if (legacyOffset) await setSetting('tg_offset', '');
+    while (current()) {
       try {
         const updates = await api('getUpdates', { offset, timeout: 25, allowed_updates: ['message', 'callback_query'] });
         for (const u of updates) {
+          if (!current()) return;
           offset = u.update_id + 1;
-          setSetting('tg_offset', String(offset)).catch(() => {});
-          if (u.message?.chat) noteChats([u.message.chat]);
+          await setSetting(offsetKey, String(offset));
+          if (!current()) return;
+          if (u.message?.chat) noteChats([u.message.chat], token);
           // documents (PDF parsing, AI) run beside the loop so dose buttons stay responsive
-          if (u.message?.document) handle(u.message).catch((e) => log.warn({ err: e.message }, 'telegram bot: document failed'));
-          else if (u.message) await handle(u.message);
-          if (u.callback_query) await handleCallback(u.callback_query);
+          const job = u.message ? handle(u.message) : u.callback_query ? handleCallback(u.callback_query) : null;
+          if (!job) continue;
+          jobs.add(job);
+          const tracked = job.finally(() => jobs.delete(job));
+          if (u.message?.document) tracked.catch((e) => log.warn({ err: e.message }, 'telegram bot: document failed'));
+          else await tracked;
         }
         backoff = 10_000;
       } catch (e) {
@@ -243,20 +273,35 @@ export function createTelegramBot({ userId, log = console, fetchImpl = telegramF
       }
     }
   }
-  return { handle, handleCallback, start: () => { loop(); }, stop: () => { stopped = true; } };
+  function stop() {
+    stopped = true;
+    lifetime.abort();
+    return Promise.allSettled([...jobs]);
+  }
+  return { handle, handleCallback, current, start: loop, stop };
 }
 
 let active = null; let lastOpts = null;
+function stopActive() {
+  const draining = active?.stop();
+  active = null;
+  return draining;
+}
 export function startTelegramBot(opts = {}) {
   const log = opts.log || console;
   lastOpts = opts;
-  if (active) return () => { active?.stop(); active = null; };
-  if (!telegramReady()) { log.info('telegram bot: off (no token or chat id)'); return () => {}; }
+  if (active) return stopActive;
+  if (!telegramReady()) { log.info('telegram bot: off (no token or chat id)'); return stopActive; }
   active = createTelegramBot(opts);
-  active.start();
-  return () => { active?.stop(); active = null; };
+  active.start().catch((err) => log.error({ err }, 'telegram bot: polling stopped'));
+  return stopActive;
 }
 /** Start the bot later, once the wizard or settings provided a token and chat id. */
 export function ensureTelegramBot() {
+  let draining;
+  if (active && !active.current()) {
+    draining = stopActive();
+  }
   if (!active && lastOpts && telegramReady()) startTelegramBot(lastOpts);
+  return draining;
 }

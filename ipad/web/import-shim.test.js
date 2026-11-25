@@ -94,3 +94,14 @@ test('an empty iPad install can read a fictional archive through the ranged file
   assert.equal(gotPad[0], 7);
   assert.equal(gotPad[gotPad.length - 1], 7);
 });
+
+test('stat reports the time of the last write across repeated reads', async () => {
+  const shim = await loadShim();
+  shim.mkdirSync('/data/test', { recursive: true });
+  shim.writeFileSync('/data/test/pending.pdf', 'fixture');
+  const first = shim.statSync('/data/test/pending.pdf').mtimeMs;
+  await new Promise((resolve) => setTimeout(resolve, 15));
+  assert.equal(shim.statSync('/data/test/pending.pdf').mtimeMs, first);
+  shim.writeFileSync('/data/test/pending.pdf', 'changed');
+  assert.ok(shim.statSync('/data/test/pending.pdf').mtimeMs > first);
+});

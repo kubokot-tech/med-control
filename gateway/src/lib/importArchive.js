@@ -5,6 +5,9 @@
  * password, AI keys, Telegram and MCP stay as set on this installation.
  */
 import path from 'node:path';
+import { createHash, randomUUID } from 'node:crypto';
+import { rename } from 'node:fs/promises';
+import { PATIENT_KEYS } from './patientCard.js';
 import unzipper from 'unzipper';
 import { pool, transaction } from './db.js';
 import * as fileStore from './files.js';
@@ -15,20 +18,26 @@ import { safeMime } from './attachmentsStore.js';
 // never loaded: the schema itself, the catalog (seeded from code), sign-in and agent access of the old installation
 const DENY = new Set(['schema_migrations', 'lab_catalog', 'users', 'app_settings', 'passkeys', 'mcp_tokens', 'mcp_audit']);
 // settings that are patient data, not configuration of the old installation
-const SETTINGS_ALLOW = ['anamnesis', 'anamnesis_brief', 'treatment_protocol', 'patient_name', 'patient_birth', 'patient_diagnosis'];
+const SETTINGS_ALLOW = ['anamnesis', 'anamnesis_brief', 'treatment_protocol', ...PATIENT_KEYS];
 // any of these with rows means the installation is in use
-const IN_USE = ['events', 'lab_results', 'medications', 'notes', 'milestones', 'symptom_entries', 'appointments', 'contacts'];
+const IN_USE = [
+  'events', 'lab_results', 'medications', 'notes', 'milestones', 'symptom_entries', 'appointments', 'contacts',
+  'attachments', 'ingest_documents', 'regimens', 'administrations', 'health_samples', 'infusion_courses',
+  'infusion_sessions', 'anamnesis_versions', 'ai_questions', 'ai_comments', 'imaging_studies', 'lesions',
+  'dicom_imports', 'lab_ref_overrides',
+];
 const TABLE_RX = /^tables\/([a-z0-9_]+)\.json$/;
 const FILE_RX = /^files\/((?:[a-z]+\/)*)([A-Za-z0-9][A-Za-z0-9._-]*)$/;
 const CHUNK = 1000;
 
 /** Is there any patient data yet? (the wizard alone leaves none) */
-export async function installationInUse(userId) {
+export async function installationInUse(userId, client = pool) {
   for (const t of IN_USE) {
-    const r = await pool.query(`select exists(select 1 from "${t}" where user_id = $1) as e`, [userId]).catch(() => ({ rows: [{ e: false }] }));
+    const r = await client.query(`select exists(select 1 from "${t}" where user_id = $1) as e`, [userId]);
     if (r.rows[0].e) return true;
   }
-  return false;
+  const settings = await client.query("select 1 from app_settings where key = any($1::text[]) and coalesce(value, '') <> '' limit 1", [SETTINGS_ALLOW]);
+  return settings.rows.length > 0;
 }
 
 /**
@@ -102,21 +111,38 @@ export async function importArchive(userId, zipPath, { log = console } = {}) {
   const entries = new Map(dir.files.map((f) => [f.path, f]));
   if (!entries.has('manifest.json') || !entries.has('tables/events.json')) throw invalid('import_bad_archive');
   if (await installationInUse(userId)) throw conflict('import_not_empty');
-  const readJson = async (p) => JSON.parse((await entries.get(p).buffer()).toString('utf8'));
-
-  // files first: if the disk fills up, nothing is in the database yet and the load can be repeated (a file without rows
-  // is harmless, names are content hashes); names are checked against path tricks
-  let files = 0;
-  for (const f of dir.files) {
-    if (f.type !== 'File' || !f.path.startsWith('files/')) continue;
-    const m = FILE_RX.exec(f.path);
-    if (!m || m[1].startsWith('pending/')) { if (!m) log.warn?.({ file: f.path }, 'import: skipped file name'); continue; }
-    await fileStore.put(path.posix.join('uploads', m[1]).replace(/\/$/, ''), m[2], await f.buffer());
-    files += 1;
+  const readJson = async (p) => {
+    try { return JSON.parse((await entries.get(p).buffer()).toString('utf8')); }
+    catch { throw invalid('import_bad_archive'); }
+  };
+  const manifest = await readJson('manifest.json');
+  if (!manifest || entries.size !== dir.files.length) throw invalid('import_bad_archive');
+  const hashes = manifest.files;
+  if (hashes) {
+    for (const name of Object.keys(hashes)) {
+      if (!FILE_RX.test(name) || !entries.has(name)) throw invalid('import_bad_archive');
+    }
+  }
+  for (const name of Object.keys(manifest.tables || {})) {
+    if (!entries.has(`tables/${name}.json`)) throw invalid('import_bad_archive');
   }
 
+  let files = 0;
   const counts = {};
   await transaction(async (client) => {
+    // Protect the empty check against a second import and ordinary writes during restore.
+    await client.query(`lock table app_settings, ${IN_USE.join(', ')} in share row exclusive mode`);
+    if (await installationInUse(userId, client)) throw conflict('import_not_empty');
+    const contents = new Map();
+    for (const f of dir.files) {
+      if (f.type !== 'File' || !f.path.startsWith('files/')) continue;
+      const m = FILE_RX.exec(f.path);
+      if (!m || m[1].startsWith('pending/')) continue;
+      const digest = createHash('sha256').update(await f.buffer()).digest('hex');
+      if (hashes && hashes[f.path] !== digest) throw invalid('import_bad_archive');
+      const area = path.posix.join('uploads', m[1]).replace(/\/$/, '');
+      contents.set(fileStore.refOf(area, m[2]), { digest, file: f, area, name: m[2] });
+    }
     const { columns, parents, fkCols, uniques } = await schema(client);
     // archive id → id of the row already here, per table: a catalog row the new installation made on its own (the
     // infusion catalog after opening «Капельницы», a lab test code) collides by a unique key; children then point at it
@@ -124,7 +150,8 @@ export async function importArchive(userId, zipPath, { log = console } = {}) {
     const tables = [...entries.keys()].map((p) => TABLE_RX.exec(p)?.[1]).filter((t) => t && !DENY.has(t) && columns.has(t));
     for (const t of loadOrder(tables, parents)) {
       let rows = await readJson(`tables/${t}.json`);
-      if (!Array.isArray(rows) || !rows.length) continue;
+      if (!Array.isArray(rows) || (manifest.tables && manifest.tables[t] !== rows.length)) throw invalid('import_bad_archive');
+      if (!rows.length) continue;
       const tcols = columns.get(t);
       const refs = (fkCols.get(t) || []).filter((r) => idMap.has(r.parent));
       rows = rows.map((r) => {
@@ -135,6 +162,8 @@ export async function importArchive(userId, zipPath, { log = console } = {}) {
           x.file_url = x.file_url ? newFileRef(x.file_url) : null;
           if (!x.file_url) { log.warn?.({ sha256: x.sha256 }, 'import: attachment without a valid file path skipped'); return null; }
           // the type is the archive's word, not ours: only the upload types stay, the rest is served as a download
+          const content = contents.get(x.file_url);
+          if (!content || (manifest.tables && x.sha256 && content.digest !== x.sha256)) throw invalid('import_bad_archive');
           x.mime_type = safeMime(x.mime_type);
         }
         return x;
@@ -181,6 +210,23 @@ export async function importArchive(userId, zipPath, { log = console } = {}) {
         if (!SETTINGS_ALLOW.includes(s.key)) continue;
         await client.query('insert into app_settings (key, value) values ($1, $2) on conflict (key) do update set value = excluded.value, updated_at = now()', [s.key, s.value]);
       }
+    }
+    // Only verified, content-addressed files are written; a retry reuses complete files.
+    for (const [ref, { file, digest, area, name }] of contents) {
+      if (await fileStore.exists(ref)) {
+        const existing = createHash('sha256').update(await fileStore.read(ref)).digest('hex');
+        if (existing !== digest) throw conflict('import_bad_archive', 'stored file differs from archive');
+      } else {
+        const stagingName = `import-${randomUUID()}.tmp`;
+        const staged = fileStore.refOf(area, stagingName);
+        try {
+          await fileStore.put(area, stagingName, await file.buffer());
+          await rename(staged, ref);
+        } finally {
+          await fileStore.remove(staged);
+        }
+      }
+      files++;
     }
   });
 

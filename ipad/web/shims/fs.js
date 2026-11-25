@@ -5,7 +5,7 @@ import { Buffer } from 'buffer';
 import { Readable, Writable } from 'stream';
 import { inherits } from 'util';
 import APP_FILES from 'virtual:app-files';
-import { queueFile, restoreFiles } from '../container.js';
+import { queueFile, containerFiles, containerOn } from '../container.js';
 import { inclusiveSlice } from './range.js';
 
 const files = new Map();   // path -> Buffer
@@ -30,46 +30,100 @@ const PERSIST = '/data/';
 // a 2 GB archive would become several copies in memory and disk for nothing.
 const keeps = (p) => p.startsWith(PERSIST) && !p.startsWith('/data/tmp/');
 let idb;
+const modified = new Map();
 const store = (mode) => idb.transaction('files', mode).objectStore('files');
-const persist = (p, buf) => {
-  if (!keeps(p)) return;
-  queueFile(p, buf);
-  if (idb) store('readwrite').put(new Uint8Array(buf), p);
-};
-const forget = (p) => {
-  if (!keeps(p)) return;
-  queueFile(p, null);
-  if (idb) store('readwrite').delete(p);
-};
+const warnMirror = (error) => console.warn('[medcontrol] file copy failed', error);
+
+function mirror(path, bytes, version) {
+  return queueFile(path, bytes).then((written) => {
+    if (!written) return;
+    const pending = idb.transaction('pending', 'readwrite').objectStore('pending');
+    const current = pending.get(path);
+    current.onsuccess = () => { if (current.result === version) pending.delete(path); };
+  });
+}
+
+function persist(path, bytes) {
+  if (!keeps(path)) return;
+  const now = Date.now();
+  if (bytes) modified.set(path, now);
+  else modified.delete(path);
+  if (!idb) return;
+  const tx = idb.transaction(['files', 'pending'], 'readwrite');
+  const saved = tx.objectStore('files');
+  if (bytes) saved.put({ bytes, mtimeMs: now }, path);
+  else saved.delete(path);
+  if (containerOn()) {
+    const version = globalThis.crypto.randomUUID();
+    tx.objectStore('pending').put(version, path);
+    tx.oncomplete = () => mirror(path, bytes, version).catch(warnMirror);
+  }
+}
+const forget = (p) => persist(p, null);
+
 export async function hydrate() {
   idb = await new Promise((res, rej) => {
-    const r = indexedDB.open('medcontrol-files', 1);
-    r.onupgradeneeded = () => r.result.createObjectStore('files');
+    const r = indexedDB.open('medcontrol-files', 2);
+    r.onupgradeneeded = () => {
+      if (!r.result.objectStoreNames.contains('files')) r.result.createObjectStore('files');
+      r.result.createObjectStore('pending');
+    };
     r.onsuccess = () => res(r.result);
     r.onerror = () => rej(r.error);
   });
-  const all = await new Promise((res, rej) => {
-    const out = [];
-    const c = store('readonly').openCursor();
-    c.onsuccess = () => { const cur = c.result; if (!cur) return res(out); out.push([cur.key, cur.value]); cur.continue(); };
-    c.onerror = () => rej(c.error);
+  const pending = new Map();
+  await new Promise((resolve, reject) => {
+    const tx = idb.transaction(['files', 'pending']);
+    const c = tx.objectStore('files').openCursor();
+    c.onsuccess = () => {
+      const cur = c.result;
+      if (!cur) return;
+      const { bytes, mtimeMs } = cur.value;
+      files.set(cur.key, Buffer.from(bytes ?? cur.value));
+      if (Number.isFinite(mtimeMs)) modified.set(cur.key, mtimeMs);
+      mkdirp(parent(cur.key));
+      cur.continue();
+    };
+    const changes = tx.objectStore('pending').openCursor();
+    changes.onsuccess = () => {
+      const cur = changes.result;
+      if (cur) { pending.set(cur.key, cur.value); cur.continue(); }
+    };
+    tx.oncomplete = resolve;
+    tx.onabort = () => reject(tx.error);
   });
-  for (const [p, v] of all) { files.set(p, Buffer.from(v)); mkdirp(parent(p)); }
-  // The app folder fills only paths the browser copy has lost. Every kept file is written back, so a stale copy catches up.
-  let filled = 0;
-  for (const [p, bytes] of await restoreFiles()) {
-    if (files.has(p)) continue;
-    files.set(p, Buffer.from(bytes));
-    mkdirp(parent(p));
-    filled++;
+
+  const present = new Set();
+  for await (const entry of containerFiles()) {
+    const p = entry.path;
+    present.add(p);
+    if (pending.has(p) || modified.has(p)) continue;
+    // New records already carry their timestamp. Migrate legacy raw bytes only once.
+    const info = await entry.stat();
+    const mtimeMs = info.mtime?.getTime() ?? Date.now();
+    if (!files.has(p)) {
+      files.set(p, Buffer.from(await entry.read()));
+      mkdirp(parent(p));
+    }
+    modified.set(p, mtimeMs);
+    store('readwrite').put({ bytes: files.get(p), mtimeMs }, p);
   }
-  for (const [p, buf] of files) if (keeps(p)) queueFile(p, buf);
-  return all.length + filled;
+  for (const [p, buf] of files) {
+    if (!keeps(p)) continue;
+    if (!modified.has(p)) {
+      const mtimeMs = Date.now();
+      modified.set(p, mtimeMs);
+      store('readwrite').put({ bytes: buf, mtimeMs }, p);
+    }
+    if (!present.has(p) && !pending.has(p) && containerOn()) await queueFile(p, buf);
+  }
+  for (const [p, version] of pending) await mirror(p, files.get(p) || null, version);
+  return modified.size;
 }
 
 const err = (code, p, syscall = 'open') => Object.assign(new Error(`${code}: ${syscall} '${p}'`), { code, path: p, syscall, errno: -2 });
 const enc = (o) => (typeof o === 'string' ? o : o?.encoding);
-const stat = (p, now = new Date()) => {
+const stat = (p, now = new Date(modified.get(p) ?? Date.now())) => {
   const f = files.get(p);
   if (!f && !dirs.has(p)) throw err('ENOENT', p, 'stat');
   return { size: f ? f.length : 0, isFile: () => !!f, isDirectory: () => !f, isSymbolicLink: () => false, mtime: now, mtimeMs: +now, ctime: now, birthtime: now, mode: f ? 0o100600 : 0o40700 };

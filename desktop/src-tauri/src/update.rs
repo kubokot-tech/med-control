@@ -217,14 +217,28 @@ fn apply(app: &AppHandle, update: &Update) {
 fn backup(data: &Path, from: &str, to: &str, now: SystemTime) -> io::Result<PathBuf> {
     let src = data.join("pgdata");
     let root = data.join(BACKUP_DIR);
-    let dest = root.join(format!("{} {from} to {to}", stamp(now))).join("pgdata");
-    if src.is_dir() {
-        copy_dir(&src, &dest)?;
-    } else {
-        fs::create_dir_all(&dest)?; // nothing stored yet
+    fs::create_dir_all(&root)?;
+    let time = now.duration_since(UNIX_EPOCH).map_err(io::Error::other)?.as_nanos();
+    let name = format!("{}-{time} {from} to {to}", stamp(now));
+    let staging = root.join(format!(".partial-{name}"));
+    fs::create_dir(&staging)?;
+    let destination = root.join(&name);
+    let result = (|| -> io::Result<()> {
+        let db = staging.join("pgdata");
+        match src.metadata() {
+            Ok(_) => copy_dir(&src, &db)?,
+            Err(e) if e.kind() == io::ErrorKind::NotFound => fs::create_dir(&db)?,
+            Err(e) => return Err(e),
+        }
+        fs::write(staging.join(".complete"), b"")?;
+        fs::rename(&staging, &destination)
+    })();
+    if let Err(error) = result {
+        let _ = fs::remove_dir_all(&staging);
+        return Err(error);
     }
     prune(&root, KEEP_BACKUPS)?;
-    Ok(dest)
+    Ok(destination.join("pgdata"))
 }
 
 fn copy_dir(src: &Path, dest: &Path) -> io::Result<()> {
@@ -243,7 +257,17 @@ fn copy_dir(src: &Path, dest: &Path) -> io::Result<()> {
 
 /// Folder names start with the time, so name order is age order.
 fn prune(root: &Path, keep: usize) -> io::Result<()> {
-    let mut dirs: Vec<PathBuf> = fs::read_dir(root)?.filter_map(|e| e.ok()).map(|e| e.path()).filter(|p| p.is_dir()).collect();
+    let mut dirs = Vec::new();
+    for entry in fs::read_dir(root)? {
+        let entry = entry?;
+        if entry.file_name().to_string_lossy().starts_with('.') || !entry.file_type()?.is_dir() {
+            continue;
+        }
+        let path = entry.path();
+        if path.join(".complete").is_file() {
+            dirs.push(path);
+        }
+    }
     dirs.sort();
     let extra = dirs.len().saturating_sub(keep);
     for d in dirs.into_iter().take(extra) {
@@ -301,6 +325,9 @@ mod tests {
         fs::create_dir_all(base.join("pgdata/base/1")).unwrap();
         fs::write(base.join("pgdata/PG_VERSION"), "17").unwrap();
         fs::write(base.join("pgdata/base/1/123"), "rows").unwrap();
+        let root = base.join(BACKUP_DIR);
+        fs::create_dir_all(root.join("older-unverified")).unwrap();
+        fs::create_dir_all(root.join(".partial-interrupted")).unwrap();
         for i in 0..5u64 {
             let at = UNIX_EPOCH + Duration::from_secs(1_794_906_000 + i * 60);
             let dest = backup(&base, "0.4.0", "0.4.1", at).unwrap();
@@ -308,7 +335,12 @@ mod tests {
         }
         let mut left: Vec<String> = fs::read_dir(base.join(BACKUP_DIR)).unwrap().map(|e| e.unwrap().file_name().to_string_lossy().into_owned()).collect();
         left.sort();
-        assert_eq!(left, ["2026-11-17 0902 0.4.0 to 0.4.1", "2026-11-17 0903 0.4.0 to 0.4.1", "2026-11-17 0904 0.4.0 to 0.4.1"]);
+        assert_eq!(left.len(), 5);
+        assert_eq!(left[0], ".partial-interrupted");
+        assert!(left[1].starts_with("2026-11-17 0902-"));
+        assert!(left[2].starts_with("2026-11-17 0903-"));
+        assert!(left[3].starts_with("2026-11-17 0904-"));
+        assert_eq!(left[4], "older-unverified");
         fs::remove_dir_all(&base).unwrap();
     }
 }

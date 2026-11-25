@@ -165,7 +165,7 @@ export default function TodayPage() {
   // Attention: markers outside the reference range on their latest value + missed doses this week
   const alertKeys = new Set(alerts.map((a) => a.key));
   const attention = cards
-    .map((c) => ({ c, flag: flagFor(c.last?.valueNum, c.last?.refLow, c.last?.refHigh) }))
+    .map((c) => ({ c, flag: flagFor(c.last?.valueNum, c.last?.refLow, c.last?.refHigh, c.last?.valueText) }))
     .filter((x) => (x.flag === 'high' || x.flag === 'low') && !alertKeys.has(x.c.key));
   const missedWeek = streak?.missed ?? 0;
 

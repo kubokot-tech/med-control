@@ -6,6 +6,7 @@ WORKDIR /app
 COPY gateway/package.json gateway/package-lock.json ./
 # --omit=optional: pdf.js only reads text here and does not need its native canvas
 RUN npm ci --omit=dev --omit=optional
+COPY db/migrations /app/migrations
 COPY gateway/src ./src
 COPY gateway/fonts ./fonts
 COPY shared /shared

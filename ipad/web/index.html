@@ -102,7 +102,12 @@
     else await step('вход', async () => { const r = await call('POST', '/auth/login', { password: PW }); token = r.data?.token; return !!token; });
     await step('разбор бланка PDF', async () => { const r = await uploadPdf('rows.pdf', new Uint8Array(await (await fetch('./rows.pdf')).arrayBuffer())); return r.status === 200; });
     await step('сводка анализов', async () => (await call('GET', '/labs/summary')).data?.rows?.length > 0);
-    for (const u of ['/report/doctor.pdf', '/labs/export/summary.xlsx', '/export/all.zip']) await step(u, async () => (await gw.request({ method: 'GET', url: u, headers: { authorization: `Bearer ${token}` } })).status === 200);
+    for (const u of ['/report/doctor.pdf', '/labs/export/summary.xlsx', '/export/all.zip']) await step(u, async () => {
+      const r = await gw.request({ method: 'GET', url: u, headers: { authorization: `Bearer ${token}` } });
+      const signature = u.endsWith('.pdf') ? '%PDF' : 'PK';
+      return r.status === 200 && r.body instanceof Uint8Array &&
+        String.fromCharCode(...r.body.subarray(0, signature.length)) === signature;
+    });
     await step('20 × сводка', async () => { for (let i = 0; i < 20; i++) await gw.request({ method: 'GET', url: '/labs/summary', headers: { authorization: `Bearer ${token}` } }); });
     steps.unshift($('status').textContent);
     steps.push(navigator.userAgent);
